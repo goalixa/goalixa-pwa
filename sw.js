@@ -47,8 +47,7 @@ const ASSET_URLS = [
 // API base URLs - use network first
 const API_PATTERNS = [
   /\/api\//,
-  /https:\/\/auth\.goalixa\.com/,
-  /https:\/\/app\.goalixa\.com/
+  /https:\/\/api\.goalixa\.com/
 ];
 
 // Install event - cache core assets

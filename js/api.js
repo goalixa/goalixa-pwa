@@ -5,9 +5,7 @@
 
 // API endpoints configuration
 const API_CONFIG = {
-  landing: window.location.origin, // Same domain
-  auth: 'https://auth.goalixa.com',
-  app: 'https://app.goalixa.com'
+  api: 'https://api.goalixa.com'
 };
 
 /**
@@ -73,14 +71,14 @@ export const landingApi = {
    * Get landing page content
    */
   async getContent() {
-    return apiRequest(`${API_CONFIG.landing}/api/content`);
+    return apiRequest(`${API_CONFIG.api}/landing/content`);
   },
 
   /**
    * Submit contact form
    */
   async submitContact(formData) {
-    return apiRequest(`${API_CONFIG.landing}/api/contact`, {
+    return apiRequest(`${API_CONFIG.api}/landing/contact`, {
       method: 'POST',
       body: formData
     });
@@ -90,7 +88,7 @@ export const landingApi = {
    * Get pricing information
    */
   async getPricing() {
-    return apiRequest(`${API_CONFIG.landing}/api/pricing`);
+    return apiRequest(`${API_CONFIG.api}/landing/pricing`);
   }
 };
 
@@ -102,7 +100,7 @@ export const authApi = {
    * Login user
    */
   async login(email, password) {
-    return apiRequest(`${API_CONFIG.auth}/api/login`, {
+    return apiRequest(`${API_CONFIG.api}/auth/login`, {
       method: 'POST',
       body: { email, password }
     });
@@ -112,7 +110,7 @@ export const authApi = {
    * Register new user
    */
   async register(userData) {
-    return apiRequest(`${API_CONFIG.auth}/api/register`, {
+    return apiRequest(`${API_CONFIG.api}/auth/register`, {
       method: 'POST',
       body: userData
     });
@@ -122,7 +120,7 @@ export const authApi = {
    * Logout user
    */
   async logout() {
-    return apiRequest(`${API_CONFIG.auth}/api/logout`, {
+    return apiRequest(`${API_CONFIG.api}/auth/logout`, {
       method: 'POST'
     });
   },
@@ -131,14 +129,14 @@ export const authApi = {
    * Get current user info
    */
   async getCurrentUser() {
-    return apiRequest(`${API_CONFIG.auth}/api/me`);
+    return apiRequest(`${API_CONFIG.api}/auth/me`);
   },
 
   /**
    * Request password reset
    */
   async requestPasswordReset(email) {
-    return apiRequest(`${API_CONFIG.auth}/api/password-reset/request`, {
+    return apiRequest(`${API_CONFIG.api}/auth/password-reset/request`, {
       method: 'POST',
       body: { email }
     });
@@ -148,7 +146,7 @@ export const authApi = {
    * Reset password with token
    */
   async resetPassword(token, newPassword) {
-    return apiRequest(`${API_CONFIG.auth}/api/password-reset/confirm`, {
+    return apiRequest(`${API_CONFIG.api}/auth/password-reset/confirm`, {
       method: 'POST',
       body: { token, password: newPassword }
     });
@@ -158,7 +156,7 @@ export const authApi = {
    * Refresh auth token
    */
   async refreshToken() {
-    return apiRequest(`${API_CONFIG.auth}/api/refresh`, {
+    return apiRequest(`${API_CONFIG.api}/auth/refresh`, {
       method: 'POST'
     });
   },
@@ -167,7 +165,7 @@ export const authApi = {
    * Verify email
    */
   async verifyEmail(token) {
-    return apiRequest(`${API_CONFIG.auth}/api/verify-email`, {
+    return apiRequest(`${API_CONFIG.api}/auth/verify-email`, {
       method: 'POST',
       body: { token }
     });
@@ -183,14 +181,14 @@ export const appApi = {
    */
   async getTasks(params = {}) {
     const queryString = new URLSearchParams(params).toString();
-    return apiRequest(`${API_CONFIG.app}/api/tasks?${queryString}`);
+    return apiRequest(`${API_CONFIG.api}/app/tasks?${queryString}`);
   },
 
   /**
    * Create task
    */
   async createTask(taskData) {
-    return apiRequest(`${API_CONFIG.app}/api/tasks`, {
+    return apiRequest(`${API_CONFIG.api}/app/tasks`, {
       method: 'POST',
       body: taskData
     });
@@ -200,7 +198,7 @@ export const appApi = {
    * Update task
    */
   async updateTask(taskId, taskData) {
-    return apiRequest(`${API_CONFIG.app}/api/tasks/${taskId}`, {
+    return apiRequest(`${API_CONFIG.api}/app/tasks/${taskId}`, {
       method: 'PUT',
       body: taskData
     });
@@ -210,7 +208,7 @@ export const appApi = {
    * Delete task
    */
   async deleteTask(taskId) {
-    return apiRequest(`${API_CONFIG.app}/api/tasks/${taskId}`, {
+    return apiRequest(`${API_CONFIG.api}/app/tasks/${taskId}`, {
       method: 'DELETE'
     });
   },
@@ -219,14 +217,14 @@ export const appApi = {
    * Get goals
    */
   async getGoals() {
-    return apiRequest(`${API_CONFIG.app}/api/goals`);
+    return apiRequest(`${API_CONFIG.api}/app/goals`);
   },
 
   /**
    * Get habits
    */
   async getHabits() {
-    return apiRequest(`${API_CONFIG.app}/api/habits`);
+    return apiRequest(`${API_CONFIG.api}/app/habits`);
   },
 
   /**
@@ -234,14 +232,14 @@ export const appApi = {
    */
   async getTimerSessions(params = {}) {
     const queryString = new URLSearchParams(params).toString();
-    return apiRequest(`${API_CONFIG.app}/api/timer/sessions?${queryString}`);
+    return apiRequest(`${API_CONFIG.api}/app/timer/sessions?${queryString}`);
   },
 
   /**
    * Start timer session
    */
   async startTimer(taskId, duration) {
-    return apiRequest(`${API_CONFIG.app}/api/timer/start`, {
+    return apiRequest(`${API_CONFIG.api}/app/timer/start`, {
       method: 'POST',
       body: { task_id: taskId, duration }
     });
@@ -251,7 +249,7 @@ export const appApi = {
    * Stop timer session
    */
   async stopTimer(sessionId) {
-    return apiRequest(`${API_CONFIG.app}/api/timer/stop`, {
+    return apiRequest(`${API_CONFIG.api}/app/timer/stop`, {
       method: 'POST',
       body: { session_id: sessionId }
     });
@@ -261,7 +259,7 @@ export const appApi = {
    * Get overview/dashboard data
    */
   async getOverview() {
-    return apiRequest(`${API_CONFIG.app}/api/overview`);
+    return apiRequest(`${API_CONFIG.api}/app/overview`);
   },
 
   /**
@@ -269,21 +267,21 @@ export const appApi = {
    */
   async getReports(params = {}) {
     const queryString = new URLSearchParams(params).toString();
-    return apiRequest(`${API_CONFIG.app}/api/reports?${queryString}`);
+    return apiRequest(`${API_CONFIG.api}/app/reports?${queryString}`);
   },
 
   /**
    * Get projects
    */
   async getProjects() {
-    return apiRequest(`${API_CONFIG.app}/api/projects`);
+    return apiRequest(`${API_CONFIG.api}/app/projects`);
   },
 
   /**
    * Get calendar events
    */
   async getCalendarEvents(start, end) {
-    return apiRequest(`${API_CONFIG.app}/api/calendar?start=${start}&end=${end}`);
+    return apiRequest(`${API_CONFIG.api}/app/calendar?start=${start}&end=${end}`);
   }
 };
 
@@ -298,21 +296,21 @@ export async function healthCheck() {
   };
 
   try {
-    await apiRequest(`${API_CONFIG.landing}/api/health`, { timeout: 5000 });
+    await apiRequest(`${API_CONFIG.api}/landing/health`, { timeout: 5000 });
     results.landing = true;
   } catch (err) {
     console.error('Landing service health check failed:', err);
   }
 
   try {
-    await apiRequest(`${API_CONFIG.auth}/api/health`, { timeout: 5000 });
+    await apiRequest(`${API_CONFIG.api}/auth/health`, { timeout: 5000 });
     results.auth = true;
   } catch (err) {
     console.error('Auth service health check failed:', err);
   }
 
   try {
-    await apiRequest(`${API_CONFIG.app}/api/health`, { timeout: 5000 });
+    await apiRequest(`${API_CONFIG.api}/app/health`, { timeout: 5000 });
     results.app = true;
   } catch (err) {
     console.error('App service health check failed:', err);
