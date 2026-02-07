@@ -1,0 +1,24 @@
+{
+  "name": "goalixa-pwa",
+  "version": "1.0.0",
+  "description": "Unified PWA Container for Goalixa - Landing, Auth, and App in one installable app",
+  "private": true,
+  "scripts": {
+    "serve": "npx http-server . -p 8080 -c-1 --cors",
+    "build": "echo 'No build step needed - vanilla JS'",
+    "test": "echo 'Tests not yet implemented'",
+    "lint": "echo 'Linting not yet implemented'"
+  },
+  "keywords": [
+    "pwa",
+    "goalixa",
+    "productivity",
+    "goals",
+    "tasks"
+  ],
+  "author": "Amirreza Rezaie",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}

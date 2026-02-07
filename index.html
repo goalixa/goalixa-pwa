@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+  <meta name="description" content="Goalixa - Goals, plans, projects, and tasks in one app." />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Goalixa" />
+
+  <title>Goalixa - Goals, Plans, Projects, Tasks</title>
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+  <link rel="icon" type="image/x-icon" href="/icons/icon-192.png" />
+
+  <!-- External Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Montserrat:wght@800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <!-- App Container -->
+  <div id="app">
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+      <div class="loading-logo">
+        <i class="fas fa-bullseye"></i>
+        <span>Goalixa</span>
+      </div>
+      <div class="loading-spinner"></div>
+    </div>
+
+    <!-- View Container - content will be injected here -->
+    <main id="view-container" aria-live="polite"></main>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="/js/utils.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/views/landing-view.js"></script>
+  <script src="/js/views/auth-view.js"></script>
+  <script src="/js/views/app-view.js"></script>
+  <script src="/js/router.js"></script>
+
+  <!-- Service Worker Registration -->
+  <script>
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js', {
+          scope: '/'
+        }).then((registration) => {
+          console.log('[PWA] Service Worker registered:', registration.scope);
+
+          // Listen for updates
+          registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing;
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                // New version available
+                showUpdateNotification();
+              }
+            });
+          });
+        }).catch((error) => {
+          console.error('[PWA] Service Worker registration failed:', error);
+        });
+
+        // Handle service worker messages
+        navigator.serviceWorker.addEventListener('message', (event) => {
+          console.log('[PWA] Message from service worker:', event.data);
+        });
+
+        // Check for service worker updates on page focus
+        window.addEventListener('focus', () => {
+          registration.update();
+        });
+      });
+    }
+
+    // Show update notification
+    function showUpdateNotification() {
+      const toast = document.createElement('div');
+      toast.className = 'toast toast-info';
+      toast.innerHTML = `
+        <i class="fas fa-info-circle"></i>
+        <span>New version available!</span>
+        <button class="toast-update-btn">Refresh</button>
+      `;
+      document.getElementById('toast-container').appendChild(toast);
+
+      const updateBtn = toast.querySelector('.toast-update-btn');
+      updateBtn.addEventListener('click', () => {
+        window.location.reload();
+      });
+
+      setTimeout(() => toast.remove(), 30000);
+    }
+
+    // Hide loading screen when app is ready
+    window.addEventListener('app-ready', () => {
+      const loadingScreen = document.getElementById('loading-screen');
+      if (loadingScreen) {
+        loadingScreen.classList.add('fade-out');
+        setTimeout(() => loadingScreen.remove(), 500);
+      }
+    });
+  </script>
+</body>
+</html>
