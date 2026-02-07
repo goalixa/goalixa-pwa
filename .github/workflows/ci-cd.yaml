@@ -1,20 +1,9 @@
-name: CI/CD Pipeline
+name: Build PWA Image
 
 on:
   push:
-    branches:
-      - main
-      - develop
-    tags:
-      - 'v*.*.*'
-  pull_request:
-    branches:
-      - main
-      - develop
-
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: goalixa/pwa
+    branches: ["main"]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -22,163 +11,26 @@ permissions:
 
 jobs:
   build:
-    name: Build and Push Docker Image
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to GitHub Container Registry
+      - name: Login to GHCR
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
+      - name: Build and push
+        uses: docker/build-push-action@v6
         with:
           context: .
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/pwa:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          platforms: linux/amd64
-
-  lint:
-    name: Lint and Validate
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Check HTML syntax
-        run: |
-          for file in *.html; do
-            if [ -f "$file" ]; then
-              echo "Validating $file..."
-              tidy -qe "$file" || true
-            fi
-          done
-
-      - name: Validate manifest.json
-        run: |
-          if [ -f "manifest.webmanifest" ]; then
-            echo "Validating manifest.webmanifest..."
-            cat manifest.webmanifest | jq empty
-          fi
-
-      - name: Check for common issues
-        run: |
-          echo "Checking for console.log statements..."
-          if grep -r "console\.log" js/ --include="*.js"; then
-            echo "Warning: console.log found in JavaScript files"
-          fi
-
-  security-scan:
-    name: Security Scan
-    runs-on: ubuntu-latest
-    needs: build
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          severity: 'CRITICAL,HIGH'
-
-      - name: Upload Trivy results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: 'trivy-results.sarif'
-
-  deploy-k8s:
-    name: Deploy to Kubernetes
-    runs-on: ubuntu-latest
-    needs: [build, lint]
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
-    environment:
-      name: production
-      url: https://pwa.goalixa.com
-
-    steps:
-      - name: Checkout k8s manifests
-        uses: actions/checkout@v4
-        with:
-          repository: goalixa/k8s
-          ref: main
-          path: k8s-manifests
-          token: ${{ secrets.GH_PAT_K8S }}
-
-      - name: Set up Kubectl
-        uses: azure/setup-kubectl@v4
-
-      - name: Configure Kubernetes context
-        run: |
-          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > kubeconfig.yaml
-          export KUBECONFIG=kubeconfig.yaml
-
-      - name: Update image tag in kustomization
-        run: |
-          cd k8s-manifests/pwa
-          kustomize edit set image ghcr.io/goalixa/pwa:${{ github.sha }}
-
-      - name: Deploy to Kubernetes
-        run: |
-          export KUBECONFIG=kubeconfig.yaml
-          kubectl apply -k k8s-manifests/pwa --namespace=goalixa-pwa
-
-      - name: Verify deployment
-        run: |
-          export KUBECONFIG=kubeconfig.yaml
-          kubectl rollout status deployment/pwa -n goalixa-pwa --timeout=5m
-
-      - name: Run smoke tests
-        run: |
-          # Wait for service to be ready
-          sleep 30
-          # Test health endpoint
-          kubectl run curl-test --image=curlimages/curl:latest --rm -i --restart=Never -- \
-            curl -f http://pwa.goalixa-pwa.svc.cluster.local:8080/health || exit 1
-
-  notify:
-    name: Notify Deployment Status
-    runs-on: ubuntu-latest
-    needs: [deploy-k8s]
-    if: always()
-
-    steps:
-      - name: Send notification
-        run: |
-          if [ "${{ needs.deploy-k8s.result }}" == "success" ]; then
-            echo "Deployment successful! 🎉"
-            # Add your notification logic here (Slack, Discord, etc.)
-          else
-            echo "Deployment failed! ❌"
-            # Add your failure notification logic here
-          fi
