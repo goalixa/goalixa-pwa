@@ -13,7 +13,6 @@ A single installable PWA that wraps the Landing, Auth, and App experiences under
 
 **Quick Start (Local)**
 ```bash
-cd /Users/snapp/Desktop/projects/Goalixa/goalixa-pwa
 npm install
 npm run serve
 # Open http://localhost:8080/#/landing
