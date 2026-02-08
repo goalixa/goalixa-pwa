@@ -26,15 +26,6 @@
 <body>
   <!-- App Container -->
   <div id="app">
-    <!-- Loading Screen -->
-    <div id="loading-screen" class="loading-screen">
-      <div class="loading-logo">
-        <i class="fas fa-bullseye"></i>
-        <span>Goalixa</span>
-      </div>
-      <div class="loading-spinner"></div>
-    </div>
-
     <!-- View Container - content will be injected here -->
     <main id="view-container" aria-live="polite"></main>
   </div>
@@ -101,14 +92,6 @@
       setTimeout(() => toast.remove(), 30000);
     }
 
-    // Hide loading screen when app is ready
-    window.addEventListener('app-ready', () => {
-      const loadingScreen = document.getElementById('loading-screen');
-      if (loadingScreen) {
-        loadingScreen.classList.add('fade-out');
-        setTimeout(() => loadingScreen.remove(), 500);
-      }
-    });
   </script>
 </body>
 </html>

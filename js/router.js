@@ -88,11 +88,39 @@ export async function initRouter() {
   // Handle initial route
   handleRoute();
 
-  // Listen for hash changes
-  window.addEventListener('hashchange', handleRoute);
-
-  // Listen for popstate (back/forward)
+  // Listen for popstate (back/forward) - for path-based routing
   window.addEventListener('popstate', handleRoute);
+
+  // Intercept link clicks for internal navigation
+  document.addEventListener('click', (e) => {
+    const link = e.target.closest('a');
+    if (!link) return;
+
+    const href = link.getAttribute('href');
+    if (!href) return;
+
+    // Skip external links, hash links, and links with special attributes
+    if (href.startsWith('http://') || href.startsWith('https://') ||
+        link.target === '_blank' ||
+        link.hasAttribute('download') ||
+        link.hasAttribute('data-no-router')) {
+      return;
+    }
+
+    // Handle hash-based links (convert to path-based)
+    if (href.startsWith('#/')) {
+      e.preventDefault();
+      navigate(href.substring(1)); // Remove the # and navigate
+      return;
+    }
+
+    // Handle path-based links
+    if (href.startsWith('/')) {
+      e.preventDefault();
+      navigate(href);
+      return;
+    }
+  });
 
   // Listen for navigate events
   eventBus.on('navigate', (path) => {
@@ -107,9 +135,17 @@ export async function initRouter() {
  * Handle route change
  */
 async function handleRoute() {
-  // Get current hash without #
-  const hash = window.location.hash.slice(1) || '/';
-  const [path, queryString] = hash.split('?');
+  // Get current path (with hash fallback for backward compatibility)
+  let path = window.location.pathname || '/';
+
+  // If using hash-based routing (backward compatibility), get path from hash
+  if (path === '/' && window.location.hash && window.location.hash.startsWith('#/')) {
+    path = window.location.hash.slice(1);
+  } else if (path === '/') {
+    path = '/';
+  }
+
+  const [pathname, queryString] = path.split('?');
 
   // Parse query parameters
   currentParams = {};
@@ -121,14 +157,14 @@ async function handleRoute() {
   }
 
   // Redirect to canonical landing/auth UIs when applicable
-  const externalTarget = resolveExternalRoute(path, currentParams);
+  const externalTarget = resolveExternalRoute(pathname, currentParams);
   if (externalTarget) {
     window.location.assign(externalTarget);
     return;
   }
 
   // Find matching route
-  const route = routes[path] || findDynamicRoute(path);
+  const route = routes[pathname] || findDynamicRoute(pathname);
 
   if (!route) {
     // 404 - redirect to landing
@@ -139,7 +175,7 @@ async function handleRoute() {
   // Check authentication
   if (route.auth && !isAuthenticated()) {
     // Store intended destination
-    sessionStorage.setItem('redirectAfterLogin', path);
+    sessionStorage.setItem('redirectAfterLogin', pathname);
     navigate('/login');
     return;
   }
@@ -148,7 +184,7 @@ async function handleRoute() {
   document.title = route.title;
 
   // Render view
-  await renderView(route.view, path);
+  await renderView(route.view, pathname);
 
   currentRoute = route;
 
@@ -225,17 +261,24 @@ async function renderView(viewName, path) {
  * Navigate to path
  */
 export function navigate(path, params = {}) {
-  const hash = path.startsWith('#') ? path : `#${path}`;
+  // Remove leading # if present (for backward compatibility)
+  const cleanPath = path.startsWith('#') ? path.substring(1) : path;
 
   // Add query parameters if provided
+  let finalPath = cleanPath;
   if (Object.keys(params).length > 0) {
     const queryString = Object.entries(params)
       .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
       .join('&');
-    window.location.hash = `${path}?${queryString}`;
-  } else {
-    window.location.hash = hash;
+    finalPath = `${cleanPath}?${queryString}`;
   }
+
+  // Use history.pushState for path-based routing
+  const url = new URL(finalPath, window.location.origin);
+  window.history.pushState({}, '', url);
+
+  // Handle the route
+  handleRoute();
 }
 
 /**
@@ -256,7 +299,7 @@ export function getParams() {
  * Redirect to login with return URL
  */
 export function redirectToLogin(returnPath = null) {
-  const path = returnPath || window.location.hash.slice(1) || '/';
+  const path = returnPath || window.location.pathname || '/';
   sessionStorage.setItem('redirectAfterLogin', path);
   navigate('/login');
 }
