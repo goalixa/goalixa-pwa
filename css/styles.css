@@ -714,6 +714,14 @@ a:hover {
   white-space: nowrap;
 }
 
+.install-btn {
+  display: none;
+}
+
+.install-btn.visible {
+  display: inline-flex;
+}
+
 .menu-toggle {
   display: none;
   background: none;

@@ -3,6 +3,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    volumes:
+      - ./nginx.local.conf:/etc/nginx/nginx.conf:ro
     ports:
       - "8081:8080"
     restart: unless-stopped

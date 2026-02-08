@@ -28,6 +28,7 @@ const landingHTML = `
           <div class="nav-cta">
             <a href="https://auth.goalixa.com/" class="btn btn-secondary btn-nav">Login</a>
             <a href="https://auth.goalixa.com/register" class="btn btn-primary btn-nav">Sign In</a>
+            <button id="install-btn" class="btn btn-secondary btn-nav install-btn" type="button">Install App</button>
           </div>
         </div>
         <button class="menu-toggle">
@@ -581,6 +582,48 @@ function initLandingView(container) {
   };
   window.addEventListener('scroll', onScroll);
   cleanupFns.push(() => window.removeEventListener('scroll', onScroll));
+
+  // PWA install prompt handling
+  const installBtn = container.querySelector('#install-btn');
+  if (installBtn) {
+    let deferredPrompt = null;
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+      window.navigator.standalone === true;
+
+    const showInstall = () => installBtn.classList.add('visible');
+    const hideInstall = () => installBtn.classList.remove('visible');
+
+    if (isStandalone) {
+      hideInstall();
+    }
+
+    const onBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      showInstall();
+    };
+
+    const onInstallClick = async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      hideInstall();
+    };
+
+    const onAppInstalled = () => {
+      deferredPrompt = null;
+      hideInstall();
+    };
+
+    window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt);
+    window.addEventListener('appinstalled', onAppInstalled);
+    installBtn.addEventListener('click', onInstallClick);
+
+    cleanupFns.push(() => window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt));
+    cleanupFns.push(() => window.removeEventListener('appinstalled', onAppInstalled));
+    cleanupFns.push(() => installBtn.removeEventListener('click', onInstallClick));
+  }
 
   // Animate stats counters
   const stats = container.querySelectorAll('.stat h3');
