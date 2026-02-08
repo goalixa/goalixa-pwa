@@ -244,7 +244,7 @@ export function redirectAfterLogin() {
  * Initialize router on load
  */
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initRouter);
+  document.addEventListener('DOMContentLoaded', () => initRouter());
 } else {
   initRouter();
 }
