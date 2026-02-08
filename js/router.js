@@ -29,6 +29,22 @@ const routes = {
   '/app/account': { view: 'app', title: 'Goalixa - Account', auth: true }
 };
 
+// External routes that should use the canonical UI (auth)
+const externalRoutes = {
+  '/auth': () => 'https://auth.goalixa.com/login',
+  '/login': () => 'https://auth.goalixa.com/login',
+  '/signup': () => 'https://auth.goalixa.com/register',
+  '/register': () => 'https://auth.goalixa.com/register',
+  '/forgot-password': () => 'https://auth.goalixa.com/forgot',
+  '/reset-password': (params) => {
+    const token = params.token || params.t;
+    if (token) {
+      return `https://auth.goalixa.com/reset/${encodeURIComponent(token)}`;
+    }
+    return 'https://auth.goalixa.com/forgot';
+  }
+};
+
 // View modules registry
 const viewModules = {
   landing: null,
@@ -104,6 +120,13 @@ async function handleRoute() {
     });
   }
 
+  // Redirect to canonical landing/auth UIs when applicable
+  const externalTarget = resolveExternalRoute(path, currentParams);
+  if (externalTarget) {
+    window.location.assign(externalTarget);
+    return;
+  }
+
   // Find matching route
   const route = routes[path] || findDynamicRoute(path);
 
@@ -131,6 +154,18 @@ async function handleRoute() {
 
   // Scroll to top
   window.scrollTo(0, 0);
+}
+
+/**
+ * Resolve external route target if defined
+ */
+function resolveExternalRoute(path, params) {
+  const target = externalRoutes[path];
+  if (!target) return null;
+  if (typeof target === 'function') {
+    return target(params);
+  }
+  return target;
 }
 
 /**

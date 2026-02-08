@@ -1,0 +1,8 @@
+services:
+  pwa:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8080"
+    restart: unless-stopped

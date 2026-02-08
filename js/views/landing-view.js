@@ -6,7 +6,7 @@
 import { isAuthenticated } from '../auth.js';
 import { navigate } from '../router.js';
 
-// HTML template for landing view
+// HTML template for landing view (synced with goalixa-landing)
 const landingHTML = `
   <div class="landing-view">
     <!-- Navigation -->
@@ -26,8 +26,8 @@ const landingHTML = `
             <a href="#contact">Contact</a>
           </div>
           <div class="nav-cta">
-            <a href="#/login" class="btn btn-secondary btn-nav">Login</a>
-            <a href="#/signup" class="btn btn-primary btn-nav">Sign In</a>
+            <a href="https://auth.goalixa.com/" class="btn btn-secondary btn-nav">Login</a>
+            <a href="https://auth.goalixa.com/register" class="btn btn-primary btn-nav">Sign In</a>
           </div>
         </div>
         <button class="menu-toggle">
@@ -43,10 +43,10 @@ const landingHTML = `
           <h1>Turn Big <span class="highlight">Goals</span> into Clear Plans.</h1>
           <p class="hero-subtitle">Goalixa helps you break outcomes into projects, tasks, and weekly focus so you stay aligned and finish what matters.</p>
           <div class="hero-buttons">
-            <a href="#/signup" class="btn btn-primary">
+            <a href="https://auth.goalixa.com/register" class="btn btn-primary">
               <i class="fas fa-user-plus"></i> Create Free Account
             </a>
-            <a href="#/login" class="btn btn-secondary">
+            <a href="https://auth.goalixa.com/" class="btn btn-secondary">
               <i class="fas fa-right-to-bracket"></i> Log In
             </a>
           </div>
@@ -179,6 +179,55 @@ const landingHTML = `
       </div>
     </section>
 
+    <!-- Use Cases Section -->
+    <section id="use-cases" class="use-cases">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-kicker">Built for every role</span>
+          <h2>Clarity for teams and individuals</h2>
+          <p>Different roles get tailored views without extra admin or spreadsheets.</p>
+        </div>
+        <div class="use-cases-grid">
+          <div class="use-case-card reveal">
+            <div class="use-icon">
+              <i class="fas fa-clipboard-list"></i>
+            </div>
+            <h3>Leads</h3>
+            <p>Align goals and projects with milestones and clear accountability.</p>
+            <ul class="use-list">
+              <li>Goal-to-project mapping</li>
+              <li>Weekly focus snapshots</li>
+              <li>Shareable progress reports</li>
+            </ul>
+          </div>
+          <div class="use-case-card reveal">
+            <div class="use-icon">
+              <i class="fas fa-running"></i>
+            </div>
+            <h3>Individuals</h3>
+            <p>Stay focused with a clean daily view of what matters most.</p>
+            <ul class="use-list">
+              <li>Personal goals dashboard</li>
+              <li>Habit and task streaks</li>
+              <li>Milestones and wins</li>
+            </ul>
+          </div>
+          <div class="use-case-card reveal">
+            <div class="use-icon">
+              <i class="fas fa-chart-pie"></i>
+            </div>
+            <h3>Ops & PMs</h3>
+            <p>Spot bottlenecks and keep projects moving with real progress signals.</p>
+            <ul class="use-list">
+              <li>Workload distribution</li>
+              <li>Project risk visibility</li>
+              <li>Exportable reports</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- How It Works Section -->
     <section id="how-it-works" class="how-it-works">
       <div class="container">
@@ -220,16 +269,151 @@ const landingHTML = `
       </div>
     </section>
 
+    <!-- Testimonials -->
+    <section id="testimonials" class="testimonials">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-kicker">Loved by makers</span>
+          <h2>What Users Say</h2>
+          <p>Join teams that plan clearly and finish consistently</p>
+        </div>
+        <div class="testimonials-grid">
+          <div class="testimonial-card reveal">
+            <div class="testimonial-content">
+              <p>"Goalixa turned our quarterly goals into an actual weekly plan. We ship more, with less chaos."</p>
+            </div>
+            <div class="testimonial-author">
+              <div class="author-avatar">
+                <i class="fas fa-user"></i>
+              </div>
+              <div class="author-info">
+                <h4>Alex Morgan</h4>
+                <p>Product Lead</p>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial-card reveal">
+            <div class="testimonial-content">
+              <p>"The weekly review view keeps me honest. I finally finish the tasks I plan."</p>
+            </div>
+            <div class="testimonial-author">
+              <div class="author-avatar">
+                <i class="fas fa-user"></i>
+              </div>
+              <div class="author-info">
+                <h4>Maria Sanchez</h4>
+                <p>Founder</p>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial-card reveal">
+            <div class="testimonial-content">
+              <p>"Simple, focused, and fast. It replaced three tools for our small team."</p>
+            </div>
+            <div class="testimonial-author">
+              <div class="author-avatar">
+                <i class="fas fa-user"></i>
+              </div>
+              <div class="author-info">
+                <h4>David Chen</h4>
+                <p>Operations Manager</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="pricing">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-kicker">Pricing</span>
+          <h2>Plans that fit every team</h2>
+          <p>Start free and upgrade as your goals scale.</p>
+        </div>
+        <div class="pricing-grid">
+          <div class="pricing-card reveal">
+            <h3>Starter</h3>
+            <p class="price">$0 <span>/month</span></p>
+            <p class="price-note">For individuals and early-stage teams.</p>
+            <ul class="pricing-list">
+              <li>Up to 5 active goals</li>
+              <li>Weekly planning view</li>
+              <li>Basic progress summaries</li>
+              <li>Email support</li>
+            </ul>
+            <a href="https://auth.goalixa.com/register" class="btn btn-secondary">Get Started</a>
+          </div>
+          <div class="pricing-card featured reveal">
+            <span class="pricing-badge">Most Popular</span>
+            <h3>Pro</h3>
+            <p class="price">$19 <span>/month</span></p>
+            <p class="price-note">For teams that ship weekly.</p>
+            <ul class="pricing-list">
+              <li>Unlimited goals and projects</li>
+              <li>Advanced analytics</li>
+              <li>PDF/CSV exports</li>
+              <li>Priority support</li>
+            </ul>
+            <a href="https://auth.goalixa.com/register" class="btn btn-primary">Start Pro</a>
+          </div>
+          <div class="pricing-card reveal">
+            <h3>Club</h3>
+            <p class="price">Custom</p>
+            <p class="price-note">For organizations with multiple teams.</p>
+            <ul class="pricing-list">
+              <li>Multi-team dashboards</li>
+              <li>Custom reporting</li>
+              <li>Dedicated success manager</li>
+              <li>Onboarding support</li>
+            </ul>
+            <a href="#contact" class="btn btn-secondary">Talk to Us</a>
+          </div>
+        </div>
+        <p class="pricing-note">Need an enterprise plan? <a href="#contact">Contact our team</a>.</p>
+      </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section id="faq" class="faq">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-kicker">FAQ</span>
+          <h2>Answers to common questions</h2>
+          <p>Everything you need to know before you get started.</p>
+        </div>
+        <div class="faq-list">
+          <details class="faq-item reveal">
+            <summary>Is Goalixa free to start?</summary>
+            <p>Yes. The Starter plan is free and includes goal planning, weekly views, and basic stats.</p>
+          </details>
+          <details class="faq-item reveal">
+            <summary>Can I invite players and staff?</summary>
+            <p>You can invite teammates and collaborators to work on shared goals and projects.</p>
+          </details>
+          <details class="faq-item reveal">
+            <summary>Do you support mobile devices?</summary>
+            <p>Absolutely. Goalixa is built for desktop, tablet, and mobile use so you can track anywhere.</p>
+          </details>
+          <details class="faq-item reveal">
+            <summary>Can I export my data?</summary>
+            <p>Yes. Pro plans include PDF and CSV exports for deeper reporting and sharing.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
     <!-- CTA Section -->
     <section class="cta">
       <div class="container">
         <h2>Start planning in minutes</h2>
         <p>Join teams who save hours each week with clear priorities and fast execution.</p>
         <div class="cta-actions">
-          <a href="#/signup" class="btn btn-primary btn-large">
+          <a href="https://auth.goalixa.com/register" class="btn btn-primary btn-large">
             <i class="fas fa-bolt"></i> Create Free Account
           </a>
-          <a href="#/login" class="btn btn-outline-light btn-large">
+          <a href="https://auth.goalixa.com/" class="btn btn-outline-light btn-large">
             <i class="fas fa-right-to-bracket"></i> Log In
           </a>
         </div>
@@ -280,6 +464,8 @@ const landingHTML = `
   </div>
 `;
 
+let cleanupLanding = null;
+
 /**
  * Render landing view
  */
@@ -290,23 +476,31 @@ export async function render(container, path, params) {
     return;
   }
 
+  // Cleanup previous listeners/observers
+  if (cleanupLanding) {
+    cleanupLanding();
+    cleanupLanding = null;
+  }
+
   // Render HTML
   container.innerHTML = landingHTML;
 
   // Initialize interactions
-  initLandingView(container);
+  cleanupLanding = initLandingView(container);
 }
 
 /**
  * Initialize landing view interactions
  */
 function initLandingView(container) {
+  const cleanupFns = [];
+
   // Mobile menu toggle
   const menuToggle = container.querySelector('.menu-toggle');
   const navMenu = container.querySelector('.nav-menu');
 
   if (menuToggle) {
-    menuToggle.addEventListener('click', function () {
+    const onMenuToggle = function () {
       navMenu.classList.toggle('active');
       const icon = this.querySelector('i');
       if (navMenu.classList.contains('active')) {
@@ -316,11 +510,13 @@ function initLandingView(container) {
         icon.classList.remove('fa-times');
         icon.classList.add('fa-bars');
       }
-    });
+    };
+    menuToggle.addEventListener('click', onMenuToggle);
+    cleanupFns.push(() => menuToggle.removeEventListener('click', onMenuToggle));
   }
 
   // Close menu when clicking outside
-  document.addEventListener('click', function (event) {
+  const onDocumentClick = function (event) {
     if (!event.target.closest('.navbar .container')) {
       navMenu?.classList.remove('active');
       const icon = menuToggle?.querySelector('i');
@@ -329,16 +525,18 @@ function initLandingView(container) {
         icon.classList.add('fa-bars');
       }
     }
-  });
+  };
+  document.addEventListener('click', onDocumentClick);
+  cleanupFns.push(() => document.removeEventListener('click', onDocumentClick));
 
   // Smooth scrolling for anchor links
   container.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function (e) {
+    const onAnchorClick = function (e) {
       const href = this.getAttribute('href');
       if (href.startsWith('#/')) return; // Skip router links
-      if (href === '#') return;
 
       e.preventDefault();
+      if (href === '#') return;
       const targetElement = container.querySelector(href);
       if (targetElement) {
         window.scrollTo({
@@ -346,7 +544,9 @@ function initLandingView(container) {
           behavior: 'smooth'
         });
       }
-    });
+    };
+    anchor.addEventListener('click', onAnchorClick);
+    cleanupFns.push(() => anchor.removeEventListener('click', onAnchorClick));
   });
 
   // Animate elements on scroll
@@ -366,9 +566,10 @@ function initLandingView(container) {
   container.querySelectorAll('.reveal').forEach(el => {
     observer.observe(el);
   });
+  cleanupFns.push(() => observer.disconnect());
 
   // Add scroll effect to navbar
-  window.addEventListener('scroll', function () {
+  const onScroll = function () {
     const navbar = container.querySelector('.navbar');
     if (window.scrollY > 50) {
       navbar.style.boxShadow = '0 5px 20px rgba(0, 0, 0, 0.1)';
@@ -377,7 +578,68 @@ function initLandingView(container) {
       navbar.style.boxShadow = '0 2px 20px rgba(0, 0, 0, 0.05)';
       navbar.style.backgroundColor = 'rgba(255, 255, 255, 0.95)';
     }
-  });
+  };
+  window.addEventListener('scroll', onScroll);
+  cleanupFns.push(() => window.removeEventListener('scroll', onScroll));
+
+  // Animate stats counters
+  const stats = container.querySelectorAll('.stat h3');
+  if (stats.length > 0) {
+    const animateValue = (element, start, end, duration, formatter) => {
+      let startTimestamp = null;
+      const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        const value = Math.floor(progress * (end - start) + start);
+        element.textContent = formatter(value);
+        if (progress < 1) {
+          window.requestAnimationFrame(step);
+        }
+      };
+      window.requestAnimationFrame(step);
+    };
+
+    const statsObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const stat = entry.target;
+          const raw = stat.textContent.trim();
+          const hasPlus = raw.includes('+');
+          const suffixMatch = raw.match(/[KM]/);
+          const suffix = suffixMatch ? suffixMatch[0] : '';
+          const decimalsMatch = raw.match(/\.(\d+)/);
+          const decimals = decimalsMatch ? decimalsMatch[1].length : 0;
+          const baseValue = parseFloat(raw);
+          let value = baseValue;
+          if (suffix === 'K') {
+            value = baseValue * 1000;
+          } else if (suffix === 'M') {
+            value = baseValue * 1000000;
+          }
+          const formatter = (current) => {
+            if (suffix) {
+              const divisor = suffix === 'K' ? 1000 : 1000000;
+              const displayValue = current / divisor;
+              const formatted = decimals > 0 ? displayValue.toFixed(decimals) : Math.floor(displayValue);
+              return formatted + suffix + (hasPlus ? '+' : '');
+            }
+            return Math.floor(current) + (hasPlus ? '+' : '');
+          };
+          if (!stat.classList.contains('animated')) {
+            stat.classList.add('animated');
+            animateValue(stat, 0, value, 2000, formatter);
+          }
+        }
+      });
+    }, { threshold: 0.5 });
+
+    stats.forEach(stat => statsObserver.observe(stat));
+    cleanupFns.push(() => statsObserver.disconnect());
+  }
+
+  return () => {
+    cleanupFns.forEach((fn) => fn());
+  };
 }
 
 // Export as default for module imports
