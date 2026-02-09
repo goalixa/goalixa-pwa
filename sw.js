@@ -3,7 +3,7 @@
  * Handles caching for landing, auth, and app views
  */
 
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const CACHE_PREFIX = 'goalixa-pwa';
 
 // Cache names for different strategies
