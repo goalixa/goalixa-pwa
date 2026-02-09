@@ -30,19 +30,21 @@ const routes = {
 };
 
 // External routes that should use the canonical UI (auth)
+// NOTE: Auth routes are now handled locally in the PWA
 const externalRoutes = {
-  '/auth': () => 'https://auth.goalixa.com/login',
-  '/login': () => 'https://auth.goalixa.com/login',
-  '/signup': () => 'https://auth.goalixa.com/register',
-  '/register': () => 'https://auth.goalixa.com/register',
-  '/forgot-password': () => 'https://auth.goalixa.com/forgot',
-  '/reset-password': (params) => {
-    const token = params.token || params.t;
-    if (token) {
-      return `https://auth.goalixa.com/reset/${encodeURIComponent(token)}`;
-    }
-    return 'https://auth.goalixa.com/forgot';
-  }
+  // Disabled - handling auth locally
+  // '/auth': () => 'https://auth.goalixa.com/login',
+  // '/login': () => 'https://auth.goalixa.com/login',
+  // '/signup': () => 'https://auth.goalixa.com/register',
+  // '/register': () => 'https://auth.goalixa.com/register',
+  // '/forgot-password': () => 'https://auth.goalixa.com/forgot',
+  // '/reset-password': (params) => {
+  //   const token = params.token || params.t;
+  //   if (token) {
+  //     return `https://auth.goalixa.com/reset/${encodeURIComponent(token)}`;
+  //   }
+  //   return 'https://auth.goalixa.com/forgot';
+  // }
 };
 
 // View modules registry
