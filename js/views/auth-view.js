@@ -3,9 +3,9 @@
  * Handles login and signup forms
  */
 
-import { login, register, isAuthenticated, redirectAfterLogin } from '../auth.js';
+import { login, register, isAuthenticated } from '../auth.js';
 import { showToast } from '../utils.js';
-import { navigate } from '../router.js';
+import { navigate, redirectAfterLogin } from '../router.js';
 
 /**
  * Render auth view

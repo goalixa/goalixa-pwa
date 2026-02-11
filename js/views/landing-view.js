@@ -26,7 +26,7 @@ const landingHTML = `
             <a href="#contact">Contact</a>
           </div>
           <div class="nav-cta">
-            <a href="https://auth.goalixa.com/" class="btn btn-secondary btn-nav">Login</a>
+            <a href="https://auth.goalixa.com/login" class="btn btn-secondary btn-nav">Login</a>
             <a href="https://auth.goalixa.com/register" class="btn btn-primary btn-nav">Sign In</a>
             <button id="install-btn" class="btn btn-secondary btn-nav install-btn" type="button">Install App</button>
           </div>
@@ -47,7 +47,7 @@ const landingHTML = `
             <a href="https://auth.goalixa.com/register" class="btn btn-primary">
               <i class="fas fa-user-plus"></i> Create Free Account
             </a>
-            <a href="https://auth.goalixa.com/" class="btn btn-secondary">
+            <a href="https://auth.goalixa.com/login" class="btn btn-secondary">
               <i class="fas fa-right-to-bracket"></i> Log In
             </a>
           </div>
