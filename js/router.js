@@ -32,19 +32,47 @@ const routes = {
 // External routes that should use the canonical UI (auth)
 // NOTE: Auth routes are handled by the auth service
 const externalRoutes = {
-  '/auth': () => 'https://auth.goalixa.com/login',
-  '/login': () => 'https://auth.goalixa.com/login',
-  '/signup': () => 'https://auth.goalixa.com/register',
-  '/register': () => 'https://auth.goalixa.com/register',
-  '/forgot-password': () => 'https://auth.goalixa.com/forgot',
+  '/auth': () => buildAuthUrl('/login'),
+  '/login': () => buildAuthUrl('/login'),
+  '/signup': () => buildAuthUrl('/register'),
+  '/register': () => buildAuthUrl('/register'),
+  '/forgot-password': () => buildAuthUrl('/forgot'),
   '/reset-password': (params) => {
     const token = params.token || params.t;
     if (token) {
-      return `https://auth.goalixa.com/reset/${encodeURIComponent(token)}`;
+      return buildAuthUrl(`/reset/${encodeURIComponent(token)}`, params);
     }
-    return 'https://auth.goalixa.com/forgot';
+    return buildAuthUrl('/forgot', params);
   }
 };
+
+function getAuthNextUrl(params = {}, fallbackPath = '/app') {
+  if (params.next) {
+    return params.next;
+  }
+
+  const storedPath = sessionStorage.getItem('redirectAfterLogin');
+  let path = storedPath || fallbackPath;
+
+  if (!path.startsWith('/')) {
+    path = `/${path}`;
+  }
+
+  if (path === '/login' || path === '/signup' || path === '/register') {
+    path = fallbackPath;
+  }
+
+  return `${window.location.origin}${path}`;
+}
+
+function buildAuthUrl(path, params = {}) {
+  const url = new URL(`https://auth.goalixa.com${path}`);
+  const nextUrl = getAuthNextUrl(params);
+  if (nextUrl) {
+    url.searchParams.set('next', nextUrl);
+  }
+  return url.toString();
+}
 
 // View modules registry
 const viewModules = {

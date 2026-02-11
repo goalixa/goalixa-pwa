@@ -26,8 +26,8 @@ const landingHTML = `
             <a href="#contact">Contact</a>
           </div>
           <div class="nav-cta">
-            <a href="https://auth.goalixa.com/login" class="btn btn-secondary btn-nav">Login</a>
-            <a href="https://auth.goalixa.com/register" class="btn btn-primary btn-nav">Sign In</a>
+            <a href="https://auth.goalixa.com/login?next=https://pwa.goalixa.com/app" class="btn btn-secondary btn-nav">Login</a>
+            <a href="https://auth.goalixa.com/register?next=https://pwa.goalixa.com/app" class="btn btn-primary btn-nav">Sign In</a>
             <button id="install-btn" class="btn btn-secondary btn-nav install-btn" type="button">Install App</button>
           </div>
         </div>
@@ -44,10 +44,10 @@ const landingHTML = `
           <h1>Turn Big <span class="highlight">Goals</span> into Clear Plans.</h1>
           <p class="hero-subtitle">Goalixa helps you break outcomes into projects, tasks, and weekly focus so you stay aligned and finish what matters.</p>
           <div class="hero-buttons">
-            <a href="https://auth.goalixa.com/register" class="btn btn-primary">
+            <a href="https://auth.goalixa.com/register?next=https://pwa.goalixa.com/app" class="btn btn-primary">
               <i class="fas fa-user-plus"></i> Create Free Account
             </a>
-            <a href="https://auth.goalixa.com/login" class="btn btn-secondary">
+            <a href="https://auth.goalixa.com/login?next=https://pwa.goalixa.com/app" class="btn btn-secondary">
               <i class="fas fa-right-to-bracket"></i> Log In
             </a>
           </div>

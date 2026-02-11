@@ -25,33 +25,31 @@ export async function initAuth() {
   notifyListeners();
 
   try {
-    // Check for auth cookie
-    const authCookie = getCookie('goalixa_auth');
+    // Always verify with server (auth uses HttpOnly cookies)
+    const result = await authApi.getCurrentUser();
+    const user = result && result.user ? result.user : result;
 
-    if (authCookie) {
-      // Verify with server
-      const user = await authApi.getCurrentUser();
-
-      if (user && user.id) {
-        authState.isAuthenticated = true;
-        authState.user = user;
-        authState.token = authCookie;
-      } else {
-        // Invalid cookie, clear it
-        deleteCookie('goalixa_auth');
-        authState.isAuthenticated = false;
-        authState.user = null;
-        authState.token = null;
-      }
+    if (user && user.id) {
+      authState.isAuthenticated = true;
+      authState.user = user;
+      authState.token = null;
+    } else {
+      authState.isAuthenticated = false;
+      authState.user = null;
+      authState.token = null;
     }
   } catch (error) {
     console.error('Auth initialization failed:', error);
-    // Check local storage fallback
+    // Offline fallback (best-effort)
     const storedAuth = storage.get('auth');
-    if (storedAuth && storedAuth.token) {
+    if (!navigator.onLine && storedAuth && storedAuth.user) {
       authState.isAuthenticated = true;
       authState.user = storedAuth.user;
-      authState.token = storedAuth.token;
+      authState.token = storedAuth.token || null;
+    } else {
+      authState.isAuthenticated = false;
+      authState.user = null;
+      authState.token = null;
     }
   } finally {
     authState.isLoading = false;
