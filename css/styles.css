@@ -1544,3 +1544,528 @@ footer {
     padding: 30px 20px;
   }
 }
+
+/* ============================================
+   DEMO VIEW STYLES
+   ============================================ */
+.demo-view {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f6faf7 0%, #e5f1ea 100%);
+  display: flex;
+  flex-direction: column;
+}
+
+.demo-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 40px;
+  background: var(--white);
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.demo-header .logo {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 900;
+  font-size: 1.8rem;
+  color: var(--primary);
+}
+
+.demo-nav {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.demo-nav .nav-link {
+  color: var(--dark);
+  font-weight: 500;
+  margin-right: 10px;
+}
+
+.demo-nav .nav-link:hover {
+  color: var(--primary);
+}
+
+/* Demo Container */
+.demo-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  width: 100%;
+}
+
+/* Demo Slides */
+.demo-slides {
+  flex: 1;
+  position: relative;
+  min-height: 500px;
+  background: var(--white);
+  border-radius: 20px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.demo-slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.5s ease;
+  padding: 60px 40px;
+}
+
+.demo-slide.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.slide-content {
+  text-align: center;
+  max-width: 800px;
+}
+
+.slide-content h1 {
+  color: var(--primary);
+  margin-bottom: 20px;
+  font-size: 2.5rem;
+}
+
+.slide-description {
+  color: var(--gray);
+  font-size: 1.2rem;
+  margin-bottom: 40px;
+}
+
+/* Slide Images / Mockups */
+.slide-image {
+  margin-top: 40px;
+}
+
+.mockup {
+  background: var(--light);
+  border-radius: 16px;
+  padding: 30px;
+  box-shadow: var(--shadow);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.mockup-header {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.mockup-header .dot {
+  width: 12px;
+  height: 12px;
+  background: var(--light-gray);
+  border-radius: 50%;
+}
+
+.mockup-header .dot:first-child {
+  background: var(--danger);
+}
+
+.mockup-header .dot:nth-child(2) {
+  background: var(--warning);
+}
+
+.mockup-header .dot:nth-child(3) {
+  background: var(--success);
+}
+
+.mockup-body {
+  display: flex;
+  gap: 20px;
+}
+
+.mockup-body .sidebar {
+  width: 120px;
+  background: var(--white);
+  border-radius: 8px;
+  padding: 15px;
+  font-size: 0.9rem;
+  color: var(--dark);
+  line-height: 2;
+}
+
+.mockup-body .main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.mockup-body .card {
+  background: var(--white);
+  border-radius: 8px;
+  padding: 20px;
+  color: var(--gray);
+}
+
+/* Goals Mockup */
+.goals-mockup {
+  text-align: left;
+}
+
+.goal-item {
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.goal-progress {
+  height: 8px;
+  background: var(--light-gray);
+  border-radius: 4px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.goal-progress::after {
+  content: '';
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--primary-light));
+  border-radius: 4px;
+}
+
+.goal-item:nth-child(1) .goal-progress::after {
+  width: 75%;
+}
+
+.goal-item:nth-child(2) .goal-progress::after {
+  width: 40%;
+}
+
+.goal-item:nth-child(3) .goal-progress::after {
+  width: 90%;
+}
+
+.goal-item span {
+  font-size: 0.95rem;
+  color: var(--dark);
+  font-weight: 500;
+}
+
+/* Habits Mockup */
+.habits-mockup {
+  text-align: left;
+}
+
+.habit-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background: var(--white);
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.habit-name {
+  font-weight: 500;
+  color: var(--dark);
+}
+
+.habit-streak {
+  color: var(--warning);
+  font-weight: 600;
+}
+
+/* Timer Mockup */
+.timer-mockup {
+  text-align: center;
+}
+
+.timer-display {
+  font-size: 4rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 20px;
+}
+
+.timer-controls {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.btn-timer {
+  padding: 15px 40px;
+  background: var(--primary);
+  color: var(--white);
+  border: none;
+  border-radius: 50px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-timer:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+}
+
+.timer-stats {
+  color: var(--gray);
+}
+
+/* Projects Mockup */
+.projects-mockup {
+  text-align: left;
+}
+
+.project-card {
+  background: var(--white);
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.project-card h4 {
+  color: var(--primary);
+  margin-bottom: 15px;
+}
+
+.task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.task-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+}
+
+/* Reports Mockup */
+.reports-mockup {
+  text-align: center;
+}
+
+.chart-bars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 200px;
+  padding: 0 20px;
+}
+
+.chart-bars .bar {
+  width: 40px;
+  background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
+  border-radius: 8px 8px 0 0;
+  transition: var(--transition);
+}
+
+.chart-bars .bar:hover {
+  transform: scaleY(1.05);
+  transform-origin: bottom;
+}
+
+.chart-label {
+  margin-top: 15px;
+  color: var(--gray);
+  font-weight: 500;
+}
+
+/* Demo Navigation */
+.demo-navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 30px 40px;
+}
+
+.nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 24px;
+  background: var(--primary);
+  color: var(--white);
+  border: none;
+  border-radius: 50px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.nav-btn:hover:not(:disabled) {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+}
+
+.nav-btn:disabled {
+  background: var(--light-gray);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.nav-btn svg {
+  transition: transform 0.3s ease;
+}
+
+.nav-btn:hover svg {
+  transform: scale(1.1);
+}
+
+/* Slide Indicators */
+.slide-indicators {
+  display: flex;
+  gap: 10px;
+}
+
+.indicator {
+  width: 12px;
+  height: 12px;
+  background: var(--light-gray);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.indicator:hover {
+  background: var(--primary-light);
+}
+
+.indicator.active {
+  background: var(--primary);
+  transform: scale(1.2);
+}
+
+/* Progress Bar */
+.demo-progress {
+  height: 4px;
+  background: var(--light-gray);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--primary-light));
+  transition: width 0.3s ease;
+}
+
+/* Demo Footer */
+.demo-footer {
+  background: var(--white);
+  text-align: center;
+  padding: 40px 20px;
+  box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.05);
+}
+
+.demo-footer p {
+  color: var(--gray);
+  margin-bottom: 20px;
+  font-size: 1.1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .demo-header {
+    padding: 15px 20px;
+  }
+
+  .demo-nav {
+    gap: 10px;
+  }
+
+  .demo-nav .nav-link {
+    display: none;
+  }
+
+  .demo-container {
+    padding: 20px 15px;
+  }
+
+  .demo-slide {
+    padding: 30px 20px;
+  }
+
+  .slide-content h1 {
+    font-size: 1.8rem;
+  }
+
+  .slide-description {
+    font-size: 1rem;
+  }
+
+  .mockup-body {
+    flex-direction: column;
+  }
+
+  .mockup-body .sidebar {
+    width: 100%;
+  }
+
+  .demo-navigation {
+    padding: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+
+  .nav-btn {
+    padding: 10px 18px;
+    font-size: 0.9rem;
+  }
+
+  .timer-display {
+    font-size: 3rem;
+  }
+
+  .chart-bars {
+    padding: 0 10px;
+  }
+
+  .chart-bars .bar {
+    width: 30px;
+  }
+}
+
+@media (max-width: 480px) {
+  .slide-content h1 {
+    font-size: 1.5rem;
+  }
+
+  .slide-description {
+    font-size: 0.9rem;
+  }
+
+  .mockup {
+    padding: 20px 15px;
+  }
+
+  .timer-display {
+    font-size: 2.5rem;
+  }
+
+  .chart-bars .bar {
+    width: 25px;
+  }
+}

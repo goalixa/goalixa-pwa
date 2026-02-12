@@ -10,6 +10,7 @@ import { eventBus } from './utils.js';
 const routes = {
   '/': { view: 'landing', title: 'Goalixa - Goals, Plans, Projects, Tasks' },
   '/landing': { view: 'landing', title: 'Goalixa - Landing' },
+  '/demo': { view: 'demo', title: 'Goalixa - Demo Tour' },
   '/auth': { view: 'auth', title: 'Goalixa - Login' },
   '/login': { view: 'auth', title: 'Goalixa - Login' },
   '/signup': { view: 'auth', title: 'Goalixa - Sign Up' },
@@ -77,6 +78,7 @@ function buildAuthUrl(path, params = {}) {
 // View modules registry
 const viewModules = {
   landing: null,
+  demo: null,
   auth: null,
   app: null
 };
@@ -98,6 +100,13 @@ export async function initRouter() {
     viewModules.landing = landingModule.default || landingModule;
   } catch (err) {
     console.error('Failed to load landing view:', err);
+  }
+
+  try {
+    const demoModule = await import('./views/demo-view.js');
+    viewModules.demo = demoModule.default || demoModule;
+  } catch (err) {
+    console.error('Failed to load demo view:', err);
   }
 
   try {
