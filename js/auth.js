@@ -3,8 +3,9 @@
  * Handles auth state across the PWA and shares with iframe
  */
 
-import { getCookie, setCookie, deleteCookie, storage, eventBus } from './utils.js';
+import { getCookie, deleteCookie, storage, eventBus } from './utils.js';
 import { authApi } from './api.js';
+import { authMonitor } from './authMonitor.js';
 
 // Auth state
 let authState = {
@@ -13,6 +14,16 @@ let authState = {
   token: null,
   isLoading: true
 };
+
+// Token refresh management
+let refreshPromise = null;
+let refreshAttempts = 0;
+const MAX_REFRESH_ATTEMPTS = 3;
+const REFRESH_BACKOFF_MS = [1000, 2000, 5000]; // Exponential backoff
+
+// Proactive refresh timer
+let proactiveRefreshTimer = null;
+const PROACTIVE_REFRESH_INTERVAL = 13 * 60 * 1000; // 13 minutes (refresh before 15min expiry)
 
 // Auth state change listeners
 const listeners = [];
@@ -33,6 +44,9 @@ export async function initAuth() {
       authState.isAuthenticated = true;
       authState.user = user;
       authState.token = null;
+
+      // Start proactive token refresh timer
+      startProactiveRefresh();
     } else {
       authState.isAuthenticated = false;
       authState.user = null;
@@ -45,7 +59,7 @@ export async function initAuth() {
     if (!navigator.onLine && storedAuth && storedAuth.user) {
       authState.isAuthenticated = true;
       authState.user = storedAuth.user;
-      authState.token = storedAuth.token || null;
+      authState.token = null;
     } else {
       authState.isAuthenticated = false;
       authState.user = null;
@@ -66,24 +80,26 @@ export async function login(email, password) {
   try {
     const response = await authApi.login(email, password);
 
-    if (response.token) {
-      // Set auth cookie
-      setCookie('goalixa_auth', response.token);
-
+    // Backend sets HttpOnly cookies (goalixa_access, goalixa_refresh)
+    // No need to manually set cookies
+    if (response.success || response.user) {
       // Update state
       authState.isAuthenticated = true;
       authState.user = response.user;
-      authState.token = response.token;
+      authState.token = null; // Token is in HttpOnly cookie
 
-      // Store in localStorage as backup
+      // Store in localStorage as backup (without sensitive token)
       storage.set('auth', {
         isAuthenticated: true,
         user: response.user,
-        token: response.token
+        token: null
       });
 
       notifyListeners();
       eventBus.emit('auth:login', { user: response.user });
+
+      // Start proactive token refresh
+      startProactiveRefresh();
 
       return { success: true, user: response.user };
     }
@@ -105,25 +121,23 @@ export async function register(userData) {
   try {
     const response = await authApi.register(userData);
 
-    if (response.token || response.user) {
-      const token = response.token || getCookie('goalixa_auth');
-
-      if (token) {
-        setCookie('goalixa_auth', token);
-      }
-
+    // Backend sets HttpOnly cookies
+    if (response.success || response.user) {
       authState.isAuthenticated = true;
       authState.user = response.user;
-      authState.token = token;
+      authState.token = null;
 
       storage.set('auth', {
         isAuthenticated: true,
         user: response.user,
-        token
+        token: null
       });
 
       notifyListeners();
       eventBus.emit('auth:register', { user: response.user });
+
+      // Start proactive token refresh
+      startProactiveRefresh();
 
       return { success: true, user: response.user };
     }
@@ -148,12 +162,21 @@ export async function logout() {
     console.error('Logout API call failed:', error);
   } finally {
     // Clear auth state regardless of API result
-    deleteCookie('goalixa_auth');
+    deleteCookie('goalixa_access');
+    deleteCookie('goalixa_refresh');
+    deleteCookie('goalixa_auth'); // Legacy cookie
     storage.remove('auth');
 
     authState.isAuthenticated = false;
     authState.user = null;
     authState.token = null;
+
+    // Stop proactive refresh timer
+    stopProactiveRefresh();
+
+    // Reset refresh attempts
+    refreshAttempts = 0;
+    refreshPromise = null;
 
     notifyListeners();
     eventBus.emit('auth:logout');
@@ -212,37 +235,106 @@ function notifyListeners() {
 }
 
 /**
- * Refresh auth token
+ * Refresh auth token with retry logic
  */
 export async function refreshToken() {
-  try {
-    const response = await authApi.refreshToken();
+  // If a refresh is already in progress, return that promise
+  if (refreshPromise) {
+    return refreshPromise;
+  }
 
-    if (response.token) {
-      setCookie('goalixa_auth', response.token);
-      authState.token = response.token;
-      storage.set('auth', { ...authState });
+  // Check if we've exceeded max attempts
+  if (refreshAttempts >= MAX_REFRESH_ATTEMPTS) {
+    console.error('Token refresh failed: max attempts exceeded');
+    await logout();
+    return { success: false, error: 'Session expired. Please login again.' };
+  }
 
-      return { success: true, token: response.token };
+  refreshPromise = (async () => {
+    try {
+      const response = await authApi.refreshToken();
+
+      // Backend sets HttpOnly cookies automatically
+      if (response.success || response.access_token) {
+        // Reset attempts on success
+        refreshAttempts = 0;
+
+        authMonitor.logEvent('auth:refresh', { success: true });
+        eventBus.emit('auth:refresh', { success: true });
+
+        return { success: true };
+      }
+
+      // Retry with backoff on failure
+      refreshAttempts++;
+      const backoffDelay = REFRESH_BACKOFF_MS[Math.min(refreshAttempts - 1, REFRESH_BACKOFF_MS.length - 1)];
+
+      console.warn(`Token refresh failed, retrying in ${backoffDelay}ms (attempt ${refreshAttempts}/${MAX_REFRESH_ATTEMPTS})`);
+
+      await new Promise(resolve => setTimeout(resolve, backoffDelay));
+      return refreshToken();
+
+    } catch (error) {
+      console.error('Token refresh failed:', error);
+
+      // Retry with backoff on network error
+      refreshAttempts++;
+      const backoffDelay = REFRESH_BACKOFF_MS[Math.min(refreshAttempts - 1, REFRESH_BACKOFF_MS.length - 1)];
+
+      if (refreshAttempts < MAX_REFRESH_ATTEMPTS) {
+        console.warn(`Token refresh error, retrying in ${backoffDelay}ms (attempt ${refreshAttempts}/${MAX_REFRESH_ATTEMPTS})`);
+        await new Promise(resolve => setTimeout(resolve, backoffDelay));
+        return refreshToken();
+      }
+
+      // Max attempts reached, logout user
+      authMonitor.logEvent('auth:error', { type: 'refresh_max_attempts', attempts: refreshAttempts });
+      await logout();
+      return { success: false, error: 'Session expired. Please login again.' };
+    } finally {
+      // Clear the in-progress promise after completion
+      refreshPromise = null;
     }
+  })();
 
-    return { success: false };
-  } catch (error) {
-    console.error('Token refresh failed:', error);
-    return { success: false };
+  return refreshPromise;
+}
+
+/**
+ * Start proactive token refresh timer
+ */
+function startProactiveRefresh() {
+  stopProactiveRefresh();
+
+  proactiveRefreshTimer = setInterval(async () => {
+    if (authState.isAuthenticated) {
+      console.log('Proactively refreshing token before expiration');
+      await refreshToken();
+    }
+  }, PROACTIVE_REFRESH_INTERVAL);
+}
+
+/**
+ * Stop proactive token refresh timer
+ */
+function stopProactiveRefresh() {
+  if (proactiveRefreshTimer) {
+    clearInterval(proactiveRefreshTimer);
+    proactiveRefreshTimer = null;
   }
 }
 
 /**
- * Share auth token with iframe (app view)
+ * Share auth state with iframe (app view)
+ * Note: Tokens are HttpOnly, so we only share user info
  */
 export function shareAuthWithIframe(iframe) {
-  if (!iframe || !authState.token) return;
+  if (!iframe || !authState.isAuthenticated) return;
 
   try {
     iframe.contentWindow.postMessage({
-      type: 'AUTH_TOKEN',
-      token: authState.token,
+      type: 'AUTH_STATE',
+      authenticated: authState.isAuthenticated,
       user: authState.user
     }, '*');
   } catch (error) {
@@ -270,7 +362,7 @@ export function listenForIframeMessages() {
 
     switch (type) {
       case 'REQUEST_AUTH':
-        // Iframe is requesting auth token
+        // Iframe is requesting auth state
         const iframe = document.querySelector('#app-iframe');
         if (iframe) {
           shareAuthWithIframe(iframe);
@@ -278,8 +370,11 @@ export function listenForIframeMessages() {
         break;
 
       case 'AUTH_EXPIRED':
-        // Iframe reports auth expired
-        refreshToken();
+        // Iframe reports auth expired - attempt refresh with retry
+        console.log('Auth expired notification from iframe, refreshing...');
+        refreshToken().catch(err => {
+          console.error('Failed to refresh after iframe notification:', err);
+        });
         break;
 
       case 'LOGOUT':

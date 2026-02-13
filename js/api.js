@@ -8,8 +8,27 @@ const API_CONFIG = {
   api: 'https://api.goalixa.com'
 };
 
+// Refresh state to prevent multiple simultaneous refresh attempts
+let isRefreshing = false;
+let refreshSubscribers = [];
+
 /**
- * API Request wrapper
+ * Add subscriber to be notified after token refresh
+ */
+function subscribeToRefresh(callback) {
+  refreshSubscribers.push(callback);
+}
+
+/**
+ * Notify all subscribers that refresh is complete
+ */
+function onRefreshed() {
+  refreshSubscribers.forEach(callback => callback());
+  refreshSubscribers = [];
+}
+
+/**
+ * API Request wrapper with automatic token refresh on 401
  */
 async function apiRequest(url, options = {}) {
   const {
@@ -42,12 +61,19 @@ async function apiRequest(url, options = {}) {
     // Handle non-JSON responses
     const contentType = response.headers.get('content-type');
     if (!contentType || !contentType.includes('application/json')) {
+      if (!response.ok && response.status === 401) {
+        return handle401Error(url, options);
+      }
       return response;
     }
 
     const data = await response.json();
 
     if (!response.ok) {
+      // Handle 401 Unauthorized - attempt token refresh
+      if (response.status === 401) {
+        return handle401Error(url, options);
+      }
       throw new Error(data.message || data.error || `HTTP ${response.status}`);
     }
 
@@ -60,6 +86,48 @@ async function apiRequest(url, options = {}) {
     }
 
     throw error;
+  }
+}
+
+/**
+ * Handle 401 errors with automatic token refresh
+ */
+async function handle401Error(originalUrl, originalOptions) {
+  // If already refreshing, add request to queue
+  if (isRefreshing) {
+    return new Promise((resolve, reject) => {
+      subscribeToRefresh(async () => {
+        try {
+          const result = await apiRequest(originalUrl, originalOptions);
+          resolve(result);
+        } catch (error) {
+          reject(error);
+        }
+      });
+    });
+  }
+
+  isRefreshing = true;
+
+  try {
+    // Dynamically import auth to avoid circular dependency
+    const { refreshToken, logout } = await import('./auth.js');
+    const refreshResult = await refreshToken();
+
+    if (refreshResult.success) {
+      // Refresh successful, retry original request
+      onRefreshed();
+      return apiRequest(originalUrl, originalOptions);
+    } else {
+      // Refresh failed, user is logged out
+      onRefreshed();
+      throw new Error(refreshResult.error || 'Session expired');
+    }
+  } catch (error) {
+    onRefreshed();
+    throw error;
+  } finally {
+    isRefreshing = false;
   }
 }
 

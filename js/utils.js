@@ -71,6 +71,8 @@ export function getCookie(name) {
 
 /**
  * Set cookie with options
+ * Note: For auth cookies (goalixa_access, goalixa_refresh), the backend sets HttpOnly cookies
+ * This function is only for non-sensitive cookies
  */
 export function setCookie(name, value, options = {}) {
   const {
@@ -78,7 +80,7 @@ export function setCookie(name, value, options = {}) {
     path = '/',
     maxAge = 60 * 60 * 24 * 30, // 30 days
     secure = true,
-    sameSite = 'lax'
+    sameSite = 'Lax'  // Changed from 'lax' to 'Lax' (standard case)
   } = options;
 
   let cookieString = `${name}=${encodeURIComponent(value)}`;
