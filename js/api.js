@@ -5,12 +5,16 @@
 
 // API endpoints configuration
 const API_CONFIG = {
-  api: 'https://api.goalixa.com'
+  api: (typeof window !== 'undefined' && window.__GOALIXA_API_BASE__) || 'https://api.goalixa.com'
 };
 
 // Refresh state to prevent multiple simultaneous refresh attempts
 let isRefreshing = false;
 let refreshSubscribers = [];
+
+function buildUrl(path) {
+  return `${API_CONFIG.api}${path}`;
+}
 
 /**
  * Add subscriber to be notified after token refresh
@@ -23,7 +27,7 @@ function subscribeToRefresh(callback) {
  * Notify all subscribers that refresh is complete
  */
 function onRefreshed() {
-  refreshSubscribers.forEach(callback => callback());
+  refreshSubscribers.forEach((callback) => callback());
   refreshSubscribers = [];
 }
 
@@ -44,7 +48,7 @@ async function apiRequest(url, options = {}) {
 
   const defaultHeaders = {
     'Content-Type': 'application/json',
-    'Accept': 'application/json'
+    Accept: 'application/json'
   };
 
   try {
@@ -58,11 +62,17 @@ async function apiRequest(url, options = {}) {
 
     clearTimeout(timeoutId);
 
-    // Handle non-JSON responses
     const contentType = response.headers.get('content-type');
+
+    // Handle non-JSON responses
     if (!contentType || !contentType.includes('application/json')) {
-      if (!response.ok && response.status === 401) {
-        return handle401Error(url, options);
+      if (!response.ok) {
+        if (response.status === 401) {
+          return handle401Error(url, options);
+        }
+        const nonJsonError = new Error(`HTTP ${response.status}`);
+        nonJsonError.status = response.status;
+        throw nonJsonError;
       }
       return response;
     }
@@ -70,11 +80,12 @@ async function apiRequest(url, options = {}) {
     const data = await response.json();
 
     if (!response.ok) {
-      // Handle 401 Unauthorized - attempt token refresh
       if (response.status === 401) {
         return handle401Error(url, options);
       }
-      throw new Error(data.message || data.error || `HTTP ${response.status}`);
+      const error = new Error(data.message || data.error || `HTTP ${response.status}`);
+      error.status = response.status;
+      throw error;
     }
 
     return data;
@@ -90,10 +101,30 @@ async function apiRequest(url, options = {}) {
 }
 
 /**
+ * Try multiple endpoints in order for compatibility during migration.
+ */
+async function apiRequestWithFallback(urls, options = {}) {
+  let lastError = null;
+
+  for (const url of urls) {
+    try {
+      return await apiRequest(url, options);
+    } catch (error) {
+      lastError = error;
+      const status = error && typeof error.status === 'number' ? error.status : 0;
+      if (status !== 404 && status !== 405) {
+        throw error;
+      }
+    }
+  }
+
+  throw lastError || new Error('All fallback API endpoints failed');
+}
+
+/**
  * Handle 401 errors with automatic token refresh
  */
 async function handle401Error(originalUrl, originalOptions) {
-  // If already refreshing, add request to queue
   if (isRefreshing) {
     return new Promise((resolve, reject) => {
       subscribeToRefresh(async () => {
@@ -111,18 +142,16 @@ async function handle401Error(originalUrl, originalOptions) {
 
   try {
     // Dynamically import auth to avoid circular dependency
-    const { refreshToken, logout } = await import('./auth.js');
+    const { refreshToken } = await import('./auth.js');
     const refreshResult = await refreshToken();
 
     if (refreshResult.success) {
-      // Refresh successful, retry original request
       onRefreshed();
       return apiRequest(originalUrl, originalOptions);
-    } else {
-      // Refresh failed, user is logged out
-      onRefreshed();
-      throw new Error(refreshResult.error || 'Session expired');
     }
+
+    onRefreshed();
+    throw new Error(refreshResult.error || 'Session expired');
   } catch (error) {
     onRefreshed();
     throw error;
@@ -135,28 +164,19 @@ async function handle401Error(originalUrl, originalOptions) {
  * Landing Service API
  */
 export const landingApi = {
-  /**
-   * Get landing page content
-   */
   async getContent() {
-    return apiRequest(`${API_CONFIG.api}/landing/content`);
+    return apiRequest(buildUrl('/landing/content'));
   },
 
-  /**
-   * Submit contact form
-   */
   async submitContact(formData) {
-    return apiRequest(`${API_CONFIG.api}/landing/contact`, {
+    return apiRequest(buildUrl('/landing/contact'), {
       method: 'POST',
       body: formData
     });
   },
 
-  /**
-   * Get pricing information
-   */
   async getPricing() {
-    return apiRequest(`${API_CONFIG.api}/landing/pricing`);
+    return apiRequest(buildUrl('/landing/pricing'));
   }
 };
 
@@ -164,76 +184,58 @@ export const landingApi = {
  * Auth Service API
  */
 export const authApi = {
-  /**
-   * Login user
-   */
   async login(email, password) {
-    return apiRequest(`${API_CONFIG.api}/auth/login`, {
+    return apiRequest(buildUrl('/auth/login'), {
       method: 'POST',
       body: { email, password }
     });
   },
 
-  /**
-   * Register new user
-   */
   async register(userData) {
-    return apiRequest(`${API_CONFIG.api}/auth/register`, {
+    return apiRequest(buildUrl('/auth/register'), {
       method: 'POST',
       body: userData
     });
   },
 
-  /**
-   * Logout user
-   */
   async logout() {
-    return apiRequest(`${API_CONFIG.api}/auth/logout`, {
+    return apiRequest(buildUrl('/auth/logout'), {
       method: 'POST'
     });
   },
 
-  /**
-   * Get current user info
-   */
   async getCurrentUser() {
-    return apiRequest(`${API_CONFIG.api}/auth/me`);
+    return apiRequest(buildUrl('/auth/me'));
   },
 
-  /**
-   * Request password reset
-   */
   async requestPasswordReset(email) {
-    return apiRequest(`${API_CONFIG.api}/auth/password-reset/request`, {
-      method: 'POST',
-      body: { email }
-    });
+    return apiRequestWithFallback(
+      [buildUrl('/auth/password-reset/request'), buildUrl('/auth/forgot')],
+      {
+        method: 'POST',
+        body: { email }
+      }
+    );
   },
 
-  /**
-   * Reset password with token
-   */
   async resetPassword(token, newPassword) {
-    return apiRequest(`${API_CONFIG.api}/auth/password-reset/confirm`, {
-      method: 'POST',
-      body: { token, password: newPassword }
-    });
+    return apiRequestWithFallback(
+      [buildUrl('/auth/password-reset/confirm'), buildUrl('/auth/reset')],
+      {
+        method: 'POST',
+        body: { token, password: newPassword }
+      }
+    );
   },
 
-  /**
-   * Refresh auth token
-   */
   async refreshToken() {
-    return apiRequest(`${API_CONFIG.api}/auth/refresh`, {
+    return apiRequest(buildUrl('/auth/refresh'), {
       method: 'POST'
     });
   },
 
-  /**
-   * Verify email
-   */
   async verifyEmail(token) {
-    return apiRequest(`${API_CONFIG.api}/auth/verify-email`, {
+    return apiRequest(buildUrl('/auth/verify-email'), {
       method: 'POST',
       body: { token }
     });
@@ -244,112 +246,111 @@ export const authApi = {
  * App Service API
  */
 export const appApi = {
-  /**
-   * Get user's tasks
-   */
   async getTasks(params = {}) {
     const queryString = new URLSearchParams(params).toString();
-    return apiRequest(`${API_CONFIG.api}/app/tasks?${queryString}`);
+    const suffix = queryString ? `?${queryString}` : '';
+    return apiRequest(buildUrl(`/app/tasks${suffix}`));
   },
 
-  /**
-   * Create task
-   */
   async createTask(taskData) {
-    return apiRequest(`${API_CONFIG.api}/app/tasks`, {
+    return apiRequest(buildUrl('/app/tasks'), {
       method: 'POST',
       body: taskData
     });
   },
 
-  /**
-   * Update task
-   */
-  async updateTask(taskId, taskData) {
-    return apiRequest(`${API_CONFIG.api}/app/tasks/${taskId}`, {
-      method: 'PUT',
-      body: taskData
+  async startTask(taskId) {
+    return apiRequest(buildUrl(`/app/tasks/${taskId}/start`), {
+      method: 'POST'
     });
   },
 
-  /**
-   * Delete task
-   */
+  async stopTask(taskId) {
+    return apiRequest(buildUrl(`/app/tasks/${taskId}/stop`), {
+      method: 'POST'
+    });
+  },
+
+  async completeTask(taskId) {
+    return apiRequest(buildUrl(`/app/tasks/${taskId}/complete`), {
+      method: 'POST'
+    });
+  },
+
+  async reopenTask(taskId) {
+    return apiRequest(buildUrl(`/app/tasks/${taskId}/reopen`), {
+      method: 'POST'
+    });
+  },
+
+  async setTaskDailyCheck(taskId) {
+    return apiRequest(buildUrl(`/app/tasks/${taskId}/daily-check`), {
+      method: 'POST'
+    });
+  },
+
   async deleteTask(taskId) {
-    return apiRequest(`${API_CONFIG.api}/app/tasks/${taskId}`, {
-      method: 'DELETE'
+    return apiRequest(buildUrl(`/app/tasks/${taskId}/delete`), {
+      method: 'POST'
     });
   },
 
-  /**
-   * Get goals
-   */
-  async getGoals() {
-    return apiRequest(`${API_CONFIG.api}/app/goals`);
-  },
-
-  /**
-   * Get habits
-   */
-  async getHabits() {
-    return apiRequest(`${API_CONFIG.api}/app/habits`);
-  },
-
-  /**
-   * Get timer sessions
-   */
-  async getTimerSessions(params = {}) {
-    const queryString = new URLSearchParams(params).toString();
-    return apiRequest(`${API_CONFIG.api}/app/timer/sessions?${queryString}`);
-  },
-
-  /**
-   * Start timer session
-   */
-  async startTimer(taskId, duration) {
-    return apiRequest(`${API_CONFIG.api}/app/timer/start`, {
-      method: 'POST',
-      body: { task_id: taskId, duration }
-    });
-  },
-
-  /**
-   * Stop timer session
-   */
-  async stopTimer(sessionId) {
-    return apiRequest(`${API_CONFIG.api}/app/timer/stop`, {
-      method: 'POST',
-      body: { session_id: sessionId }
-    });
-  },
-
-  /**
-   * Get overview/dashboard data
-   */
-  async getOverview() {
-    return apiRequest(`${API_CONFIG.api}/app/overview`);
-  },
-
-  /**
-   * Get reports
-   */
-  async getReports(params = {}) {
-    const queryString = new URLSearchParams(params).toString();
-    return apiRequest(`${API_CONFIG.api}/app/reports?${queryString}`);
-  },
-
-  /**
-   * Get projects
-   */
   async getProjects() {
-    return apiRequest(`${API_CONFIG.api}/app/projects`);
+    return apiRequest(buildUrl('/app/projects'));
   },
 
-  /**
-   * Get calendar events
-   */
+  async createProject(name, labelIds = []) {
+    return apiRequest(buildUrl('/app/projects'), {
+      method: 'POST',
+      body: { name, label_ids: labelIds }
+    });
+  },
+
+  async deleteProject(projectId) {
+    return apiRequest(buildUrl(`/app/projects/${projectId}/delete`), {
+      method: 'POST'
+    });
+  },
+
+  async getReportsSummary(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    const suffix = queryString ? `?${queryString}` : '';
+    return apiRequest(buildUrl(`/app/reports/summary${suffix}`));
+  },
+
+  async getTimerEntries(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    const suffix = queryString ? `?${queryString}` : '';
+    return apiRequest(buildUrl(`/app/timer/entries${suffix}`));
+  },
+
+  async getOverview() {
+    const [tasks, projects] = await Promise.all([
+      this.getTasks(),
+      this.getProjects().catch(() => ({ projects: [] }))
+    ]);
+
+    const activeTasks = Array.isArray(tasks.tasks) ? tasks.tasks : [];
+    const completedTasks = Array.isArray(tasks.completed_tasks) ? tasks.completed_tasks : [];
+    const doneTodayTasks = Array.isArray(tasks.done_today_tasks) ? tasks.done_today_tasks : [];
+    const totalTrackedSeconds = activeTasks.reduce((sum, task) => sum + Number(task.total_seconds || 0), 0);
+
+    return {
+      active_tasks_count: activeTasks.length,
+      completed_tasks_count: completedTasks.length,
+      done_today_count: doneTodayTasks.length,
+      total_tracked_seconds: totalTrackedSeconds,
+      projects_count: Array.isArray(projects.projects) ? projects.projects.length : 0
+    };
+  },
+
+  // Backward-compatible aliases.
+  async getReports(params = {}) {
+    return this.getReportsSummary(params);
+  },
+
   async getCalendarEvents(start, end) {
-    return apiRequest(`${API_CONFIG.api}/app/calendar?start=${start}&end=${end}`);
+    return this.getTimerEntries({ start, end });
   }
 };
 
@@ -364,21 +365,21 @@ export async function healthCheck() {
   };
 
   try {
-    await apiRequest(`${API_CONFIG.api}/landing/health`, { timeout: 5000 });
+    await apiRequest(buildUrl('/landing/health'), { timeout: 5000 });
     results.landing = true;
   } catch (err) {
     console.error('Landing service health check failed:', err);
   }
 
   try {
-    await apiRequest(`${API_CONFIG.api}/auth/health`, { timeout: 5000 });
+    await apiRequest(buildUrl('/auth/health'), { timeout: 5000 });
     results.auth = true;
   } catch (err) {
     console.error('Auth service health check failed:', err);
   }
 
   try {
-    await apiRequest(`${API_CONFIG.api}/app/health`, { timeout: 5000 });
+    await apiRequest(buildUrl('/app/health'), { timeout: 5000 });
     results.app = true;
   } catch (err) {
     console.error('App service health check failed:', err);

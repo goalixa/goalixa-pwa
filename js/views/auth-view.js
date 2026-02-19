@@ -3,7 +3,7 @@
  * Handles login and signup forms
  */
 
-import { login, register, isAuthenticated } from '../auth.js';
+import { login, register, isAuthenticated, requestPasswordReset, resetPasswordWithToken } from '../auth.js';
 import { showToast } from '../utils.js';
 import { navigate, redirectAfterLogin } from '../router.js';
 
@@ -342,11 +342,51 @@ function initAuthView(container, mode, params) {
       const button = resetForm.querySelector('button[type="submit"]');
       setButtonLoading(button, true);
 
-      // TODO: Call API for password reset
-      showToast('If an account exists, you will receive reset instructions', 'success');
+      const result = await requestPasswordReset(email);
+      if (result.success) {
+        showToast(result.message || 'If an account exists, you will receive reset instructions', 'success');
+      } else {
+        showToast(result.error || 'Unable to request password reset', 'error');
+      }
 
       setButtonLoading(button, false);
       navigate('/login');
+    });
+  }
+
+  // Handle set new password form
+  const newPasswordForm = container.querySelector('#newPasswordForm');
+  if (newPasswordForm) {
+    newPasswordForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const token = params.token || params.t;
+      if (!token) {
+        showToast('Reset token is missing. Please use the link from your email.', 'error');
+        return;
+      }
+
+      const password = document.getElementById('newPassword').value;
+      const confirmPassword = document.getElementById('confirmNewPassword').value;
+
+      if (password !== confirmPassword) {
+        showToast('Passwords do not match', 'error');
+        return;
+      }
+
+      const button = newPasswordForm.querySelector('button[type="submit"]');
+      setButtonLoading(button, true);
+
+      const result = await resetPasswordWithToken(token, password);
+
+      setButtonLoading(button, false);
+
+      if (result.success) {
+        showToast('Password reset successful. Please sign in.', 'success');
+        navigate('/login');
+      } else {
+        showToast(result.error || 'Password reset failed', 'error');
+      }
     });
   }
 }

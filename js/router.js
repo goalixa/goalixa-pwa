@@ -30,50 +30,9 @@ const routes = {
   '/app/account': { view: 'app', title: 'Goalixa - Account', auth: true }
 };
 
-// External routes that should use the canonical UI (auth)
-// NOTE: Auth routes are handled by the auth service
-const externalRoutes = {
-  '/auth': () => buildAuthUrl('/login'),
-  '/login': () => buildAuthUrl('/login'),
-  '/signup': () => buildAuthUrl('/register'),
-  '/register': () => buildAuthUrl('/register'),
-  '/forgot-password': () => buildAuthUrl('/forgot'),
-  '/reset-password': (params) => {
-    const token = params.token || params.t;
-    if (token) {
-      return buildAuthUrl(`/reset/${encodeURIComponent(token)}`, params);
-    }
-    return buildAuthUrl('/forgot', params);
-  }
-};
-
-function getAuthNextUrl(params = {}, fallbackPath = '/app') {
-  if (params.next) {
-    return params.next;
-  }
-
-  const storedPath = sessionStorage.getItem('redirectAfterLogin');
-  let path = storedPath || fallbackPath;
-
-  if (!path.startsWith('/')) {
-    path = `/${path}`;
-  }
-
-  if (path === '/login' || path === '/signup' || path === '/register') {
-    path = fallbackPath;
-  }
-
-  return `${window.location.origin}${path}`;
-}
-
-function buildAuthUrl(path, params = {}) {
-  const url = new URL(`https://auth.goalixa.com${path}`);
-  const nextUrl = getAuthNextUrl(params);
-  if (nextUrl) {
-    url.searchParams.set('next', nextUrl);
-  }
-  return url.toString();
-}
+// External route redirects are intentionally disabled while auth/app UI
+// are being extracted into this PWA.
+const externalRoutes = {};
 
 // View modules registry
 const viewModules = {

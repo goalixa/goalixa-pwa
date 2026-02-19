@@ -153,6 +153,44 @@ export async function register(userData) {
 }
 
 /**
+ * Request password reset email/link
+ */
+export async function requestPasswordReset(email) {
+  try {
+    const response = await authApi.requestPasswordReset(email);
+    return {
+      success: Boolean(response && (response.success || response.message)),
+      message: (response && response.message) || 'If the account exists, reset instructions were sent.'
+    };
+  } catch (error) {
+    console.error('Password reset request failed:', error);
+    return {
+      success: false,
+      error: error.message || 'Could not request password reset.'
+    };
+  }
+}
+
+/**
+ * Confirm password reset using token + new password
+ */
+export async function resetPasswordWithToken(token, newPassword) {
+  try {
+    const response = await authApi.resetPassword(token, newPassword);
+    return {
+      success: Boolean(response && (response.success || response.message)),
+      message: (response && response.message) || 'Password has been reset.'
+    };
+  } catch (error) {
+    console.error('Password reset confirm failed:', error);
+    return {
+      success: false,
+      error: error.message || 'Could not reset password.'
+    };
+  }
+}
+
+/**
  * Logout user
  */
 export async function logout() {
