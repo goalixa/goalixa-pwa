@@ -4070,69 +4070,395 @@ async function bindWeeklyGoalActions(container, currentPath, payload) {
   });
 }
 
-function renderHabits(content, payload) {
-  const habits = Array.isArray(payload.habits) ? payload.habits : [];
+function buildHabitsDemoPayload() {
+  const today = new Date().toISOString().slice(0, 10);
+  const goals = [
+    {
+      id: 'demo-goal-1',
+      name: 'Unify frontend in PWA',
+      subgoals: [
+        { id: 'demo-subgoal-1', title: 'Migrate remaining app pages' },
+        { id: 'demo-subgoal-2', title: 'Add demo fallback for validation' }
+      ]
+    },
+    {
+      id: 'demo-goal-2',
+      name: 'Stabilize API routing',
+      subgoals: [
+        { id: 'demo-subgoal-3', title: 'BFF endpoint mapping' },
+        { id: 'demo-subgoal-4', title: 'Ingress path cleanup' }
+      ]
+    }
+  ];
 
-  content.innerHTML = `
-    <div class="app-panel">
-      <div class="app-panel-header">
-        <h3>Habits</h3>
-        <p>Daily routines with streak and completion tracking.</p>
-      </div>
+  const habits = [
+    {
+      id: 'demo-habit-1',
+      name: 'Daily architecture review',
+      frequency: 'Daily',
+      time_of_day: 'Morning',
+      reminder: '09:00',
+      notes: 'Check API edge-cases and write one note.',
+      goal_name: 'Stabilize API routing',
+      subgoal_name: 'BFF endpoint mapping',
+      streak: 8,
+      done: true
+    },
+    {
+      id: 'demo-habit-2',
+      name: 'Ship one visible UI improvement',
+      frequency: 'Weekdays',
+      time_of_day: 'Afternoon',
+      reminder: '15:00',
+      notes: '',
+      goal_name: 'Unify frontend in PWA',
+      subgoal_name: 'Migrate remaining app pages',
+      streak: 5,
+      done: false
+    },
+    {
+      id: 'demo-habit-3',
+      name: 'Evening retrospective',
+      frequency: 'Daily',
+      time_of_day: 'Evening',
+      reminder: '21:30',
+      notes: 'Write three wins and one blocker.',
+      goal_name: '',
+      subgoal_name: '',
+      streak: 12,
+      done: false
+    }
+  ];
 
-      <div class="stats-grid">
-        <article class="stat-card"><h4>Completed Today</h4><p>${Number(payload.completed_habits || 0)}</p></article>
-        <article class="stat-card"><h4>Total Habits</h4><p>${Number(payload.total_habits || 0)}</p></article>
-        <article class="stat-card"><h4>Best Streak</h4><p>${Number(payload.best_streak || 0)}d</p></article>
-        <article class="stat-card"><h4>Focus Window</h4><p>${escapeHtml(payload.focus_window || 'Anytime')}</p></article>
-      </div>
+  return {
+    today,
+    habits,
+    goals,
+    total_habits: habits.length,
+    completed_habits: habits.filter((habit) => Boolean(habit.done)).length,
+    best_streak: Math.max(0, ...habits.map((habit) => Number(habit.streak || 0))),
+    focus_window: 'Evening close',
+    habit_series: {
+      labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      values: [1, 2, 2, 3, 2, 1, 2]
+    },
+    __demo: true
+  };
+}
 
-      <form id="habit-create-form" class="inline-actions-form">
-        <input id="habit-name" type="text" placeholder="Habit name" required />
-        <select id="habit-frequency">
-          <option value="Daily">Daily</option>
-          <option value="Weekdays">Weekdays</option>
-          <option value="Weekends">Weekends</option>
-        </select>
-        <select id="habit-time">
-          <option value="">Anytime</option>
-          <option value="Morning">Morning</option>
-          <option value="Afternoon">Afternoon</option>
-          <option value="Evening">Evening</option>
-        </select>
-        <button class="btn btn-primary" type="submit">Add Habit</button>
-      </form>
+function withHabitsDemoPayload(payload) {
+  const safe = payload && typeof payload === 'object' ? payload : {};
+  const hasHabits = Array.isArray(safe.habits) && safe.habits.length > 0;
+  if (!isLocalhostRuntime() || hasHabits) {
+    return safe;
+  }
 
-      <div class="habit-list-lite">
-        ${habits.length === 0 ? '<p class="muted">No habits yet.</p>' : ''}
-        ${habits.map((habit) => `
-          <article class="habit-row-lite ${habit.done ? 'is-done' : ''}">
-            <label>
-              <input type="checkbox" data-action="toggle-habit" data-habit-id="${habit.id}" ${habit.done ? 'checked' : ''} />
-              <span>${escapeHtml(habit.name)}</span>
-            </label>
-            <div class="task-actions">
-              <span class="task-state ${habit.done ? 'running' : 'idle'}">${habit.streak}d streak</span>
-              <button data-action="delete-habit" data-habit-id="${habit.id}" class="danger" type="button">Delete</button>
+  const demo = buildHabitsDemoPayload();
+  return {
+    ...demo,
+    ...safe,
+    habits: hasHabits ? safe.habits : demo.habits,
+    goals: Array.isArray(safe.goals) && safe.goals.length ? safe.goals : demo.goals,
+    total_habits: Number.isFinite(Number(safe.total_habits)) ? Number(safe.total_habits) : demo.total_habits,
+    completed_habits: Number.isFinite(Number(safe.completed_habits)) ? Number(safe.completed_habits) : demo.completed_habits,
+    best_streak: Number.isFinite(Number(safe.best_streak)) ? Number(safe.best_streak) : demo.best_streak,
+    focus_window: safe.focus_window || demo.focus_window,
+    habit_series: safe.habit_series && typeof safe.habit_series === 'object' ? safe.habit_series : demo.habit_series,
+    today: safe.today || demo.today,
+    __demo: true
+  };
+}
+
+function normalizeHabitMeta(habit) {
+  if (habit && habit.meta) return String(habit.meta);
+  const parts = [];
+  if (habit && habit.frequency) parts.push(String(habit.frequency));
+  if (habit && habit.time_of_day) parts.push(String(habit.time_of_day));
+  if (habit && habit.reminder) parts.push(`Reminder ${habit.reminder}`);
+  return parts.length ? parts.join(' • ') : 'No schedule';
+}
+
+function normalizeHabitSeries(habitSeries, habits) {
+  const labels = Array.isArray(habitSeries?.labels) ? habitSeries.labels.map((item) => String(item)) : [];
+  const values = Array.isArray(habitSeries?.values) ? habitSeries.values.map((item) => Number(item || 0)) : [];
+  if (labels.length && labels.length === values.length) {
+    return { labels: labels.slice(-14), values: values.slice(-14) };
+  }
+
+  const doneCount = Array.isArray(habits) ? habits.filter((habit) => Boolean(habit.done)).length : 0;
+  const totalCount = Array.isArray(habits) ? habits.length : 0;
+  const baseValue = Math.max(0, Math.min(7, doneCount || Math.ceil(totalCount * 0.5)));
+  return {
+    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+    values: [baseValue - 1, baseValue, baseValue, baseValue + 1, baseValue, baseValue - 1, baseValue]
+      .map((value) => Math.max(0, value))
+  };
+}
+
+function renderHabitSeriesChart(habitSeries, habits) {
+  const series = normalizeHabitSeries(habitSeries, habits);
+  const maxValue = Math.max(1, ...series.values);
+  if (!series.labels.length) {
+    return '<p class="muted">No completion data yet.</p>';
+  }
+
+  return `
+    <div class="habit-series-chart" aria-label="Habit completion over time">
+      ${series.labels.map((label, index) => {
+        const value = Math.max(0, Number(series.values[index] || 0));
+        const height = Math.max(6, Math.round((value / maxValue) * 100));
+        return `
+          <div class="habit-series-col">
+            <div class="habit-series-track">
+              <span class="habit-series-bar" style="height: ${height}%;"></span>
             </div>
-          </article>
-        `).join('')}
-      </div>
+            <span class="habit-series-value">${value}</span>
+            <span class="habit-series-label">${escapeHtml(label)}</span>
+          </div>
+        `;
+      }).join('')}
     </div>
   `;
 }
 
-async function bindHabitActions(container, currentPath, today) {
+function renderGoalNameOptions(goals, selectedValue = '') {
+  const safeGoals = Array.isArray(goals) ? goals : [];
+  return `
+    <option value="">No goal</option>
+    ${safeGoals.map((goal) => `
+      <option value="${escapeHtml(goal.name || '')}" ${String(goal.name || '') === String(selectedValue || '') ? 'selected' : ''}>
+        ${escapeHtml(goal.name || '')}
+      </option>
+    `).join('')}
+  `;
+}
+
+function renderSubgoalOptions(goals, selectedValue = '') {
+  const safeGoals = Array.isArray(goals) ? goals : [];
+  const groupsMarkup = safeGoals.map((goal) => {
+    const subgoals = Array.isArray(goal.subgoals) ? goal.subgoals : [];
+    if (!subgoals.length) return '';
+    return `
+      <optgroup label="${escapeHtml(goal.name || 'Goal')}">
+        ${subgoals.map((subgoal) => {
+          const title = String(subgoal.title || '');
+          return `
+            <option value="${escapeHtml(title)}" ${title === String(selectedValue || '') ? 'selected' : ''}>
+              ${escapeHtml(title)}
+            </option>
+          `;
+        }).join('')}
+      </optgroup>
+    `;
+  }).join('');
+
+  return `
+    <option value="">No sub-goal</option>
+    ${groupsMarkup}
+  `;
+}
+
+function renderHabits(content, payload) {
+  const habits = Array.isArray(payload.habits) ? payload.habits : [];
+  const goals = Array.isArray(payload.goals) ? payload.goals : [];
+  const today = payload.today || new Date().toISOString().slice(0, 10);
+
+  const demoNote = payload.__demo
+    ? `
+      <div class="goals-demo-note">
+        <i class="bi bi-flask"></i>
+        <span>Demo data is enabled on localhost because API returned no habits yet.</span>
+      </div>
+    `
+    : '';
+
+  content.innerHTML = `
+    <div class="habits-page" data-habits-today="${escapeHtml(today)}" data-habits-demo="${payload.__demo ? '1' : '0'}">
+      ${demoNote}
+
+      <section class="habits-hero">
+        <article class="habit-stat-card">
+          <span class="habit-stat-label">Completed today</span>
+          <span class="habit-stat-value">${Number(payload.completed_habits || 0)}</span>
+          <span class="habit-stat-meta">Out of ${Number(payload.total_habits || habits.length)}</span>
+        </article>
+        <article class="habit-stat-card">
+          <span class="habit-stat-label">Best streak</span>
+          <span class="habit-stat-value">${Number(payload.best_streak || 0)} days</span>
+          <span class="habit-stat-meta">Current best chain</span>
+        </article>
+        <article class="habit-stat-card">
+          <span class="habit-stat-label">Focus ritual</span>
+          <span class="habit-stat-value">${escapeHtml(payload.focus_window || 'Night close')}</span>
+          <span class="habit-stat-meta">Close your day with checklist</span>
+        </article>
+      </section>
+
+      <section class="app-panel habits-card">
+        <div class="habits-card-header">
+          <div>
+            <p class="goals-label">Tonight</p>
+            <h3 class="goals-title">Daily checklist</h3>
+          </div>
+          <div class="habit-actions-inline">
+            <button class="btn btn-outline-secondary btn-sm" type="button" data-action="habit-mark-all">Mark all complete</button>
+          </div>
+        </div>
+
+        <form id="habit-create-form" class="habit-create-form">
+          <input id="habit-name" type="text" placeholder="Habit name" required />
+          <select id="habit-frequency">
+            <option value="Daily">Daily</option>
+            <option value="Weekdays">Weekdays</option>
+            <option value="Weekends">Weekends</option>
+            <option value="Custom">Custom</option>
+          </select>
+          <select id="habit-time">
+            <option value="">Anytime</option>
+            <option value="Morning">Morning</option>
+            <option value="Afternoon">Afternoon</option>
+            <option value="Evening">Evening</option>
+          </select>
+          <select id="habit-goal-name">
+            ${renderGoalNameOptions(goals)}
+          </select>
+          <select id="habit-subgoal-name">
+            ${renderSubgoalOptions(goals)}
+          </select>
+          <input id="habit-reminder" type="time" value="" />
+          <button class="btn btn-primary btn-sm" type="submit">Add habit</button>
+        </form>
+
+        <div class="habit-list" id="habit-list">
+          ${habits.length ? habits.map((habit) => `
+            <article class="habit-item">
+              <div class="habit-row ${habit.done ? 'is-done' : ''}">
+                <div class="habit-left">
+                  <label class="habit-checkbox">
+                    <input
+                      type="checkbox"
+                      data-action="toggle-habit"
+                      data-habit-id="${escapeHtml(String(habit.id || ''))}"
+                      ${habit.done ? 'checked' : ''}
+                    />
+                    <span class="habit-checkmark"></span>
+                  </label>
+                  <div class="habit-text">
+                    <span class="habit-name">${escapeHtml(habit.name || 'Untitled habit')}</span>
+                    <span class="habit-meta">${escapeHtml(normalizeHabitMeta(habit))}</span>
+                  </div>
+                </div>
+                <div class="habit-actions">
+                  <span class="habit-streak">
+                    <i class="bi bi-fire"></i>
+                    ${Number(habit.streak || 0)} day streak
+                  </span>
+                  <button class="btn btn-outline-secondary btn-sm" type="button" data-action="edit-habit" data-habit-id="${escapeHtml(String(habit.id || ''))}">
+                    Edit
+                  </button>
+                  <button class="btn btn-outline-danger btn-sm danger" type="button" data-action="delete-habit" data-habit-id="${escapeHtml(String(habit.id || ''))}">
+                    Delete
+                  </button>
+                </div>
+              </div>
+
+              <form class="habit-edit-form" data-habit-edit-form data-habit-id="${escapeHtml(String(habit.id || ''))}">
+                <div class="habit-edit-grid">
+                  <label>
+                    Habit name
+                    <input type="text" name="name" value="${escapeHtml(habit.name || '')}" required />
+                  </label>
+                  <label>
+                    Frequency
+                    <select name="frequency">
+                      <option value="Daily" ${habit.frequency === 'Daily' ? 'selected' : ''}>Daily</option>
+                      <option value="Weekdays" ${habit.frequency === 'Weekdays' ? 'selected' : ''}>Weekdays</option>
+                      <option value="Weekends" ${habit.frequency === 'Weekends' ? 'selected' : ''}>Weekends</option>
+                      <option value="Custom" ${habit.frequency === 'Custom' ? 'selected' : ''}>Custom</option>
+                    </select>
+                  </label>
+                  <label>
+                    Time of day
+                    <select name="time_of_day">
+                      <option value="" ${habit.time_of_day ? '' : 'selected'}>Anytime</option>
+                      <option value="Morning" ${habit.time_of_day === 'Morning' ? 'selected' : ''}>Morning</option>
+                      <option value="Afternoon" ${habit.time_of_day === 'Afternoon' ? 'selected' : ''}>Afternoon</option>
+                      <option value="Evening" ${habit.time_of_day === 'Evening' ? 'selected' : ''}>Evening</option>
+                    </select>
+                  </label>
+                  <label>
+                    Reminder
+                    <input type="time" name="reminder" value="${escapeHtml(habit.reminder || '')}" />
+                  </label>
+                  <label>
+                    Goal
+                    <select name="goal_name">
+                      ${renderGoalNameOptions(goals, habit.goal_name)}
+                    </select>
+                  </label>
+                  <label>
+                    Sub-goal
+                    <select name="subgoal_name">
+                      ${renderSubgoalOptions(goals, habit.subgoal_name)}
+                    </select>
+                  </label>
+                </div>
+                <label>
+                  Notes
+                  <textarea rows="2" name="notes">${escapeHtml(habit.notes || '')}</textarea>
+                </label>
+                <div class="habit-edit-actions">
+                  <button class="btn btn-outline-secondary btn-sm" type="submit">Save changes</button>
+                  <button class="btn btn-light btn-sm" type="button" data-action="cancel-habit-edit" data-habit-id="${escapeHtml(String(habit.id || ''))}">
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </article>
+          `).join('') : '<p class="muted">No habits yet.</p>'}
+        </div>
+      </section>
+
+      <section class="app-panel habits-chart">
+        <div class="habits-card-header">
+          <div>
+            <p class="goals-label">Progress</p>
+            <h3 class="goals-title">Habit completion over time</h3>
+          </div>
+          <span class="habit-chart-note">Last 14 days</span>
+        </div>
+        ${renderHabitSeriesChart(payload.habit_series, habits)}
+      </section>
+    </div>
+  `;
+}
+
+async function bindHabitActions(container, currentPath, payload) {
   const content = container.querySelector('#app-shell-content');
   if (!content) return;
 
-  const form = content.querySelector('#habit-create-form');
-  if (form) {
-    form.addEventListener('submit', async (event) => {
+  const habitsRoot = content.querySelector('.habits-page');
+  const today = habitsRoot?.dataset.habitsToday || payload.today || new Date().toISOString().slice(0, 10);
+  const isDemo = habitsRoot?.dataset.habitsDemo === '1';
+
+  const createForm = content.querySelector('#habit-create-form');
+  if (createForm) {
+    createForm.addEventListener('submit', async (event) => {
       event.preventDefault();
-      const name = content.querySelector('#habit-name').value.trim();
-      const frequency = content.querySelector('#habit-frequency').value;
-      const timeOfDay = content.querySelector('#habit-time').value;
+      const nameInput = content.querySelector('#habit-name');
+      const frequencyInput = content.querySelector('#habit-frequency');
+      const timeInput = content.querySelector('#habit-time');
+      const goalInput = content.querySelector('#habit-goal-name');
+      const subgoalInput = content.querySelector('#habit-subgoal-name');
+      const reminderInput = content.querySelector('#habit-reminder');
+
+      const name = nameInput instanceof HTMLInputElement ? nameInput.value.trim() : '';
+      const frequency = frequencyInput instanceof HTMLSelectElement ? frequencyInput.value : 'Daily';
+      const timeOfDay = timeInput instanceof HTMLSelectElement ? timeInput.value : '';
+      const goalName = goalInput instanceof HTMLSelectElement ? goalInput.value : '';
+      const subgoalName = subgoalInput instanceof HTMLSelectElement ? subgoalInput.value : '';
+      const reminder = reminderInput instanceof HTMLInputElement ? reminderInput.value : '';
+
       if (!name) return;
 
       try {
@@ -4140,10 +4466,10 @@ async function bindHabitActions(container, currentPath, today) {
           name,
           frequency,
           time_of_day: timeOfDay,
-          reminder: '',
+          reminder,
           notes: '',
-          goal_name: '',
-          subgoal_name: ''
+          goal_name: goalName,
+          subgoal_name: subgoalName
         });
         showToast('Habit created', 'success');
         await render(container, currentPath, {});
@@ -4153,10 +4479,95 @@ async function bindHabitActions(container, currentPath, today) {
     });
   }
 
+  const closeAllEditForms = () => {
+    content.querySelectorAll('[data-habit-edit-form].is-open').forEach((form) => {
+      form.classList.remove('is-open');
+    });
+  };
+
+  content.querySelectorAll('[data-action="edit-habit"]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const habitId = button.dataset.habitId;
+      if (!habitId) return;
+      const targetForm = Array.from(content.querySelectorAll('[data-habit-edit-form]'))
+        .find((form) => form.dataset.habitId === habitId);
+      if (!targetForm) return;
+      const shouldOpen = !targetForm.classList.contains('is-open');
+      closeAllEditForms();
+      if (shouldOpen) {
+        targetForm.classList.add('is-open');
+        const firstInput = targetForm.querySelector('input[name="name"]');
+        if (firstInput instanceof HTMLInputElement) {
+          firstInput.focus();
+          firstInput.select();
+        }
+      }
+    });
+  });
+
+  content.querySelectorAll('[data-action="cancel-habit-edit"]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const habitId = button.dataset.habitId;
+      if (!habitId) return;
+      const targetForm = Array.from(content.querySelectorAll('[data-habit-edit-form]'))
+        .find((form) => form.dataset.habitId === habitId);
+      if (!targetForm) return;
+      targetForm.classList.remove('is-open');
+    });
+  });
+
+  content.querySelectorAll('[data-habit-edit-form]').forEach((form) => {
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const habitId = form.dataset.habitId;
+      if (!habitId) return;
+
+      if (isDemo && String(habitId).startsWith('demo-')) {
+        showToast('Demo habit: connect API data to save changes.', 'info');
+        return;
+      }
+
+      const name = form.querySelector('input[name="name"]')?.value?.trim() || '';
+      const frequency = form.querySelector('select[name="frequency"]')?.value || 'Daily';
+      const timeOfDay = form.querySelector('select[name="time_of_day"]')?.value || '';
+      const reminder = form.querySelector('input[name="reminder"]')?.value || '';
+      const notes = form.querySelector('textarea[name="notes"]')?.value || '';
+      const goalName = form.querySelector('select[name="goal_name"]')?.value || '';
+      const subgoalName = form.querySelector('select[name="subgoal_name"]')?.value || '';
+
+      if (!name) return;
+
+      try {
+        await appApi.updateHabit(habitId, {
+          name,
+          frequency,
+          time_of_day: timeOfDay,
+          reminder,
+          notes,
+          goal_name: goalName,
+          subgoal_name: subgoalName
+        });
+        showToast('Habit updated', 'success');
+        await render(container, currentPath, {});
+      } catch (error) {
+        showToast(error.message || 'Failed to update habit', 'error');
+      }
+    });
+  });
+
   content.querySelectorAll('[data-action="toggle-habit"]').forEach((checkbox) => {
     checkbox.addEventListener('change', async () => {
+      const habitId = checkbox.dataset.habitId;
+      if (!habitId) return;
+
+      if (isDemo && String(habitId).startsWith('demo-')) {
+        showToast('Demo habit: connect API data to update this item.', 'info');
+        checkbox.checked = !checkbox.checked;
+        return;
+      }
+
       try {
-        await appApi.toggleHabit(checkbox.dataset.habitId, { done: checkbox.checked, date: today });
+        await appApi.toggleHabit(habitId, { done: checkbox.checked, date: today });
         showToast('Habit updated', 'success');
         await render(container, currentPath, {});
       } catch (error) {
@@ -4167,14 +4578,57 @@ async function bindHabitActions(container, currentPath, today) {
 
   content.querySelectorAll('[data-action="delete-habit"]').forEach((button) => {
     button.addEventListener('click', async () => {
+      const habitId = button.dataset.habitId;
+      if (!habitId) return;
+
+      if (isDemo && String(habitId).startsWith('demo-')) {
+        showToast('Demo habit: connect API data to delete this item.', 'info');
+        return;
+      }
+
       try {
-        await appApi.deleteHabit(button.dataset.habitId);
+        await appApi.deleteHabit(habitId);
         showToast('Habit deleted', 'success');
         await render(container, currentPath, {});
       } catch (error) {
         showToast(error.message || 'Failed to delete habit', 'error');
       }
     });
+  });
+
+  const markAllButton = content.querySelector('[data-action="habit-mark-all"]');
+  if (markAllButton) {
+    markAllButton.addEventListener('click', async () => {
+      const pending = Array.from(content.querySelectorAll('[data-action="toggle-habit"]'))
+        .filter((checkbox) => !checkbox.checked && Boolean(checkbox.dataset.habitId));
+      if (!pending.length) {
+        showToast('All habits are already complete.', 'info');
+        return;
+      }
+
+      if (isDemo) {
+        showToast('Demo mode: this action will work with live API habits.', 'info');
+        return;
+      }
+
+      markAllButton.disabled = true;
+      try {
+        await Promise.all(
+          pending.map((checkbox) => appApi.toggleHabit(checkbox.dataset.habitId, { done: true, date: today }))
+        );
+        showToast('All habits marked complete', 'success');
+        await render(container, currentPath, {});
+      } catch (error) {
+        showToast(error.message || 'Failed to update all habits', 'error');
+      } finally {
+        markAllButton.disabled = false;
+      }
+    });
+  }
+
+  content.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    closeAllEditForms();
   });
 }
 
@@ -4797,9 +5251,16 @@ async function renderSection(container, section, currentPath) {
     }
 
     if (section === 'habits') {
-      const payload = await appApi.getHabits();
+      let payload;
+      try {
+        payload = await appApi.getHabits();
+      } catch (error) {
+        if (!isLocalhostRuntime()) throw error;
+        payload = {};
+      }
+      payload = withHabitsDemoPayload(payload);
       renderHabits(content, payload);
-      await bindHabitActions(container, currentPath, payload.today);
+      await bindHabitActions(container, currentPath, payload);
       return;
     }
 
