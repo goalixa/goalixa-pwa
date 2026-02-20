@@ -5035,90 +5035,619 @@ async function bindPlannerActions(container, currentPath, payload) {
   });
 }
 
+const DEFAULT_REMINDER_WEEKDAY_OPTIONS = [
+  { value: '0', label: 'Mon' },
+  { value: '1', label: 'Tue' },
+  { value: '2', label: 'Wed' },
+  { value: '3', label: 'Thu' },
+  { value: '4', label: 'Fri' },
+  { value: '5', label: 'Sat' },
+  { value: '6', label: 'Sun' }
+];
+
+function normalizeReminderWeekdayOptions(options) {
+  if (!Array.isArray(options) || !options.length) {
+    return DEFAULT_REMINDER_WEEKDAY_OPTIONS;
+  }
+  const normalized = options.map((item, index) => {
+    const fallback = DEFAULT_REMINDER_WEEKDAY_OPTIONS[index % DEFAULT_REMINDER_WEEKDAY_OPTIONS.length];
+    const value = item && item.value !== undefined ? String(item.value) : fallback.value;
+    const label = item && item.label ? String(item.label) : fallback.label;
+    return { value, label };
+  }).filter((item) => item.value !== '');
+
+  return normalized.length ? normalized : DEFAULT_REMINDER_WEEKDAY_OPTIONS;
+}
+
+function normalizeReminderRepeatDays(reminder) {
+  if (Array.isArray(reminder?.repeat_days_list) && reminder.repeat_days_list.length) {
+    return reminder.repeat_days_list.map((day) => String(day));
+  }
+  if (Array.isArray(reminder?.repeat_days) && reminder.repeat_days.length) {
+    return reminder.repeat_days.map((day) => String(day));
+  }
+  if (typeof reminder?.repeat_days === 'string' && reminder.repeat_days.trim()) {
+    return reminder.repeat_days.split(',').map((day) => day.trim()).filter(Boolean);
+  }
+  return [];
+}
+
+function reminderPriorityClass(priority) {
+  const safe = String(priority || 'normal').toLowerCase();
+  if (safe === 'low') return 'priority-low';
+  if (safe === 'high') return 'priority-high';
+  return 'priority-normal';
+}
+
+function reminderPriorityLabel(priority) {
+  const safe = String(priority || 'normal').toLowerCase();
+  if (safe === 'low') return 'Low';
+  if (safe === 'high') return 'High';
+  return 'Normal';
+}
+
+function reminderStatusInfo(reminder) {
+  const status = String(reminder?.status || '').toLowerCase();
+  if (status === 'paused') return { label: 'Paused', className: 'status-muted' };
+  if (status === 'overdue') return { label: 'Overdue', className: 'status-warning' };
+  if (status === 'unscheduled') return { label: 'Unscheduled', className: 'status-muted' };
+  return { label: 'Upcoming', className: 'status-ok' };
+}
+
+function renderReminderDayChips(weekdayOptions, selectedDays, idPrefix) {
+  const selected = new Set((Array.isArray(selectedDays) ? selectedDays : []).map((day) => String(day)));
+  return weekdayOptions.map((day, index) => {
+    const value = String(day.value ?? index);
+    const label = String(day.label ?? value);
+    const inputId = `${idPrefix}-${index}-${value}`;
+    return `
+      <label class="day-chip" for="${escapeHtml(inputId)}">
+        <input type="checkbox" id="${escapeHtml(inputId)}" name="repeat_days" value="${escapeHtml(value)}" ${selected.has(value) ? 'checked' : ''} />
+        <span>${escapeHtml(label)}</span>
+      </label>
+    `;
+  }).join('');
+}
+
+function buildRemindersDemoPayload() {
+  const todayDate = new Date();
+  const today = todayDate.toISOString().slice(0, 10);
+  const yesterday = new Date(todayDate.getTime() - 86400000).toISOString().slice(0, 10);
+
+  const reminders = [
+    {
+      id: 'demo-reminder-1',
+      title: 'Evening architecture check',
+      remind_date: today,
+      remind_time: '21:00',
+      repeat_interval: 'daily',
+      repeat_days: '',
+      repeat_days_list: [],
+      priority: 'normal',
+      notes: 'Review API gateway route map before shutting down the day.',
+      is_active: true,
+      channel_toast: true,
+      channel_system: false,
+      play_sound: false,
+      status: 'upcoming',
+      next_label: 'Today at 21:00',
+      repeat_label: 'Daily',
+      channels_label: 'In-app',
+      timezone_name: 'Local'
+    },
+    {
+      id: 'demo-reminder-2',
+      title: 'Weekly BFF checkpoint',
+      remind_date: today,
+      remind_time: '10:00',
+      repeat_interval: 'weekly',
+      repeat_days: '1,3',
+      repeat_days_list: [1, 3],
+      priority: 'high',
+      notes: 'Validate API contracts and path-level routing changes.',
+      is_active: true,
+      channel_toast: true,
+      channel_system: true,
+      play_sound: true,
+      status: 'upcoming',
+      next_label: 'Tomorrow at 10:00',
+      repeat_label: 'Weekly · Tue, Thu',
+      channels_label: 'In-app · System · Sound',
+      timezone_name: 'Local'
+    },
+    {
+      id: 'demo-reminder-3',
+      title: 'Upload deployment notes',
+      remind_date: yesterday,
+      remind_time: '18:30',
+      repeat_interval: 'none',
+      repeat_days: '',
+      repeat_days_list: [],
+      priority: 'low',
+      notes: '',
+      is_active: false,
+      channel_toast: true,
+      channel_system: false,
+      play_sound: false,
+      status: 'paused',
+      next_label: 'Paused',
+      repeat_label: 'One-time',
+      channels_label: 'In-app',
+      timezone_name: 'Local'
+    }
+  ];
+
+  const active = reminders.filter((reminder) => Boolean(reminder.is_active));
+  const overdue = reminders.filter((reminder) => reminder.status === 'overdue');
+
+  return {
+    reminders,
+    reminders_summary: {
+      total: reminders.length,
+      active: active.length,
+      overdue: overdue.length,
+      next_label: 'Today at 21:00'
+    },
+    notification_settings: {
+      enabled: true,
+      interval_minutes: 10,
+      show_toast: true,
+      show_system: false,
+      play_sound: false,
+      title: 'Tracking reminder',
+      message: 'Start a Pomodoro to keep tracking your focus.'
+    },
+    weekday_options: DEFAULT_REMINDER_WEEKDAY_OPTIONS,
+    today,
+    __demo: true
+  };
+}
+
+function withRemindersDemoPayload(payload) {
+  const safe = payload && typeof payload === 'object' ? payload : {};
+  const hasReminders = Array.isArray(safe.reminders) && safe.reminders.length > 0;
+  if (!isLocalhostRuntime() || hasReminders) {
+    return safe;
+  }
+
+  const demo = buildRemindersDemoPayload();
+  return {
+    ...demo,
+    ...safe,
+    reminders: hasReminders ? safe.reminders : demo.reminders,
+    reminders_summary: safe.reminders_summary && typeof safe.reminders_summary === 'object'
+      ? safe.reminders_summary
+      : demo.reminders_summary,
+    notification_settings: safe.notification_settings && typeof safe.notification_settings === 'object'
+      ? safe.notification_settings
+      : demo.notification_settings,
+    weekday_options: Array.isArray(safe.weekday_options) && safe.weekday_options.length
+      ? safe.weekday_options
+      : demo.weekday_options,
+    today: safe.today || demo.today,
+    __demo: true
+  };
+}
+
 function renderReminders(content, payload) {
   const reminders = Array.isArray(payload.reminders) ? payload.reminders : [];
+  const weekdayOptions = normalizeReminderWeekdayOptions(payload.weekday_options);
+  const today = payload.today || new Date().toISOString().slice(0, 10);
+  const summary = payload.reminders_summary && typeof payload.reminders_summary === 'object'
+    ? payload.reminders_summary
+    : {
+      total: reminders.length,
+      active: reminders.filter((reminder) => Boolean(reminder.is_active)).length,
+      overdue: reminders.filter((reminder) => reminder.status === 'overdue').length,
+      next_label: '-'
+    };
+  const notificationSettings = payload.notification_settings && typeof payload.notification_settings === 'object'
+    ? payload.notification_settings
+    : {
+      enabled: false,
+      interval_minutes: 30,
+      show_toast: true,
+      show_system: true,
+      play_sound: false,
+      title: 'Tracking reminder',
+      message: 'Start a Pomodoro to keep tracking your focus.'
+    };
+  const intervalOptions = [1, 5, 10, 15, 20, 30];
+
+  const demoNote = payload.__demo
+    ? `
+      <div class="goals-demo-note">
+        <i class="bi bi-flask"></i>
+        <span>Demo data is enabled on localhost because API returned no reminders yet.</span>
+      </div>
+    `
+    : '';
 
   content.innerHTML = `
-    <div class="app-panel">
-      <div class="app-panel-header">
-        <h3>Reminders</h3>
-        <p>One-time and recurring reminders.</p>
-      </div>
+    <div class="reminders-page" data-reminders-today="${escapeHtml(today)}" data-reminders-demo="${payload.__demo ? '1' : '0'}">
+      ${demoNote}
 
-      <div class="stats-grid">
-        <article class="stat-card"><h4>Total</h4><p>${Number(payload.reminders_summary?.total || 0)}</p></article>
-        <article class="stat-card"><h4>Active</h4><p>${Number(payload.reminders_summary?.active || 0)}</p></article>
-        <article class="stat-card"><h4>Overdue</h4><p>${Number(payload.reminders_summary?.overdue || 0)}</p></article>
-        <article class="stat-card"><h4>Next Up</h4><p>${escapeHtml(payload.reminders_summary?.next_label || '-')}</p></article>
-      </div>
+      <section class="reminders-hero">
+        <article class="reminder-stat-card">
+          <span class="reminder-stat-label">Total reminders</span>
+          <span class="reminder-stat-value">${Number(summary.total || 0)}</span>
+          <span class="reminder-stat-meta">Across all schedules</span>
+        </article>
+        <article class="reminder-stat-card">
+          <span class="reminder-stat-label">Active now</span>
+          <span class="reminder-stat-value">${Number(summary.active || 0)}</span>
+          <span class="reminder-stat-meta">Currently running</span>
+        </article>
+        <article class="reminder-stat-card">
+          <span class="reminder-stat-label">Overdue</span>
+          <span class="reminder-stat-value">${Number(summary.overdue || 0)}</span>
+          <span class="reminder-stat-meta">Need attention</span>
+        </article>
+        <article class="reminder-stat-card">
+          <span class="reminder-stat-label">Next up</span>
+          <span class="reminder-stat-value">${escapeHtml(summary.next_label || '-')}</span>
+          <span class="reminder-stat-meta">Local timezone</span>
+        </article>
+      </section>
 
-      <form id="reminder-create-form" class="reminder-form-lite">
-        <input id="reminder-title" type="text" placeholder="Reminder title" required />
-        <input id="reminder-date" type="date" value="${escapeHtml(payload.today || '')}" required />
-        <input id="reminder-time" type="time" value="09:00" required />
-        <select id="reminder-repeat">
-          <option value="none">One-time</option>
-          <option value="daily">Daily</option>
-          <option value="weekly">Weekly</option>
-          <option value="monthly">Monthly</option>
-        </select>
-        <select id="reminder-priority">
-          <option value="low">Low</option>
-          <option value="normal" selected>Normal</option>
-          <option value="high">High</option>
-        </select>
-        <button class="btn btn-primary" type="submit">Add Reminder</button>
-      </form>
+      <section class="reminders-grid">
+        <div class="reminders-main">
+          <section class="app-panel reminders-card">
+            <div class="reminders-card-header">
+              <div>
+                <p class="goals-label">Create</p>
+                <h3 class="goals-title">New reminder</h3>
+              </div>
+            </div>
 
-      <div class="reminder-list-lite">
-        ${reminders.length === 0 ? '<p class="muted">No reminders yet.</p>' : ''}
-        ${reminders.map((reminder) => `
-          <article class="reminder-row-lite ${reminder.status === 'overdue' ? 'overdue' : ''}">
+            <form id="reminder-create-form" class="reminder-form">
+              <div class="reminder-form-grid">
+                <label class="reminder-field">
+                  Title
+                  <input type="text" name="title" placeholder="Focus check-in, standup, call mom" required />
+                </label>
+                <label class="reminder-field">
+                  Date
+                  <input type="date" name="remind_date" value="${escapeHtml(today)}" required />
+                </label>
+                <label class="reminder-field">
+                  Time
+                  <input type="time" name="remind_time" value="09:00" required />
+                </label>
+                <label class="reminder-field">
+                  Repeat
+                  <select name="repeat_interval" data-reminder-repeat-select>
+                    <option value="none">One-time</option>
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="repeat-days is-hidden" data-repeat-days>
+                ${renderReminderDayChips(weekdayOptions, [], 'reminder-create-day')}
+              </div>
+
+              <div class="reminder-form-grid">
+                <label class="reminder-field">
+                  Priority
+                  <select name="priority">
+                    <option value="low">Low</option>
+                    <option value="normal" selected>Normal</option>
+                    <option value="high">High</option>
+                  </select>
+                </label>
+                <label class="reminder-field">
+                  Notes
+                  <textarea name="notes" rows="3" placeholder="Context, links, or a short prep list."></textarea>
+                </label>
+              </div>
+
+              <div class="reminder-options">
+                <label class="reminder-switch">
+                  <input type="checkbox" name="is_active" checked />
+                  <span>Active</span>
+                </label>
+                <label class="reminder-switch">
+                  <input type="checkbox" name="channel_toast" checked />
+                  <span>In-app popup</span>
+                </label>
+                <label class="reminder-switch">
+                  <input type="checkbox" name="channel_system" />
+                  <span>System notification</span>
+                </label>
+                <label class="reminder-switch">
+                  <input type="checkbox" name="play_sound" />
+                  <span>Play sound</span>
+                </label>
+              </div>
+
+              <div class="reminder-actions">
+                <button class="btn btn-primary btn-sm" type="submit">
+                  <i class="bi bi-plus-lg"></i>
+                  Add reminder
+                </button>
+              </div>
+            </form>
+          </section>
+
+          <section class="app-panel reminders-card">
+            <div class="reminders-card-header">
+              <div>
+                <p class="goals-label">Schedule</p>
+                <h3 class="goals-title">Your reminders</h3>
+              </div>
+            </div>
+
+            ${reminders.length ? `
+              <div class="reminder-list">
+                ${reminders.map((reminder, index) => {
+                  const reminderId = String(reminder.id || '');
+                  const repeatInterval = String(reminder.repeat_interval || 'none').toLowerCase();
+                  const selectedDays = normalizeReminderRepeatDays(reminder);
+                  const status = reminderStatusInfo(reminder);
+                  return `
+                    <article class="reminder-item ${reminder.status === 'overdue' ? 'is-overdue' : ''} ${reminder.status === 'paused' ? 'is-paused' : ''}">
+                      <div class="reminder-item-header">
+                        <div>
+                          <h3>${escapeHtml(reminder.title || 'Untitled reminder')}</h3>
+                          <p class="reminder-subtitle">${escapeHtml(reminder.next_label || '-')}</p>
+                        </div>
+                        <div class="reminder-badges">
+                          <span class="reminder-pill ${reminderPriorityClass(reminder.priority)}">${reminderPriorityLabel(reminder.priority)}</span>
+                          <span class="reminder-pill ${status.className}">${status.label}</span>
+                        </div>
+                      </div>
+
+                      <div class="reminder-meta">
+                        <span><i class="bi bi-repeat"></i> ${escapeHtml(reminder.repeat_label || 'One-time')}</span>
+                        <span><i class="bi bi-bell"></i> ${escapeHtml(reminder.channels_label || 'No alerts')}</span>
+                        <span><i class="bi bi-globe"></i> ${escapeHtml(reminder.timezone_name || '-')}</span>
+                      </div>
+
+                      ${reminder.notes ? `<p class="reminder-notes">${escapeHtml(reminder.notes)}</p>` : ''}
+
+                      <div class="reminder-actions-row">
+                        <button class="btn btn-outline-secondary btn-sm" type="button" data-action="edit-reminder" data-reminder-id="${escapeHtml(reminderId)}">
+                          <i class="bi bi-pencil"></i>
+                          Edit
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm" type="button" data-action="toggle-reminder" data-reminder-id="${escapeHtml(reminderId)}" data-is-active="${reminder.is_active ? '0' : '1'}">
+                          <i class="bi bi-power"></i>
+                          ${reminder.is_active ? 'Pause' : 'Resume'}
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm danger" type="button" data-action="delete-reminder" data-reminder-id="${escapeHtml(reminderId)}">
+                          <i class="bi bi-trash"></i>
+                          Delete
+                        </button>
+                      </div>
+
+                      <form class="reminder-edit-form" data-reminder-edit-form data-reminder-id="${escapeHtml(reminderId)}">
+                        <div class="reminder-form-grid">
+                          <label class="reminder-field">
+                            Title
+                            <input type="text" name="title" value="${escapeHtml(reminder.title || '')}" required />
+                          </label>
+                          <label class="reminder-field">
+                            Date
+                            <input type="date" name="remind_date" value="${escapeHtml(reminder.remind_date || today)}" required />
+                          </label>
+                          <label class="reminder-field">
+                            Time
+                            <input type="time" name="remind_time" value="${escapeHtml(reminder.remind_time || '09:00')}" required />
+                          </label>
+                          <label class="reminder-field">
+                            Repeat
+                            <select name="repeat_interval" data-reminder-repeat-select>
+                              <option value="none" ${repeatInterval === 'none' ? 'selected' : ''}>One-time</option>
+                              <option value="daily" ${repeatInterval === 'daily' ? 'selected' : ''}>Daily</option>
+                              <option value="weekly" ${repeatInterval === 'weekly' ? 'selected' : ''}>Weekly</option>
+                              <option value="monthly" ${repeatInterval === 'monthly' ? 'selected' : ''}>Monthly</option>
+                            </select>
+                          </label>
+                        </div>
+
+                        <div class="repeat-days ${repeatInterval === 'weekly' ? '' : 'is-hidden'}" data-repeat-days>
+                          ${renderReminderDayChips(weekdayOptions, selectedDays, `reminder-edit-${index}`)}
+                        </div>
+
+                        <div class="reminder-form-grid">
+                          <label class="reminder-field">
+                            Priority
+                            <select name="priority">
+                              <option value="low" ${String(reminder.priority || '').toLowerCase() === 'low' ? 'selected' : ''}>Low</option>
+                              <option value="normal" ${String(reminder.priority || 'normal').toLowerCase() === 'normal' ? 'selected' : ''}>Normal</option>
+                              <option value="high" ${String(reminder.priority || '').toLowerCase() === 'high' ? 'selected' : ''}>High</option>
+                            </select>
+                          </label>
+                          <label class="reminder-field">
+                            Notes
+                            <textarea name="notes" rows="3">${escapeHtml(reminder.notes || '')}</textarea>
+                          </label>
+                        </div>
+
+                        <div class="reminder-options">
+                          <label class="reminder-switch">
+                            <input type="checkbox" name="is_active" ${reminder.is_active ? 'checked' : ''} />
+                            <span>Active</span>
+                          </label>
+                          <label class="reminder-switch">
+                            <input type="checkbox" name="channel_toast" ${reminder.channel_toast ? 'checked' : ''} />
+                            <span>In-app popup</span>
+                          </label>
+                          <label class="reminder-switch">
+                            <input type="checkbox" name="channel_system" ${reminder.channel_system ? 'checked' : ''} />
+                            <span>System notification</span>
+                          </label>
+                          <label class="reminder-switch">
+                            <input type="checkbox" name="play_sound" ${reminder.play_sound ? 'checked' : ''} />
+                            <span>Play sound</span>
+                          </label>
+                        </div>
+
+                        <div class="reminder-actions-row">
+                          <button class="btn btn-outline-primary btn-sm" type="submit">
+                            <i class="bi bi-check2"></i>
+                            Save changes
+                          </button>
+                          <button class="btn btn-light btn-sm" type="button" data-action="cancel-reminder-edit" data-reminder-id="${escapeHtml(reminderId)}">
+                            Cancel
+                          </button>
+                        </div>
+                      </form>
+                    </article>
+                  `;
+                }).join('')}
+              </div>
+            ` : `
+              <div class="reminder-empty">
+                <p class="muted">No reminders yet. Create one to keep yourself on track.</p>
+              </div>
+            `}
+          </section>
+        </div>
+
+        <aside class="app-panel reminders-card reminders-settings">
+          <div class="reminders-card-header">
             <div>
-              <h5>${escapeHtml(reminder.title)}</h5>
-              <p>${escapeHtml(reminder.next_label || '-')} • ${escapeHtml(reminder.repeat_label || 'One-time')}</p>
+              <p class="goals-label">Focus nudges</p>
+              <h3 class="goals-title">Tracking reminder</h3>
             </div>
-            <div class="task-actions">
-              <button data-action="toggle-reminder" data-reminder-id="${reminder.id}" data-is-active="${reminder.is_active ? '0' : '1'}" type="button">${reminder.is_active ? 'Pause' : 'Resume'}</button>
-              <button data-action="delete-reminder" data-reminder-id="${reminder.id}" class="danger" type="button">Delete</button>
+          </div>
+
+          <form id="reminder-notification-form" class="reminder-form reminder-notification-form">
+            <label class="reminder-switch">
+              <input type="checkbox" name="notifications_enabled" ${notificationSettings.enabled ? 'checked' : ''} />
+              <span>Remind me when Pomodoro is off</span>
+            </label>
+
+            <label class="reminder-field">
+              Reminder interval (minutes)
+              <select name="notifications_interval_minutes">
+                ${intervalOptions.map((minutes) => `
+                  <option value="${minutes}" ${Number(notificationSettings.interval_minutes || 30) === minutes ? 'selected' : ''}>
+                    ${minutes} minute${minutes === 1 ? '' : 's'}
+                  </option>
+                `).join('')}
+              </select>
+            </label>
+
+            <div class="reminder-options">
+              <label class="reminder-switch">
+                <input type="checkbox" name="notifications_show_toast" ${notificationSettings.show_toast ? 'checked' : ''} />
+                <span>In-app popup</span>
+              </label>
+              <label class="reminder-switch">
+                <input type="checkbox" name="notifications_show_system" ${notificationSettings.show_system ? 'checked' : ''} />
+                <span>System notification</span>
+              </label>
+              <label class="reminder-switch">
+                <input type="checkbox" name="notifications_play_sound" ${notificationSettings.play_sound ? 'checked' : ''} />
+                <span>Play sound</span>
+              </label>
             </div>
-          </article>
-        `).join('')}
-      </div>
+
+            <label class="reminder-field">
+              Popup title
+              <input type="text" name="notifications_title" value="${escapeHtml(notificationSettings.title || '')}" />
+            </label>
+            <label class="reminder-field">
+              Popup message
+              <textarea name="notifications_message" rows="3">${escapeHtml(notificationSettings.message || '')}</textarea>
+            </label>
+
+            <div class="reminder-actions-row">
+              <button class="btn btn-outline-primary btn-sm" type="submit">
+                <i class="bi bi-check2-circle"></i>
+                Save settings
+              </button>
+              <button class="btn btn-outline-secondary btn-sm" type="button" data-action="test-reminder-notification">
+                <i class="bi bi-bell"></i>
+                Test notification
+              </button>
+            </div>
+          </form>
+        </aside>
+      </section>
     </div>
   `;
 }
 
-async function bindReminderActions(container, currentPath) {
+async function bindReminderActions(container, currentPath, payload) {
   const content = container.querySelector('#app-shell-content');
   if (!content) return;
+
+  const remindersRoot = content.querySelector('.reminders-page');
+  const isDemo = remindersRoot?.dataset.remindersDemo === '1';
+
+  const closeAllEditForms = () => {
+    content.querySelectorAll('[data-reminder-edit-form].is-open').forEach((form) => {
+      form.classList.remove('is-open');
+    });
+  };
+
+  const updateRepeatDaysVisibility = (form) => {
+    const repeatSelect = form.querySelector('[data-reminder-repeat-select]');
+    const daysPanel = form.querySelector('[data-repeat-days]');
+    if (!(repeatSelect instanceof HTMLSelectElement) || !(daysPanel instanceof HTMLElement)) return;
+    const isWeekly = repeatSelect.value === 'weekly';
+    daysPanel.classList.toggle('is-hidden', !isWeekly);
+  };
+
+  content.querySelectorAll('form').forEach((form) => {
+    const repeatSelect = form.querySelector('[data-reminder-repeat-select]');
+    if (!(repeatSelect instanceof HTMLSelectElement)) return;
+    updateRepeatDaysVisibility(form);
+    repeatSelect.addEventListener('change', () => updateRepeatDaysVisibility(form));
+  });
+
+  const collectReminderFormPayload = (form) => {
+    const titleInput = form.querySelector('input[name="title"]');
+    const dateInput = form.querySelector('input[name="remind_date"]');
+    const timeInput = form.querySelector('input[name="remind_time"]');
+    const repeatInput = form.querySelector('select[name="repeat_interval"]');
+    const priorityInput = form.querySelector('select[name="priority"]');
+    const notesInput = form.querySelector('textarea[name="notes"]');
+    const activeInput = form.querySelector('input[name="is_active"]');
+    const toastInput = form.querySelector('input[name="channel_toast"]');
+    const systemInput = form.querySelector('input[name="channel_system"]');
+    const soundInput = form.querySelector('input[name="play_sound"]');
+
+    const title = titleInput instanceof HTMLInputElement ? titleInput.value.trim() : '';
+    const remindDate = dateInput instanceof HTMLInputElement ? dateInput.value : '';
+    const remindTime = timeInput instanceof HTMLInputElement ? timeInput.value : '';
+    const repeatInterval = repeatInput instanceof HTMLSelectElement ? repeatInput.value : 'none';
+    const repeatDays = Array.from(form.querySelectorAll('input[name="repeat_days"]:checked'))
+      .map((input) => input instanceof HTMLInputElement ? input.value : '')
+      .filter(Boolean);
+    const priority = priorityInput instanceof HTMLSelectElement ? priorityInput.value : 'normal';
+    const notes = notesInput instanceof HTMLTextAreaElement ? notesInput.value.trim() : '';
+
+    return {
+      title,
+      remind_date: remindDate,
+      remind_time: remindTime,
+      repeat_interval: repeatInterval,
+      repeat_days: repeatInterval === 'weekly' ? repeatDays : [],
+      priority,
+      notes,
+      is_active: activeInput instanceof HTMLInputElement ? activeInput.checked : true,
+      channel_toast: toastInput instanceof HTMLInputElement ? toastInput.checked : true,
+      channel_system: systemInput instanceof HTMLInputElement ? systemInput.checked : false,
+      play_sound: soundInput instanceof HTMLInputElement ? soundInput.checked : false
+    };
+  };
 
   const createForm = content.querySelector('#reminder-create-form');
   if (createForm) {
     createForm.addEventListener('submit', async (event) => {
       event.preventDefault();
-      const title = content.querySelector('#reminder-title').value.trim();
-      const remindDate = content.querySelector('#reminder-date').value;
-      const remindTime = content.querySelector('#reminder-time').value;
-      const repeatInterval = content.querySelector('#reminder-repeat').value;
-      const priority = content.querySelector('#reminder-priority').value;
-
-      if (!title || !remindDate || !remindTime) return;
+      const formPayload = collectReminderFormPayload(createForm);
+      if (!formPayload.title || !formPayload.remind_date || !formPayload.remind_time) return;
 
       try {
-        await appApi.createReminder({
-          title,
-          remind_date: remindDate,
-          remind_time: remindTime,
-          repeat_interval: repeatInterval,
-          repeat_days: [],
-          priority,
-          notes: '',
-          is_active: true,
-          channel_toast: true,
-          channel_system: false,
-          play_sound: false
-        });
+        await appApi.createReminder(formPayload);
         showToast('Reminder created', 'success');
         await render(container, currentPath, {});
       } catch (error) {
@@ -5127,10 +5656,72 @@ async function bindReminderActions(container, currentPath) {
     });
   }
 
+  content.querySelectorAll('[data-action="edit-reminder"]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const reminderId = button.dataset.reminderId;
+      if (!reminderId) return;
+      const targetForm = Array.from(content.querySelectorAll('[data-reminder-edit-form]'))
+        .find((form) => form.dataset.reminderId === reminderId);
+      if (!targetForm) return;
+      const shouldOpen = !targetForm.classList.contains('is-open');
+      closeAllEditForms();
+      if (shouldOpen) {
+        targetForm.classList.add('is-open');
+        const firstInput = targetForm.querySelector('input[name="title"]');
+        if (firstInput instanceof HTMLInputElement) {
+          firstInput.focus();
+          firstInput.select();
+        }
+      }
+    });
+  });
+
+  content.querySelectorAll('[data-action="cancel-reminder-edit"]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const reminderId = button.dataset.reminderId;
+      if (!reminderId) return;
+      const targetForm = Array.from(content.querySelectorAll('[data-reminder-edit-form]'))
+        .find((form) => form.dataset.reminderId === reminderId);
+      if (!targetForm) return;
+      targetForm.classList.remove('is-open');
+    });
+  });
+
+  content.querySelectorAll('[data-reminder-edit-form]').forEach((form) => {
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const reminderId = form.dataset.reminderId;
+      if (!reminderId) return;
+
+      if (isDemo && String(reminderId).startsWith('demo-')) {
+        showToast('Demo reminder: connect API data to save changes.', 'info');
+        return;
+      }
+
+      const formPayload = collectReminderFormPayload(form);
+      if (!formPayload.title || !formPayload.remind_date || !formPayload.remind_time) return;
+
+      try {
+        await appApi.updateReminder(reminderId, formPayload);
+        showToast('Reminder updated', 'success');
+        await render(container, currentPath, {});
+      } catch (error) {
+        showToast(error.message || 'Failed to update reminder', 'error');
+      }
+    });
+  });
+
   content.querySelectorAll('[data-action="toggle-reminder"]').forEach((button) => {
     button.addEventListener('click', async () => {
+      const reminderId = button.dataset.reminderId;
+      if (!reminderId) return;
+      if (isDemo && String(reminderId).startsWith('demo-')) {
+        showToast('Demo reminder: connect API data to update this item.', 'info');
+        return;
+      }
+
       try {
-        await appApi.toggleReminder(button.dataset.reminderId, button.dataset.isActive === '1');
+        await appApi.toggleReminder(reminderId, button.dataset.isActive === '1');
         await render(container, currentPath, {});
       } catch (error) {
         showToast(error.message || 'Failed to update reminder', 'error');
@@ -5140,13 +5731,54 @@ async function bindReminderActions(container, currentPath) {
 
   content.querySelectorAll('[data-action="delete-reminder"]').forEach((button) => {
     button.addEventListener('click', async () => {
+      const reminderId = button.dataset.reminderId;
+      if (!reminderId) return;
+      if (isDemo && String(reminderId).startsWith('demo-')) {
+        showToast('Demo reminder: connect API data to delete this item.', 'info');
+        return;
+      }
+
       try {
-        await appApi.deleteReminder(button.dataset.reminderId);
+        await appApi.deleteReminder(reminderId);
         await render(container, currentPath, {});
       } catch (error) {
         showToast(error.message || 'Failed to delete reminder', 'error');
       }
     });
+  });
+
+  const notificationForm = content.querySelector('#reminder-notification-form');
+  if (notificationForm) {
+    notificationForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      try {
+        await appApi.updateNotificationSettings({
+          notifications_enabled: Boolean(notificationForm.querySelector('input[name="notifications_enabled"]')?.checked),
+          notifications_show_toast: Boolean(notificationForm.querySelector('input[name="notifications_show_toast"]')?.checked),
+          notifications_show_system: Boolean(notificationForm.querySelector('input[name="notifications_show_system"]')?.checked),
+          notifications_play_sound: Boolean(notificationForm.querySelector('input[name="notifications_play_sound"]')?.checked),
+          notifications_interval_minutes: Number(notificationForm.querySelector('select[name="notifications_interval_minutes"]')?.value || 30),
+          notifications_title: notificationForm.querySelector('input[name="notifications_title"]')?.value || '',
+          notifications_message: notificationForm.querySelector('textarea[name="notifications_message"]')?.value || ''
+        });
+        showToast('Notification settings updated', 'success');
+        await render(container, currentPath, {});
+      } catch (error) {
+        showToast(error.message || 'Failed to update notification settings', 'error');
+      }
+    });
+  }
+
+  const testNotificationButton = content.querySelector('[data-action="test-reminder-notification"]');
+  if (testNotificationButton) {
+    testNotificationButton.addEventListener('click', () => {
+      showToast('Test reminder sent. Check your active channels.', 'info');
+    });
+  }
+
+  content.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    closeAllEditForms();
   });
 }
 
@@ -5521,9 +6153,16 @@ async function renderSection(container, section, currentPath) {
     }
 
     if (section === 'reminders') {
-      const payload = await appApi.getReminders();
+      let payload;
+      try {
+        payload = await appApi.getReminders();
+      } catch (error) {
+        if (!isLocalhostRuntime()) throw error;
+        payload = {};
+      }
+      payload = withRemindersDemoPayload(payload);
       renderReminders(content, payload);
-      await bindReminderActions(container, currentPath);
+      await bindReminderActions(container, currentPath, payload);
       return;
     }
 

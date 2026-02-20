@@ -6135,6 +6135,385 @@ footer {
   }
 }
 
+/* ============================================
+   REMINDERS (App Parity Migration)
+   ============================================ */
+.reminders-page {
+  display: grid;
+  gap: 14px;
+}
+
+.reminders-page .goals-demo-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px dashed rgba(31, 111, 235, 0.45);
+  background: rgba(31, 111, 235, 0.08);
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.reminders-page .goals-demo-note i {
+  color: var(--accent);
+}
+
+.reminders-page .reminders-hero {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+}
+
+.reminders-page .reminder-stat-card {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--card);
+  padding: 14px;
+  display: grid;
+  gap: 5px;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.reminders-page .reminder-stat-card::after {
+  content: "";
+  position: absolute;
+  inset: auto -34px -56px auto;
+  width: 130px;
+  height: 130px;
+  background: radial-gradient(circle, rgba(31, 111, 235, 0.18), transparent 65%);
+  pointer-events: none;
+}
+
+.reminders-page .reminder-stat-label {
+  font-size: 0.74rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+
+.reminders-page .reminder-stat-value {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.reminders-page .reminder-stat-meta {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.reminders-page .reminders-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.reminders-page .reminders-main {
+  display: grid;
+  gap: 14px;
+}
+
+.reminders-page .reminders-card {
+  display: grid;
+  gap: 12px;
+}
+
+.reminders-page .reminders-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.reminders-page .reminder-form {
+  display: grid;
+  gap: 12px;
+}
+
+.reminders-page .reminder-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+}
+
+.reminders-page .reminder-field {
+  display: grid;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.reminders-page .reminder-field input,
+.reminders-page .reminder-field select,
+.reminders-page .reminder-field textarea {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--text);
+  padding: 10px 12px;
+}
+
+.reminders-page .repeat-days {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.reminders-page .repeat-days.is-hidden {
+  display: none;
+}
+
+.reminders-page .day-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--soft);
+  color: var(--text);
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.reminders-page .day-chip input {
+  accent-color: var(--accent);
+}
+
+.reminders-page .reminder-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.reminders-page .reminder-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--soft);
+  color: var(--text);
+  padding: 7px 11px;
+  font-size: 0.8rem;
+}
+
+.reminders-page .reminder-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.reminders-page .reminder-list {
+  display: grid;
+  gap: 10px;
+}
+
+.reminders-page .reminder-item {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--card);
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.reminders-page .reminder-item.is-overdue {
+  border-color: rgba(242, 169, 0, 0.7);
+  box-shadow: 0 10px 20px rgba(242, 169, 0, 0.12);
+}
+
+.reminders-page .reminder-item.is-paused {
+  opacity: 0.82;
+}
+
+.reminders-page .reminder-item-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.reminders-page .reminder-item h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.reminders-page .reminder-subtitle {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.reminders-page .reminder-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.reminders-page .reminder-pill {
+  border-radius: 999px;
+  border: 1px solid transparent;
+  padding: 4px 10px;
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--soft);
+}
+
+.reminders-page .priority-low {
+  border-color: rgba(148, 163, 184, 0.6);
+  color: #64748b;
+  background: rgba(148, 163, 184, 0.15);
+}
+
+.reminders-page .priority-normal {
+  border-color: rgba(59, 130, 246, 0.6);
+  color: #2563eb;
+  background: rgba(59, 130, 246, 0.12);
+}
+
+.reminders-page .priority-high {
+  border-color: rgba(249, 115, 22, 0.6);
+  color: #ea580c;
+  background: rgba(249, 115, 22, 0.15);
+}
+
+.reminders-page .status-muted {
+  color: var(--muted);
+}
+
+.reminders-page .status-warning {
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.45);
+  background: rgba(245, 158, 11, 0.14);
+}
+
+.reminders-page .status-ok {
+  color: #10b981;
+  border-color: rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.12);
+}
+
+.reminders-page .reminder-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.reminders-page .reminder-meta i {
+  margin-right: 6px;
+}
+
+.reminders-page .reminder-notes {
+  margin: 0;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  background: var(--soft);
+  color: var(--text);
+  padding: 10px 12px;
+  font-size: 0.84rem;
+}
+
+.reminders-page .reminder-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.reminders-page .reminder-edit-form {
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+  display: none;
+  gap: 10px;
+}
+
+.reminders-page .reminder-edit-form.is-open {
+  display: grid;
+}
+
+.reminders-page .reminder-empty {
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  background: var(--soft);
+  padding: 12px;
+}
+
+.reminders-page .reminder-notification-form {
+  gap: 10px;
+}
+
+[data-theme="dark"] .reminders-page .reminder-stat-card,
+[data-theme="dark"] .reminders-page .reminder-item {
+  background: linear-gradient(145deg, #1a2336 0%, #16213e 100%);
+  border-color: rgba(139, 179, 255, 0.2);
+}
+
+[data-theme="dark"] .reminders-page .goals-demo-note {
+  border-color: rgba(139, 179, 255, 0.45);
+  background: rgba(139, 179, 255, 0.12);
+}
+
+[data-theme="dark"] .reminders-page .day-chip,
+[data-theme="dark"] .reminders-page .reminder-switch {
+  background: rgba(18, 23, 34, 0.9);
+  border-color: rgba(139, 179, 255, 0.25);
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .reminders-page .reminder-field input,
+[data-theme="dark"] .reminders-page .reminder-field select,
+[data-theme="dark"] .reminders-page .reminder-field textarea {
+  background: #121722;
+  border-color: rgba(139, 179, 255, 0.25);
+}
+
+[data-theme="dark"] .reminders-page .reminder-notes,
+[data-theme="dark"] .reminders-page .reminder-empty {
+  background: rgba(18, 23, 34, 0.9);
+  border-color: rgba(139, 179, 255, 0.2);
+}
+
+[data-theme="dark"] .reminders-page .reminder-edit-form {
+  border-color: rgba(139, 179, 255, 0.22);
+}
+
+@media (max-width: 992px) {
+  .reminders-page .reminders-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .reminders-page .reminder-item-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .reminders-page .reminder-badges {
+    justify-content: flex-start;
+  }
+
+  .reminders-page .reminder-actions,
+  .reminders-page .reminder-actions-row {
+    justify-content: flex-start;
+  }
+
+  .reminders-page .reminder-options {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
 @media (max-width: 992px) {
   .timer-range-card {
     grid-template-columns: 1fr;
