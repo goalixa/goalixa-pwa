@@ -4233,6 +4233,86 @@ footer {
   padding: 16px;
 }
 
+.calendar-lite-page {
+  display: grid;
+  gap: 12px;
+}
+
+.calendar-lite-toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.calendar-lite-filters {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.calendar-toggle {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.calendar-toggle .btn {
+  border-radius: 999px;
+  min-height: 36px;
+  padding: 7px 14px;
+}
+
+.calendar-toggle .btn.is-active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
+}
+
+.calendar-toggle .btn.is-active:hover {
+  background: var(--timer-accent-strong);
+  border-color: var(--timer-accent-strong);
+}
+
+.calendar-filter {
+  display: grid;
+  gap: 6px;
+}
+
+.calendar-filter label {
+  font-size: 0.75rem;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.calendar-filter select {
+  min-width: 180px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--text);
+  padding: 8px 10px;
+  font-size: 0.86rem;
+}
+
+.calendar-week-meta-pill {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 0.82rem;
+  color: var(--muted);
+  background: var(--soft);
+  font-weight: 700;
+}
+
+.calendar-board-panel {
+  padding: 14px;
+}
+
 .calendar-week-board {
   display: grid;
   gap: 12px;
@@ -5807,6 +5887,22 @@ footer {
   .reports-donut-inner {
     width: 98px;
     height: 98px;
+  }
+
+  .calendar-lite-toolbar,
+  .calendar-lite-filters {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .calendar-filter select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .calendar-week-meta-pill {
+    justify-self: start;
   }
 
   .project-row-top,

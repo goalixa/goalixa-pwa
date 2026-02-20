@@ -30,6 +30,7 @@ const NAV_ITEMS = [
 let timerViewCleanup = null;
 let overviewViewCleanup = null;
 let reportsViewCleanup = null;
+let calendarViewCleanup = null;
 
 function resolveSection(path) {
   const subPath = path.replace('/app', '') || '/overview';
@@ -214,6 +215,13 @@ function clearReportsView() {
   if (typeof reportsViewCleanup === 'function') {
     reportsViewCleanup();
     reportsViewCleanup = null;
+  }
+}
+
+function clearCalendarView() {
+  if (typeof calendarViewCleanup === 'function') {
+    calendarViewCleanup();
+    calendarViewCleanup = null;
   }
 }
 
@@ -2674,41 +2682,183 @@ function renderCalendar(content, payload) {
   const weekDays = Array.isArray(payload.week_days) ? payload.week_days : [];
   const taskRows = Array.isArray(payload.task_rows) ? payload.task_rows : [];
   const habitRows = Array.isArray(payload.habit_rows) ? payload.habit_rows : [];
+  const projects = Array.isArray(payload.projects) ? payload.projects : [];
 
-  const renderRow = (label, checks) => {
-    const cells = checks.map((checked) => `<span class="calendar-dot ${checked ? 'checked' : ''}"></span>`).join('');
+  const renderWeekHeader = (title) => `
+    <div class="calendar-week-grid calendar-week-header-row" data-calendar-section="${title.toLowerCase()}">
+      <div class="calendar-weekday calendar-task-header">${title}</div>
+      ${weekDays.map((day) => `
+        <div class="calendar-weekday${day.is_today ? ' is-today' : ''}">
+          <span class="calendar-weekday-name">${escapeHtml(day.day || '')}</span>
+          <span class="calendar-weekday-date">${escapeHtml(day.date || '')}</span>
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  const renderTaskRows = () => {
+    if (!taskRows.length) {
+      return '<p class="empty" data-calendar-section="tasks">No tasks yet.</p>';
+    }
     return `
-      <article class="calendar-row-lite">
-        <h5>${escapeHtml(label)}</h5>
-        <div class="calendar-dot-row">${cells}</div>
-      </article>
+      <div class="calendar-week-body" data-calendar-section="tasks">
+        ${taskRows.map((task) => `
+          <div class="calendar-week-grid calendar-week-row" data-calendar-row data-project-id="${task.project_id || ''}">
+            <div class="calendar-task-cell">
+              <span class="calendar-task-name">${escapeHtml(task.name || '')}</span>
+              <span class="calendar-task-meta">${escapeHtml(task.project_name || 'No project')}</span>
+            </div>
+            ${weekDays.map((day, index) => {
+              const checked = Array.isArray(task.week_checks) ? Boolean(task.week_checks[index]) : false;
+              const statusClass = checked ? ' is-checked' : (day.is_future ? '' : ' is-missed');
+              return `
+                <div class="calendar-day-cell${day.is_today ? ' is-today' : ''}">
+                  <span class="calendar-check${statusClass}" title="${escapeHtml(day.full || '')}"></span>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        `).join('')}
+      </div>
+      <p class="empty" id="calendar-empty-filter" hidden>No tasks match this filter.</p>
+    `;
+  };
+
+  const renderHabitRows = () => {
+    if (!habitRows.length) {
+      return '<p class="empty" data-calendar-section="habits">No habits yet.</p>';
+    }
+    return `
+      <div class="calendar-week-body" data-calendar-section="habits">
+        ${habitRows.map((habit) => `
+          <div class="calendar-week-grid calendar-week-row">
+            <div class="calendar-task-cell">
+              <span class="calendar-task-name">${escapeHtml(habit.name || '')}</span>
+              <span class="calendar-task-meta">${escapeHtml(habit.frequency || 'Habit')}</span>
+            </div>
+            ${weekDays.map((day, index) => {
+              const checked = Array.isArray(habit.week_checks) ? Boolean(habit.week_checks[index]) : false;
+              const statusClass = checked ? ' is-checked' : (day.is_future ? '' : ' is-missed');
+              return `
+                <div class="calendar-day-cell${day.is_today ? ' is-today' : ''}">
+                  <span class="calendar-check${statusClass}" title="${escapeHtml(day.full || '')}"></span>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        `).join('')}
+      </div>
     `;
   };
 
   content.innerHTML = `
-    <div class="app-panel">
-      <div class="app-panel-header">
-        <h3>Calendar</h3>
-        <p>${escapeHtml(payload.week_label || 'Current week')}</p>
-      </div>
+    <div class="calendar-lite-page">
+      <section class="app-panel">
+        <div class="calendar-lite-toolbar">
+          <div class="calendar-lite-filters">
+            <div class="calendar-toggle">
+              <button class="btn btn-outline-primary btn-sm is-active" type="button" data-calendar-toggle="tasks">Tasks</button>
+              <button class="btn btn-outline-primary btn-sm" type="button" data-calendar-toggle="habits">Habits</button>
+            </div>
+            <div class="calendar-filter" data-calendar-filter-wrap>
+              <label for="calendar-project-filter">Project</label>
+              <select id="calendar-project-filter" ${projects.length ? '' : 'disabled'}>
+                <option value="">All projects</option>
+                ${projects.map((project) => `
+                  <option value="${project.id}">${escapeHtml(project.name || '')}</option>
+                `).join('')}
+              </select>
+            </div>
+          </div>
+          <div class="calendar-week-meta-pill">${escapeHtml(payload.week_label || 'Current week')}</div>
+        </div>
+      </section>
 
-      <div class="calendar-week-days">
-        ${weekDays.map((day) => `<span class="calendar-day-pill ${day.is_today ? 'today' : ''}">${escapeHtml(day.day)} ${escapeHtml(day.date)}</span>`).join('')}
-      </div>
-
-      <div class="calendar-section-block">
-        <h4>Tasks</h4>
-        ${taskRows.length === 0 ? '<p class="muted">No task rows.</p>' : ''}
-        ${taskRows.map((task) => renderRow(task.name, task.week_checks || [])).join('')}
-      </div>
-
-      <div class="calendar-section-block">
-        <h4>Habits</h4>
-        ${habitRows.length === 0 ? '<p class="muted">No habit rows.</p>' : ''}
-        ${habitRows.map((habit) => renderRow(habit.name, habit.week_checks || [])).join('')}
-      </div>
+      <section class="app-panel calendar-board-panel">
+        ${renderWeekHeader('Tasks')}
+        ${renderTaskRows()}
+        ${renderWeekHeader('Habits')}
+        ${renderHabitRows()}
+      </section>
     </div>
   `;
+}
+
+async function bindCalendarActions(container) {
+  clearCalendarView();
+
+  const content = container.querySelector('#app-shell-content');
+  if (!content) return;
+
+  const root = content.querySelector('.calendar-lite-page');
+  if (!root) return;
+
+  const rows = content.querySelectorAll('[data-calendar-row]');
+  const projectFilter = content.querySelector('#calendar-project-filter');
+  const emptyState = content.querySelector('#calendar-empty-filter');
+  const toggleButtons = content.querySelectorAll('[data-calendar-toggle]');
+  const sections = content.querySelectorAll('[data-calendar-section]');
+  const projectFilterWrap = content.querySelector('[data-calendar-filter-wrap]');
+
+  const abortController = new AbortController();
+  const { signal } = abortController;
+
+  const applyFilter = () => {
+    if (!rows.length || !projectFilter) return;
+    const selected = projectFilter.value;
+    let visibleCount = 0;
+
+    rows.forEach((row) => {
+      const rowProjectId = row.dataset.projectId || '';
+      const isVisible = !selected || rowProjectId === selected;
+      row.hidden = !isVisible;
+      if (isVisible) {
+        visibleCount += 1;
+      }
+    });
+
+    if (emptyState) {
+      emptyState.hidden = visibleCount !== 0;
+    }
+  };
+
+  const setActiveSection = (requestedSection) => {
+    const target = requestedSection === 'habits' ? 'habits' : 'tasks';
+
+    sections.forEach((section) => {
+      const visible = section.dataset.calendarSection === target;
+      section.hidden = !visible;
+    });
+
+    toggleButtons.forEach((button) => {
+      button.classList.toggle('is-active', button.dataset.calendarToggle === target);
+    });
+
+    const showTasks = target === 'tasks';
+    if (projectFilterWrap) projectFilterWrap.hidden = !showTasks;
+    if (projectFilter) projectFilter.disabled = !showTasks;
+    if (!showTasks && emptyState) emptyState.hidden = true;
+  };
+
+  if (projectFilter) {
+    projectFilter.addEventListener('change', applyFilter, { signal });
+    applyFilter();
+  }
+
+  toggleButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      setActiveSection(button.dataset.calendarToggle);
+      if (button.dataset.calendarToggle === 'tasks') {
+        applyFilter();
+      }
+    }, { signal });
+  });
+
+  setActiveSection('tasks');
+
+  calendarViewCleanup = () => {
+    abortController.abort();
+  };
 }
 
 function renderGoals(content, payload, viewMode = 'overview') {
@@ -3583,6 +3733,10 @@ async function renderSection(container, section, currentPath) {
     clearReportsView();
   }
 
+  if (section !== 'calendar') {
+    clearCalendarView();
+  }
+
   if (section !== 'tasks') {
     clearTasksView();
   }
@@ -3676,6 +3830,7 @@ async function renderSection(container, section, currentPath) {
     if (section === 'calendar') {
       const payload = await appApi.getCalendarBoard();
       renderCalendar(content, payload);
+      await bindCalendarActions(container);
       return;
     }
 
