@@ -1,7 +1,7 @@
 {
   "name": "goalixa-pwa",
   "version": "1.0.0",
-  "description": "Unified PWA Container for Goalixa - Landing, Auth, and App in one installable app",
+  "description": "Goalixa PWA frontend for auth and app experience with API-gateway backend",
   "private": true,
   "scripts": {
     "serve": "npx http-server . -p 8080 -c-1 --cors",

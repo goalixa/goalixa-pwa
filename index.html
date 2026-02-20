@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
-  <meta name="description" content="Goalixa - Goals, plans, projects, and tasks in one app." />
+  <meta name="description" content="Goalixa PWA workspace for goals, projects, tasks, and planning." />
   <meta name="theme-color" content="#0f172a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Goalixa" />
 
-  <title>Goalixa - Goals, Plans, Projects, Tasks</title>
+  <title>Goalixa PWA</title>
 
   <!-- PWA Manifest -->
   <link rel="manifest" href="/manifest.webmanifest" />
@@ -33,47 +33,24 @@
   <!-- Toast Container -->
   <div id="toast-container" class="toast-container"></div>
 
+  <!-- Runtime config -->
+  <script>
+    (() => {
+      const host = window.location.hostname;
+      const isLocal = host === 'localhost' || host === '127.0.0.1' || host === '::1';
+      if (isLocal) {
+        // Ensure localhost never falls back to production API endpoints.
+        window.__GOALIXA_API_BASE__ = '';
+      }
+    })();
+  </script>
+
   <!-- Scripts -->
   <!-- Load router as module - it will import dependencies -->
   <script type="module" src="/js/router.js"></script>
 
   <!-- Service Worker Registration -->
   <script>
-    // Register Service Worker
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js', {
-          scope: '/'
-        }).then((registration) => {
-          console.log('[PWA] Service Worker registered:', registration.scope);
-
-          // Listen for updates
-          registration.addEventListener('updatefound', () => {
-            const newWorker = registration.installing;
-            newWorker.addEventListener('statechange', () => {
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                // New version available
-                showUpdateNotification();
-              }
-            });
-          });
-        }).catch((error) => {
-          console.error('[PWA] Service Worker registration failed:', error);
-        });
-
-        // Handle service worker messages
-        navigator.serviceWorker.addEventListener('message', (event) => {
-          console.log('[PWA] Message from service worker:', event.data);
-        });
-
-        // Check for service worker updates on page focus
-        window.addEventListener('focus', () => {
-          registration.update();
-        });
-      });
-    }
-
-    // Show update notification
     function showUpdateNotification() {
       const toast = document.createElement('div');
       toast.className = 'toast toast-info';
@@ -92,6 +69,51 @@
       setTimeout(() => toast.remove(), 30000);
     }
 
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', async () => {
+        const host = window.location.hostname;
+        const isLocal = host === 'localhost' || host === '127.0.0.1' || host === '::1';
+
+        if (isLocal) {
+          // Prevent stale localhost caches from old builds.
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(registrations.map((registration) => registration.unregister()));
+
+          if ('caches' in window) {
+            const cacheKeys = await caches.keys();
+            await Promise.all(cacheKeys.map((key) => caches.delete(key)));
+          }
+          return;
+        }
+
+        try {
+          const registration = await navigator.serviceWorker.register('/sw.js', {
+            scope: '/'
+          });
+          console.log('[PWA] Service Worker registered:', registration.scope);
+
+          registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing;
+            if (!newWorker) return;
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                showUpdateNotification();
+              }
+            });
+          });
+
+          navigator.serviceWorker.addEventListener('message', (event) => {
+            console.log('[PWA] Message from service worker:', event.data);
+          });
+
+          window.addEventListener('focus', () => {
+            registration.update();
+          });
+        } catch (error) {
+          console.error('[PWA] Service Worker registration failed:', error);
+        }
+      });
+    }
   </script>
 </body>
 </html>

@@ -1,39 +1,50 @@
 /**
  * API Client for Goalixa PWA
- * Handles communication with all microservices
+ * Handles communication with API gateway and backend services.
  */
 
-// API endpoints configuration
+function getRuntimeApiBase() {
+  if (typeof window === 'undefined') {
+    return 'https://api.goalixa.com';
+  }
+
+  if (typeof window.__GOALIXA_API_BASE__ === 'string') {
+    return window.__GOALIXA_API_BASE__;
+  }
+
+  const host = window.location.hostname;
+  const isLocal =
+    host === 'localhost' ||
+    host === '127.0.0.1' ||
+    host === '::1';
+
+  // Local development should not call production endpoints.
+  return isLocal ? '' : 'https://api.goalixa.com';
+}
+
 const API_CONFIG = {
-  api: (typeof window !== 'undefined' && window.__GOALIXA_API_BASE__) || 'https://api.goalixa.com'
+  api: getRuntimeApiBase()
 };
 
-// Refresh state to prevent multiple simultaneous refresh attempts
 let isRefreshing = false;
 let refreshSubscribers = [];
 
 function buildUrl(path) {
+  if (!API_CONFIG.api) {
+    return path;
+  }
   return `${API_CONFIG.api}${path}`;
 }
 
-/**
- * Add subscriber to be notified after token refresh
- */
 function subscribeToRefresh(callback) {
   refreshSubscribers.push(callback);
 }
 
-/**
- * Notify all subscribers that refresh is complete
- */
 function onRefreshed() {
   refreshSubscribers.forEach((callback) => callback());
   refreshSubscribers = [];
 }
 
-/**
- * API Request wrapper with automatic token refresh on 401
- */
 async function apiRequest(url, options = {}) {
   const {
     method = 'GET',
@@ -63,8 +74,6 @@ async function apiRequest(url, options = {}) {
     clearTimeout(timeoutId);
 
     const contentType = response.headers.get('content-type');
-
-    // Handle non-JSON responses
     if (!contentType || !contentType.includes('application/json')) {
       if (!response.ok) {
         if (response.status === 401) {
@@ -91,18 +100,13 @@ async function apiRequest(url, options = {}) {
     return data;
   } catch (error) {
     clearTimeout(timeoutId);
-
     if (error.name === 'AbortError') {
       throw new Error('Request timeout');
     }
-
     throw error;
   }
 }
 
-/**
- * Try multiple endpoints in order for compatibility during migration.
- */
 async function apiRequestWithFallback(urls, options = {}) {
   let lastError = null;
 
@@ -121,9 +125,6 @@ async function apiRequestWithFallback(urls, options = {}) {
   throw lastError || new Error('All fallback API endpoints failed');
 }
 
-/**
- * Handle 401 errors with automatic token refresh
- */
 async function handle401Error(originalUrl, originalOptions) {
   if (isRefreshing) {
     return new Promise((resolve, reject) => {
@@ -141,7 +142,6 @@ async function handle401Error(originalUrl, originalOptions) {
   isRefreshing = true;
 
   try {
-    // Dynamically import auth to avoid circular dependency
     const { refreshToken } = await import('./auth.js');
     const refreshResult = await refreshToken();
 
@@ -160,29 +160,6 @@ async function handle401Error(originalUrl, originalOptions) {
   }
 }
 
-/**
- * Landing Service API
- */
-export const landingApi = {
-  async getContent() {
-    return apiRequest(buildUrl('/landing/content'));
-  },
-
-  async submitContact(formData) {
-    return apiRequest(buildUrl('/landing/contact'), {
-      method: 'POST',
-      body: formData
-    });
-  },
-
-  async getPricing() {
-    return apiRequest(buildUrl('/landing/pricing'));
-  }
-};
-
-/**
- * Auth Service API
- */
 export const authApi = {
   async login(email, password) {
     return apiRequest(buildUrl('/auth/login'), {
@@ -242,9 +219,6 @@ export const authApi = {
   }
 };
 
-/**
- * App Service API
- */
 export const appApi = {
   async getTasks(params = {}) {
     const queryString = new URLSearchParams(params).toString();
@@ -324,6 +298,230 @@ export const appApi = {
     return apiRequest(buildUrl(`/app/timer/entries${suffix}`));
   },
 
+  async getTimerDashboard(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    const suffix = queryString ? `?${queryString}` : '';
+    return apiRequest(buildUrl(`/app/timer/dashboard${suffix}`));
+  },
+
+  async getCalendarBoard() {
+    return apiRequest(buildUrl('/app/calendar/board'));
+  },
+
+  async setDailyTarget(targetSeconds) {
+    return apiRequest(buildUrl('/app/daily-target'), {
+      method: 'POST',
+      body: { target_seconds: targetSeconds }
+    });
+  },
+
+  async getPlanner() {
+    return apiRequest(buildUrl('/app/planner'));
+  },
+
+  async createTodo(name) {
+    return apiRequest(buildUrl('/app/todos'), {
+      method: 'POST',
+      body: { name }
+    });
+  },
+
+  async toggleTodo(todoId, done) {
+    return apiRequest(buildUrl(`/app/todos/${todoId}/toggle`), {
+      method: 'POST',
+      body: { done }
+    });
+  },
+
+  async deleteTodo(todoId) {
+    return apiRequest(buildUrl(`/app/todos/${todoId}/delete`), {
+      method: 'POST'
+    });
+  },
+
+  async getHabits() {
+    return apiRequest(buildUrl('/app/habits'));
+  },
+
+  async createHabit(habitData) {
+    return apiRequest(buildUrl('/app/habits'), {
+      method: 'POST',
+      body: habitData
+    });
+  },
+
+  async toggleHabit(habitId, payload) {
+    return apiRequest(buildUrl(`/app/habits/${habitId}/toggle`), {
+      method: 'POST',
+      body: payload
+    });
+  },
+
+  async updateHabit(habitId, habitData) {
+    return apiRequest(buildUrl(`/app/habits/${habitId}/update`), {
+      method: 'POST',
+      body: habitData
+    });
+  },
+
+  async deleteHabit(habitId) {
+    return apiRequest(buildUrl(`/app/habits/${habitId}/delete`), {
+      method: 'POST'
+    });
+  },
+
+  async getGoals() {
+    return apiRequest(buildUrl('/app/goals'));
+  },
+
+  async getGoal(goalId) {
+    return apiRequest(buildUrl(`/app/goals/${goalId}`));
+  },
+
+  async createGoal(goalData) {
+    return apiRequest(buildUrl('/app/goals'), {
+      method: 'POST',
+      body: goalData
+    });
+  },
+
+  async updateGoal(goalId, goalData) {
+    return apiRequest(buildUrl(`/app/goals/${goalId}/edit`), {
+      method: 'POST',
+      body: goalData
+    });
+  },
+
+  async deleteGoal(goalId) {
+    return apiRequest(buildUrl(`/app/goals/${goalId}/delete`), {
+      method: 'POST'
+    });
+  },
+
+  async toggleGoalSubgoal(subgoalId, done) {
+    return apiRequest(buildUrl(`/app/goals/subgoals/${subgoalId}/toggle`), {
+      method: 'POST',
+      body: { done }
+    });
+  },
+
+  async addGoalSubgoal(goalId, subgoalData) {
+    return apiRequest(buildUrl(`/app/goals/${goalId}/subgoals`), {
+      method: 'POST',
+      body: subgoalData
+    });
+  },
+
+  async getWeeklyGoals(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    const suffix = queryString ? `?${queryString}` : '';
+    return apiRequest(buildUrl(`/app/weekly-goals${suffix}`));
+  },
+
+  async createWeeklyGoal(goalData) {
+    return apiRequest(buildUrl('/app/weekly-goals'), {
+      method: 'POST',
+      body: goalData
+    });
+  },
+
+  async toggleWeeklyGoal(goalId, status) {
+    return apiRequest(buildUrl(`/app/weekly-goals/${goalId}/toggle`), {
+      method: 'POST',
+      body: { status }
+    });
+  },
+
+  async deleteWeeklyGoal(goalId) {
+    return apiRequest(buildUrl(`/app/weekly-goals/${goalId}/delete`), {
+      method: 'POST'
+    });
+  },
+
+  async getReminders() {
+    return apiRequest(buildUrl('/app/reminders'));
+  },
+
+  async createReminder(reminderData) {
+    return apiRequest(buildUrl('/app/reminders'), {
+      method: 'POST',
+      body: reminderData
+    });
+  },
+
+  async updateReminder(reminderId, reminderData) {
+    return apiRequest(buildUrl(`/app/reminders/${reminderId}/update`), {
+      method: 'POST',
+      body: reminderData
+    });
+  },
+
+  async toggleReminder(reminderId, isActive) {
+    return apiRequest(buildUrl(`/app/reminders/${reminderId}/toggle`), {
+      method: 'POST',
+      body: { is_active: isActive }
+    });
+  },
+
+  async deleteReminder(reminderId) {
+    return apiRequest(buildUrl(`/app/reminders/${reminderId}/delete`), {
+      method: 'POST'
+    });
+  },
+
+  async getLabels() {
+    return apiRequest(buildUrl('/app/labels'));
+  },
+
+  async createLabel(name, color) {
+    return apiRequest(buildUrl('/app/labels'), {
+      method: 'POST',
+      body: { name, color }
+    });
+  },
+
+  async updateLabel(labelId, name, color) {
+    return apiRequest(buildUrl(`/app/labels/${labelId}/edit`), {
+      method: 'POST',
+      body: { name, color }
+    });
+  },
+
+  async deleteLabel(labelId) {
+    return apiRequest(buildUrl(`/app/labels/${labelId}/delete`), {
+      method: 'POST'
+    });
+  },
+
+  async getAccount() {
+    return apiRequest(buildUrl('/app/account'));
+  },
+
+  async updateProfile(profileData) {
+    return apiRequest(buildUrl('/app/settings/profile'), {
+      method: 'POST',
+      body: profileData
+    });
+  },
+
+  async updateTimezone(timezone) {
+    return apiRequest(buildUrl('/app/settings/timezone'), {
+      method: 'POST',
+      body: { timezone }
+    });
+  },
+
+  async getNotificationSettings() {
+    return apiRequest(buildUrl('/app/settings/notifications'));
+  },
+
+  async updateNotificationSettings(settingsData) {
+    return apiRequest(buildUrl('/app/settings/notifications'), {
+      method: 'POST',
+      body: settingsData
+    });
+  },
+
   async getOverview() {
     const [tasks, projects] = await Promise.all([
       this.getTasks(),
@@ -344,7 +542,6 @@ export const appApi = {
     };
   },
 
-  // Backward-compatible aliases.
   async getReports(params = {}) {
     return this.getReportsSummary(params);
   },
@@ -354,22 +551,11 @@ export const appApi = {
   }
 };
 
-/**
- * Health check for all services
- */
 export async function healthCheck() {
   const results = {
-    landing: false,
     auth: false,
     app: false
   };
-
-  try {
-    await apiRequest(buildUrl('/landing/health'), { timeout: 5000 });
-    results.landing = true;
-  } catch (err) {
-    console.error('Landing service health check failed:', err);
-  }
 
   try {
     await apiRequest(buildUrl('/auth/health'), { timeout: 5000 });

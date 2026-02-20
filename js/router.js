@@ -1,6 +1,6 @@
 /**
  * Client-Side Router for Goalixa PWA
- * Hash-based routing with support for landing, auth, and app views
+ * Hash-based routing with support for auth and app views.
  */
 
 import { isAuthenticated, initAuth } from './auth.js';
@@ -8,12 +8,11 @@ import { eventBus } from './utils.js';
 
 // Route configuration
 const routes = {
-  '/': { view: 'landing', title: 'Goalixa - Goals, Plans, Projects, Tasks' },
-  '/landing': { view: 'landing', title: 'Goalixa - Landing' },
-  '/demo': { view: 'demo', title: 'Goalixa - Demo Tour' },
+  '/': { view: 'app', title: 'Goalixa - App', auth: true },
   '/auth': { view: 'auth', title: 'Goalixa - Login' },
   '/login': { view: 'auth', title: 'Goalixa - Login' },
   '/signup': { view: 'auth', title: 'Goalixa - Sign Up' },
+  '/singnup': { view: 'auth', title: 'Goalixa - Sign Up' }, // Typo alias kept intentionally.
   '/register': { view: 'auth', title: 'Goalixa - Register' },
   '/forgot-password': { view: 'auth', title: 'Goalixa - Reset Password' },
   '/reset-password': { view: 'auth', title: 'Goalixa - Reset Password' },
@@ -21,12 +20,16 @@ const routes = {
   '/app/timer': { view: 'app', title: 'Goalixa - Timer', auth: true },
   '/app/overview': { view: 'app', title: 'Goalixa - Overview', auth: true },
   '/app/goals': { view: 'app', title: 'Goalixa - Goals', auth: true },
+  '/app/long-term-goals': { view: 'app', title: 'Goalixa - Long-term Goals', auth: true },
+  '/app/weekly-goals': { view: 'app', title: 'Goalixa - Weekly Goals', auth: true },
   '/app/habits': { view: 'app', title: 'Goalixa - Habits', auth: true },
   '/app/projects': { view: 'app', title: 'Goalixa - Projects', auth: true },
   '/app/tasks': { view: 'app', title: 'Goalixa - Tasks', auth: true },
   '/app/reports': { view: 'app', title: 'Goalixa - Reports', auth: true },
   '/app/calendar': { view: 'app', title: 'Goalixa - Calendar', auth: true },
   '/app/planner': { view: 'app', title: 'Goalixa - Planner', auth: true },
+  '/app/reminders': { view: 'app', title: 'Goalixa - Reminders', auth: true },
+  '/app/labels': { view: 'app', title: 'Goalixa - Labels', auth: true },
   '/app/account': { view: 'app', title: 'Goalixa - Account', auth: true }
 };
 
@@ -36,8 +39,6 @@ const externalRoutes = {};
 
 // View modules registry
 const viewModules = {
-  landing: null,
-  demo: null,
   auth: null,
   app: null
 };
@@ -47,6 +48,29 @@ let currentRoute = null;
 let currentParams = {};
 
 /**
+ * Load a view module and cache it.
+ */
+async function loadViewModule(viewName) {
+  try {
+    if (viewName === 'auth') {
+      const authModule = await import('./views/auth-view.js');
+      viewModules.auth = authModule.default || authModule;
+      return viewModules.auth;
+    }
+
+    if (viewName === 'app') {
+      const appModule = await import('./views/app-view.js');
+      viewModules.app = appModule.default || appModule;
+      return viewModules.app;
+    }
+  } catch (err) {
+    console.error(`Failed to load ${viewName} view:`, err);
+  }
+
+  return null;
+}
+
+/**
  * Initialize router
  */
 export async function initRouter() {
@@ -54,33 +78,8 @@ export async function initRouter() {
   await initAuth();
 
   // Register view modules
-  try {
-    const landingModule = await import('./views/landing-view.js');
-    viewModules.landing = landingModule.default || landingModule;
-  } catch (err) {
-    console.error('Failed to load landing view:', err);
-  }
-
-  try {
-    const demoModule = await import('./views/demo-view.js');
-    viewModules.demo = demoModule.default || demoModule;
-  } catch (err) {
-    console.error('Failed to load demo view:', err);
-  }
-
-  try {
-    const authModule = await import('./views/auth-view.js');
-    viewModules.auth = authModule.default || authModule;
-  } catch (err) {
-    console.error('Failed to load auth view:', err);
-  }
-
-  try {
-    const appModule = await import('./views/app-view.js');
-    viewModules.app = appModule.default || appModule;
-  } catch (err) {
-    console.error('Failed to load app view:', err);
-  }
+  await loadViewModule('auth');
+  await loadViewModule('app');
 
   // Handle initial route
   handleRoute();
@@ -153,7 +152,7 @@ async function handleRoute() {
     });
   }
 
-  // Redirect to canonical landing/auth UIs when applicable
+  // Redirect to external targets when configured
   const externalTarget = resolveExternalRoute(pathname, currentParams);
   if (externalTarget) {
     window.location.assign(externalTarget);
@@ -164,8 +163,8 @@ async function handleRoute() {
   const route = routes[pathname] || findDynamicRoute(pathname);
 
   if (!route) {
-    // 404 - redirect to landing
-    navigate('/');
+    // 404 - redirect to app
+    navigate('/app');
     return;
   }
 
@@ -222,14 +221,19 @@ async function renderView(viewName, path) {
   container.innerHTML = '';
 
   // Get view module
-  const viewModule = viewModules[viewName];
+  let viewModule = viewModules[viewName];
+
+  // Retry dynamic import on demand if preload failed.
+  if (!viewModule) {
+    viewModule = await loadViewModule(viewName);
+  }
 
   if (!viewModule) {
     container.innerHTML = `
       <div class="error-view">
         <h2>View Not Found</h2>
         <p>The requested view could not be loaded.</p>
-        <a href="#/" class="btn btn-primary">Go Home</a>
+        <a href="/app" class="btn btn-primary">Go Home</a>
       </div>
     `;
     return;
@@ -248,7 +252,7 @@ async function renderView(viewName, path) {
       <div class="error-view">
         <h2>Something went wrong</h2>
         <p>${error.message}</p>
-        <a href="#/" class="btn btn-primary">Go Home</a>
+        <a href="/app" class="btn btn-primary">Go Home</a>
       </div>
     `;
   }

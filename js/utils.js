@@ -2,6 +2,21 @@
  * Utility functions for Goalixa PWA
  */
 
+function getDefaultCookieDomain() {
+  if (typeof window === 'undefined') return '.goalixa.com';
+  const host = window.location.hostname;
+  if (host === 'localhost' || host === '127.0.0.1' || host === '::1') {
+    return null;
+  }
+  return '.goalixa.com';
+}
+
+function isLocalhost() {
+  if (typeof window === 'undefined') return false;
+  const host = window.location.hostname;
+  return host === 'localhost' || host === '127.0.0.1' || host === '::1';
+}
+
 /**
  * Create and show a toast notification
  */
@@ -76,10 +91,10 @@ export function getCookie(name) {
  */
 export function setCookie(name, value, options = {}) {
   const {
-    domain = '.goalixa.com',
+    domain = getDefaultCookieDomain(),
     path = '/',
     maxAge = 60 * 60 * 24 * 30, // 30 days
-    secure = true,
+    secure = !isLocalhost(),
     sameSite = 'Lax'  // Changed from 'lax' to 'Lax' (standard case)
   } = options;
 
@@ -98,8 +113,12 @@ export function setCookie(name, value, options = {}) {
  * Delete cookie
  */
 export function deleteCookie(name, options = {}) {
-  const { domain = '.goalixa.com', path = '/' } = options;
-  document.cookie = `${name}=; Path=${path}; Domain=${domain}; Max-Age=0`;
+  const { domain = getDefaultCookieDomain(), path = '/' } = options;
+  let cookieString = `${name}=; Path=${path}; Max-Age=0`;
+  if (domain) {
+    cookieString += `; Domain=${domain}`;
+  }
+  document.cookie = cookieString;
 }
 
 /**

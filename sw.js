@@ -1,9 +1,9 @@
 /**
  * Unified PWA Service Worker for Goalixa
- * Handles caching for landing, auth, and app views
+ * Handles caching for auth and app views
  */
 
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const CACHE_PREFIX = 'goalixa-pwa';
 
 // Cache names for different strategies
@@ -25,7 +25,6 @@ const CORE_ASSETS = [
   '/js/api.js',
   '/js/auth.js',
   '/js/utils.js',
-  '/js/views/landing-view.js',
   '/js/views/auth-view.js',
   '/js/views/app-view.js'
 ];

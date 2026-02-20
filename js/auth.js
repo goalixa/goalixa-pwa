@@ -27,6 +27,57 @@ const PROACTIVE_REFRESH_INTERVAL = 13 * 60 * 1000; // 13 minutes (refresh before
 
 // Auth state change listeners
 const listeners = [];
+const DEV_BYPASS_KEY = 'goalixa_dev_bypass';
+
+function isLocalhost() {
+  if (typeof window === 'undefined') return false;
+  const host = window.location.hostname;
+  return host === 'localhost' || host === '127.0.0.1' || host === '::1';
+}
+
+function getDevBypassUser() {
+  const storedAuth = storage.get('auth');
+  if (storedAuth && storedAuth.user && storedAuth.user.is_dev_bypass) {
+    return storedAuth.user;
+  }
+
+  return {
+    id: 'local-dev-user',
+    email: 'local@goalixa.dev',
+    full_name: 'Local Dev User',
+    name: 'Local Dev User',
+    is_dev_bypass: true
+  };
+}
+
+function isLocalDevBypassEnabled() {
+  return isLocalhost() && storage.get(DEV_BYPASS_KEY, false) === true;
+}
+
+export function enableLocalDevBypass(userOverrides = {}) {
+  if (!isLocalhost()) {
+    return false;
+  }
+
+  const user = { ...getDevBypassUser(), ...userOverrides, is_dev_bypass: true };
+  storage.set(DEV_BYPASS_KEY, true);
+  storage.set('auth', {
+    isAuthenticated: true,
+    user,
+    token: null
+  });
+
+  authState.isAuthenticated = true;
+  authState.user = user;
+  authState.token = null;
+  authState.isLoading = false;
+  notifyListeners();
+  return true;
+}
+
+export function disableLocalDevBypass() {
+  storage.remove(DEV_BYPASS_KEY);
+}
 
 /**
  * Initialize auth state from cookies/storage
@@ -34,6 +85,15 @@ const listeners = [];
 export async function initAuth() {
   authState.isLoading = true;
   notifyListeners();
+
+  if (isLocalDevBypassEnabled()) {
+    authState.isAuthenticated = true;
+    authState.user = getDevBypassUser();
+    authState.token = null;
+    authState.isLoading = false;
+    notifyListeners();
+    return authState;
+  }
 
   try {
     // Always verify with server (auth uses HttpOnly cookies)
@@ -83,6 +143,8 @@ export async function login(email, password) {
     // Backend sets HttpOnly cookies (goalixa_access, goalixa_refresh)
     // No need to manually set cookies
     if (response.success || response.user) {
+      disableLocalDevBypass();
+
       // Update state
       authState.isAuthenticated = true;
       authState.user = response.user;
@@ -123,6 +185,8 @@ export async function register(userData) {
 
     // Backend sets HttpOnly cookies
     if (response.success || response.user) {
+      disableLocalDevBypass();
+
       authState.isAuthenticated = true;
       authState.user = response.user;
       authState.token = null;
