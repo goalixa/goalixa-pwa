@@ -225,6 +225,12 @@ function clearCalendarView() {
   }
 }
 
+function isLocalhostRuntime() {
+  if (typeof window === 'undefined') return false;
+  const host = window.location.hostname;
+  return host === 'localhost' || host === '127.0.0.1' || host === '::1';
+}
+
 function formatDurationAxis(seconds) {
   const safe = Math.max(0, Math.floor(Number(seconds || 0)));
   const hours = Math.floor(safe / 3600);
@@ -2678,11 +2684,111 @@ async function bindTimerActions(container, currentPath) {
   }, { signal });
 }
 
+function buildCalendarDemoPayload() {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const mondayOffset = (today.getDay() + 6) % 7;
+  const weekStart = new Date(today);
+  weekStart.setDate(today.getDate() - mondayOffset);
+
+  const weekDays = Array.from({ length: 7 }, (_, index) => {
+    const dayDate = new Date(weekStart);
+    dayDate.setDate(weekStart.getDate() + index);
+    const dayShort = dayDate.toLocaleDateString(undefined, { weekday: 'short' });
+    const dateShort = dayDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    const full = dayDate.toLocaleDateString(undefined, {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+    const dayStamp = dayDate.toDateString();
+    return {
+      day: dayShort,
+      date: dateShort,
+      full,
+      is_today: dayStamp === today.toDateString(),
+      is_future: dayDate.getTime() > today.getTime()
+    };
+  });
+
+  return {
+    week_days: weekDays,
+    task_rows: [
+      {
+        id: 'demo-task-1',
+        name: 'Ship PWA auth hardening',
+        project_id: 'proj-foundation',
+        project_name: 'Foundation',
+        week_checks: [true, true, false, true, false, false, false]
+      },
+      {
+        id: 'demo-task-2',
+        name: 'Migrate dashboard widgets',
+        project_id: 'proj-frontend',
+        project_name: 'Frontend',
+        week_checks: [true, false, true, false, false, false, false]
+      },
+      {
+        id: 'demo-task-3',
+        name: 'BFF API contract review',
+        project_id: 'proj-platform',
+        project_name: 'Platform',
+        week_checks: [false, true, true, false, false, false, false]
+      }
+    ],
+    habit_rows: [
+      {
+        id: 'demo-habit-1',
+        name: 'Daily planning',
+        frequency: 'Daily',
+        week_checks: [true, true, true, false, false, false, false]
+      },
+      {
+        id: 'demo-habit-2',
+        name: 'Review focus score',
+        frequency: 'Daily',
+        week_checks: [true, false, true, true, false, false, false]
+      }
+    ],
+    projects: [
+      { id: 'proj-foundation', name: 'Foundation' },
+      { id: 'proj-frontend', name: 'Frontend' },
+      { id: 'proj-platform', name: 'Platform' }
+    ],
+    week_label: `${weekDays[0].date} - ${weekDays[6].date}`,
+    __demo: true
+  };
+}
+
+function withCalendarDemoPayload(payload) {
+  const safe = payload && typeof payload === 'object' ? payload : {};
+  const hasTasks = Array.isArray(safe.task_rows) && safe.task_rows.length > 0;
+  const hasHabits = Array.isArray(safe.habit_rows) && safe.habit_rows.length > 0;
+  if (!isLocalhostRuntime() || hasTasks || hasHabits) {
+    return safe;
+  }
+  const demo = buildCalendarDemoPayload();
+  return {
+    ...demo,
+    ...safe,
+    week_days: Array.isArray(safe.week_days) && safe.week_days.length ? safe.week_days : demo.week_days,
+    task_rows: hasTasks ? safe.task_rows : demo.task_rows,
+    habit_rows: hasHabits ? safe.habit_rows : demo.habit_rows,
+    projects: Array.isArray(safe.projects) && safe.projects.length ? safe.projects : demo.projects,
+    week_label: safe.week_label || demo.week_label,
+    __demo: true
+  };
+}
+
 function renderCalendar(content, payload) {
   const weekDays = Array.isArray(payload.week_days) ? payload.week_days : [];
   const taskRows = Array.isArray(payload.task_rows) ? payload.task_rows : [];
   const habitRows = Array.isArray(payload.habit_rows) ? payload.habit_rows : [];
   const projects = Array.isArray(payload.projects) ? payload.projects : [];
+  const demoNotice = payload.__demo
+    ? '<p class="calendar-demo-note">Demo data is enabled on localhost (no calendar rows from API yet).</p>'
+    : '';
 
   const renderWeekHeader = (title) => `
     <div class="calendar-week-grid calendar-week-header-row" data-calendar-section="${title.toLowerCase()}">
@@ -2772,6 +2878,7 @@ function renderCalendar(content, payload) {
           </div>
           <div class="calendar-week-meta-pill">${escapeHtml(payload.week_label || 'Current week')}</div>
         </div>
+        ${demoNotice}
       </section>
 
       <section class="app-panel calendar-board-panel">
@@ -2861,81 +2968,554 @@ async function bindCalendarActions(container) {
   };
 }
 
+function buildGoalsDemoPayload() {
+  const offsetDate = (days) => {
+    const value = new Date();
+    value.setDate(value.getDate() + days);
+    return value.toISOString().slice(0, 10);
+  };
+
+  const labels = [
+    { id: 'label-impact', name: 'High Impact', color: '#1f6feb' },
+    { id: 'label-health', name: 'Health', color: '#22c55e' },
+    { id: 'label-growth', name: 'Growth', color: '#f59e0b' }
+  ];
+
+  const projects = [
+    { id: 'project-platform', name: 'Platform' },
+    { id: 'project-focus', name: 'Focus Engine' },
+    { id: 'project-content', name: 'Content' }
+  ];
+
+  const tasks = [
+    { id: 'task-api-gateway', name: 'API gateway contract draft' },
+    { id: 'task-pwa-goals', name: 'Goals UI migration in PWA' },
+    { id: 'task-metrics', name: 'Weekly analytics baseline' }
+  ];
+
+  const goals = [
+    {
+      id: 'goal-pwa-unification',
+      name: 'Unify frontend in PWA',
+      description: 'Move all user-facing views from app/auth into the PWA shell.',
+      status: 'active',
+      display_status: 'active',
+      priority: 'high',
+      progress: 68,
+      target_date: offsetDate(21),
+      total_seconds: 54400,
+      label_id: 'label-impact',
+      label: labels[0],
+      projects_count: 2,
+      tasks_count: 2,
+      project_ids: ['project-platform', 'project-focus'],
+      task_ids: ['task-api-gateway', 'task-pwa-goals'],
+      subgoals_count: 4,
+      subgoals_completed: 2,
+      subgoals: [
+        { id: 'subgoal-nav', title: 'Migrate navigation shell', status: 'completed' },
+        { id: 'subgoal-auth', title: 'Reuse auth screens in PWA', status: 'completed' },
+        { id: 'subgoal-timer', title: 'Timer and pomodoro parity', status: 'active' },
+        { id: 'subgoal-goals', title: 'Goals and weekly goals parity', status: 'active' }
+      ]
+    },
+    {
+      id: 'goal-operations',
+      name: 'Stabilize API routing',
+      description: 'Apply clean API gateway path strategy and isolate UI traffic.',
+      status: 'at_risk',
+      display_status: 'at_risk',
+      priority: 'medium',
+      progress: 42,
+      target_date: offsetDate(30),
+      total_seconds: 28100,
+      label_id: 'label-growth',
+      label: labels[2],
+      projects_count: 1,
+      tasks_count: 1,
+      project_ids: ['project-platform'],
+      task_ids: ['task-api-gateway'],
+      subgoals_count: 3,
+      subgoals_completed: 1,
+      subgoals: [
+        { id: 'subgoal-ingress', title: 'Ingress path design review', status: 'completed' },
+        { id: 'subgoal-bff', title: 'BFF scope definition', status: 'active' },
+        { id: 'subgoal-observability', title: 'API metrics baseline', status: 'active' }
+      ]
+    },
+    {
+      id: 'goal-health',
+      name: 'Protect focus health',
+      description: 'Sustain consistent deep-work routine with realistic weekly limits.',
+      status: 'active',
+      display_status: 'active',
+      priority: 'low',
+      progress: 80,
+      target_date: offsetDate(14),
+      total_seconds: 19600,
+      label_id: 'label-health',
+      label: labels[1],
+      projects_count: 1,
+      tasks_count: 1,
+      project_ids: ['project-focus'],
+      task_ids: ['task-metrics'],
+      subgoals_count: 2,
+      subgoals_completed: 2,
+      subgoals: [
+        { id: 'subgoal-sleep', title: 'Sleep before midnight 5 days/week', status: 'completed' },
+        { id: 'subgoal-review', title: 'Weekly review every Friday', status: 'completed' }
+      ]
+    }
+  ];
+
+  return {
+    goals,
+    labels,
+    projects,
+    tasks,
+    active_goals_count: goals.filter((goal) => !['completed', 'archived'].includes(String(goal.display_status || goal.status || '').toLowerCase())).length,
+    targets_set: goals.filter((goal) => Boolean(goal.target_date)).length,
+    total_goal_seconds: goals.reduce((sum, goal) => sum + Number(goal.total_seconds || 0), 0),
+    __demo: true
+  };
+}
+
+function withGoalsDemoPayload(payload) {
+  const safe = payload && typeof payload === 'object' ? payload : {};
+  const hasGoals = Array.isArray(safe.goals) && safe.goals.length > 0;
+  if (!isLocalhostRuntime() || hasGoals) {
+    return safe;
+  }
+
+  const demo = buildGoalsDemoPayload();
+  return {
+    ...demo,
+    ...safe,
+    goals: hasGoals ? safe.goals : demo.goals,
+    labels: Array.isArray(safe.labels) && safe.labels.length ? safe.labels : demo.labels,
+    projects: Array.isArray(safe.projects) && safe.projects.length ? safe.projects : demo.projects,
+    tasks: Array.isArray(safe.tasks) && safe.tasks.length ? safe.tasks : demo.tasks,
+    active_goals_count: Number.isFinite(Number(safe.active_goals_count))
+      ? Number(safe.active_goals_count)
+      : demo.active_goals_count,
+    targets_set: Number.isFinite(Number(safe.targets_set))
+      ? Number(safe.targets_set)
+      : demo.targets_set,
+    total_goal_seconds: Number.isFinite(Number(safe.total_goal_seconds))
+      ? Number(safe.total_goal_seconds)
+      : demo.total_goal_seconds,
+    __demo: true
+  };
+}
+
+function goalStatusTone(status) {
+  const value = String(status || 'active').toLowerCase();
+  if (value === 'completed' || value === 'archived') return 'completed';
+  if (value === 'at_risk') return 'paused';
+  return 'active';
+}
+
+function goalStatusLabel(status) {
+  return String(status || 'active').replace(/_/g, ' ');
+}
+
+function normalizeGoalPercent(value) {
+  const parsed = Number(value || 0);
+  if (!Number.isFinite(parsed)) return 0;
+  return Math.max(0, Math.min(100, Math.round(parsed)));
+}
+
+function formatGoalDate(value) {
+  if (!value) return '';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return String(value);
+  }
+  return parsed.toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  });
+}
+
+function resolveGoalLabel(goal, labels) {
+  const embedded = goal && goal.label && typeof goal.label === 'object' ? goal.label : null;
+  if (embedded && embedded.name) {
+    return {
+      name: String(embedded.name),
+      color: String(embedded.color || '#64748b')
+    };
+  }
+  const goalLabelId = goal && goal.label_id ? String(goal.label_id) : '';
+  if (!goalLabelId) return null;
+  const safeLabels = Array.isArray(labels) ? labels : [];
+  const matched = safeLabels.find((item) => String(item.id) === goalLabelId);
+  if (!matched) return null;
+  return {
+    name: String(matched.name || ''),
+    color: String(matched.color || '#64748b')
+  };
+}
+
+function renderGoalMomentumChart(goals) {
+  const rows = (Array.isArray(goals) ? goals : [])
+    .slice()
+    .sort((left, right) => normalizeGoalPercent(right.progress) - normalizeGoalPercent(left.progress))
+    .slice(0, 6)
+    .map((goal) => ({
+      name: String(goal.name || 'Untitled goal'),
+      progress: normalizeGoalPercent(goal.progress)
+    }));
+
+  if (!rows.length) {
+    return '<p class="muted">No goal momentum yet.</p>';
+  }
+
+  return `
+    <div class="goal-momentum-chart">
+      ${rows.map((row) => `
+        <div class="goal-momentum-row">
+          <span class="goal-momentum-name">${escapeHtml(row.name)}</span>
+          <div class="goal-momentum-track">
+            <span class="goal-momentum-fill" style="width: ${row.progress}%;"></span>
+          </div>
+          <span class="goal-momentum-value">${row.progress}%</span>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function renderGoalCards(goals, labels, viewMode = 'overview') {
+  const safeGoals = Array.isArray(goals) ? goals : [];
+  const subgoalLimit = viewMode === 'long-term' ? 8 : 4;
+
+  return safeGoals.map((goal) => {
+    const progress = normalizeGoalPercent(goal.progress);
+    const statusRaw = goal.display_status || goal.status || 'active';
+    const statusTone = goalStatusTone(statusRaw);
+    const statusText = goalStatusLabel(statusRaw);
+    const subgoals = Array.isArray(goal.subgoals) ? goal.subgoals : [];
+    const subgoalsCompleted = Number.isFinite(Number(goal.subgoals_completed))
+      ? Number(goal.subgoals_completed)
+      : subgoals.filter((subgoal) => String(subgoal.status || '').toLowerCase() === 'completed').length;
+    const subgoalsCount = Number.isFinite(Number(goal.subgoals_count))
+      ? Number(goal.subgoals_count)
+      : subgoals.length;
+    const projectCount = Number.isFinite(Number(goal.projects_count))
+      ? Number(goal.projects_count)
+      : (Array.isArray(goal.project_ids) ? goal.project_ids.length : 0);
+    const taskCount = Number.isFinite(Number(goal.tasks_count))
+      ? Number(goal.tasks_count)
+      : (Array.isArray(goal.task_ids) ? goal.task_ids.length : 0);
+    const labelMeta = resolveGoalLabel(goal, labels);
+    const shownSubgoals = subgoals.slice(0, subgoalLimit);
+    const goalId = escapeHtml(String(goal.id || ''));
+
+    return `
+      <article class="goal-card">
+        <div class="goal-top">
+          <span class="goal-status ${statusTone}">${escapeHtml(statusText)}</span>
+          <div class="goal-deadline">
+            <div class="deadline-ring" style="--progress: ${progress};" title="Progress ${progress}%">
+              <span>${progress}%</span>
+            </div>
+            <span class="deadline-date">${goal.target_date ? `Target ${escapeHtml(formatGoalDate(goal.target_date))}` : 'No target date'}</span>
+          </div>
+        </div>
+
+        <div class="goal-card-header">
+          <h4 class="goal-name">${escapeHtml(goal.name || 'Untitled goal')}</h4>
+        </div>
+
+        <p class="goal-desc">${escapeHtml(goal.description || 'No description yet.')}</p>
+
+        <div class="goal-relations">
+          <span class="goal-relation-pill">
+            <i class="bi bi-folder2-open"></i>
+            ${projectCount} projects
+          </span>
+          <span class="goal-relation-pill">
+            <i class="bi bi-list-task"></i>
+            ${taskCount} tasks
+          </span>
+          ${labelMeta ? `
+            <span class="goal-label-chip">
+              <span class="goal-label-dot" style="background-color: ${escapeHtml(labelMeta.color)};"></span>
+              ${escapeHtml(labelMeta.name)}
+            </span>
+          ` : ''}
+        </div>
+
+        <div class="goal-progress">
+          <div class="goal-progress-bar">
+            <span style="width: ${progress}%;"></span>
+          </div>
+          <span class="goal-progress-text">
+            ${subgoalsCount ? `${subgoalsCompleted} / ${subgoalsCount} sub-goals` : `${progress}% complete`}
+          </span>
+        </div>
+
+        <div class="goal-subgoal-items">
+          ${shownSubgoals.map((subgoal) => `
+            <label class="goal-subgoal-item ${String(subgoal.status || '').toLowerCase() === 'completed' ? 'is-done' : ''}">
+              <input
+                type="checkbox"
+                data-action="toggle-subgoal"
+                data-subgoal-id="${escapeHtml(String(subgoal.id || ''))}"
+                ${String(subgoal.status || '').toLowerCase() === 'completed' ? 'checked' : ''}
+              />
+              <span>${escapeHtml(subgoal.title || 'Untitled sub-goal')}</span>
+            </label>
+          `).join('')}
+          ${shownSubgoals.length ? '' : '<p class="goal-subgoal-empty">No sub-goals yet.</p>'}
+        </div>
+
+        <form class="subgoal-add-form-lite goal-subgoal-add-form" data-goal-id="${goalId}">
+          <input type="text" placeholder="Add sub-goal" name="title" required />
+          <button class="btn btn-outline-primary btn-sm" type="submit">Add</button>
+        </form>
+
+        <div class="goal-card-actions">
+          <button class="btn btn-outline-danger btn-sm danger" data-action="delete-goal" data-goal-id="${goalId}" type="button">
+            Delete
+          </button>
+        </div>
+      </article>
+    `;
+  }).join('');
+}
+
 function renderGoals(content, payload, viewMode = 'overview') {
   const goals = Array.isArray(payload.goals) ? payload.goals : [];
   const labels = Array.isArray(payload.labels) ? payload.labels : [];
   const projects = Array.isArray(payload.projects) ? payload.projects : [];
   const tasks = Array.isArray(payload.tasks) ? payload.tasks : [];
+  const longTermMode = viewMode === 'long-term';
+  const activeGoalsCount = Number.isFinite(Number(payload.active_goals_count))
+    ? Number(payload.active_goals_count)
+    : goals.filter((goal) => goalStatusTone(goal.display_status || goal.status) !== 'completed').length;
+  const targetsSet = Number.isFinite(Number(payload.targets_set))
+    ? Number(payload.targets_set)
+    : goals.filter((goal) => Boolean(goal.target_date)).length;
+  const totalGoalSeconds = Number.isFinite(Number(payload.total_goal_seconds))
+    ? Number(payload.total_goal_seconds)
+    : goals.reduce((sum, goal) => sum + Number(goal.total_seconds || 0), 0);
+  const linkedProjectsTotal = goals.reduce((sum, goal) => (
+    sum + (
+      Number.isFinite(Number(goal.projects_count))
+        ? Number(goal.projects_count)
+        : (Array.isArray(goal.project_ids) ? goal.project_ids.length : 0)
+    )
+  ), 0);
+  const linkedTasksTotal = goals.reduce((sum, goal) => (
+    sum + (
+      Number.isFinite(Number(goal.tasks_count))
+        ? Number(goal.tasks_count)
+        : (Array.isArray(goal.task_ids) ? goal.task_ids.length : 0)
+    )
+  ), 0);
 
-  const visibleGoals = viewMode === 'long-term'
+  const visibleGoals = longTermMode
     ? goals
-    : goals;
+    : goals.slice().sort((left, right) => normalizeGoalPercent(right.progress) - normalizeGoalPercent(left.progress)).slice(0, 6);
+
+  const goalsWithSubgoals = goals.filter((goal) => Array.isArray(goal.subgoals) && goal.subgoals.length > 0);
+  const hasLabels = labels.length > 0;
+  const demoNote = payload.__demo
+    ? `
+      <div class="goals-demo-note">
+        <i class="bi bi-flask"></i>
+        <span>Demo data is enabled on localhost because API returned no goals yet.</span>
+      </div>
+    `
+    : '';
 
   content.innerHTML = `
-    <div class="app-panel">
-      <div class="app-panel-header">
-        <h3>${viewMode === 'long-term' ? 'Long-term Goals' : 'Goals'}</h3>
-        <p>Manage outcome goals and sub-goals directly in PWA.</p>
-      </div>
+    <div class="goals-page ${longTermMode ? 'is-long-term' : ''}">
+      ${demoNote}
 
-      <div class="stats-grid">
-        <article class="stat-card"><h4>Active Goals</h4><p>${Number(payload.active_goals_count || 0)}</p></article>
-        <article class="stat-card"><h4>Total Goals</h4><p>${goals.length}</p></article>
-        <article class="stat-card"><h4>Targets Set</h4><p>${Number(payload.targets_set || 0)}</p></article>
-        <article class="stat-card"><h4>Tracked Time</h4><p>${formatDuration(payload.total_goal_seconds || 0)}</p></article>
-      </div>
+      ${longTermMode ? `
+        <section class="app-panel goals-compact-header">
+          <div class="goals-header">
+            <div>
+              <p class="goals-label">Long-term goals</p>
+              <h3 class="goals-title">Plan outcomes and track progress</h3>
+            </div>
+            <button class="btn btn-outline-secondary btn-sm" type="button" data-route="/app/goals">
+              Overview
+            </button>
+          </div>
+        </section>
+      ` : `
+        <section class="goals-hero">
+          <a class="goal-hub-card" href="/app/weekly-goals" data-route="/app/weekly-goals">
+            <div>
+              <p class="goals-label">Weekly goals</p>
+              <h2>Weekly Focus</h2>
+              <p class="goal-hub-meta">Define this week's execution target</p>
+            </div>
+            <span class="goal-hub-arrow"><i class="bi bi-arrow-up-right"></i></span>
+          </a>
 
-      <form id="goal-create-form" class="goals-create-form">
-        <input id="goal-name" type="text" placeholder="Goal name" required />
-        <input id="goal-target-date" type="date" />
-        <input id="goal-target-hours" type="number" min="0" step="0.5" placeholder="Target hours" />
-        <select id="goal-label" required>
-          <option value="">Select label</option>
-          ${labels.map((label) => `<option value="${label.id}">${escapeHtml(label.name)}</option>`).join('')}
-        </select>
-        <select id="goal-project">
-          <option value="">Project (optional)</option>
-          ${projects.map((project) => `<option value="${project.id}">${escapeHtml(project.name)}</option>`).join('')}
-        </select>
-        <select id="goal-task">
-          <option value="">Task (optional)</option>
-          ${tasks.map((task) => `<option value="${task.id}">${escapeHtml(task.name)}</option>`).join('')}
-        </select>
-        <button class="btn btn-primary" type="submit">Create Goal</button>
-      </form>
+          <a class="goal-hub-card" href="/app/long-term-goals" data-route="/app/long-term-goals">
+            <div>
+              <p class="goals-label">Long-term goals</p>
+              <h2>Outcome Pipeline</h2>
+              <p class="goal-hub-meta">${goals.length} goals in total</p>
+            </div>
+            <span class="goal-hub-arrow"><i class="bi bi-arrow-up-right"></i></span>
+          </a>
+        </section>
 
-      <div class="goal-grid-lite">
-        ${visibleGoals.length === 0 ? '<p class="muted">No goals yet.</p>' : ''}
-        ${visibleGoals.map((goal) => `
-          <article class="goal-lite-card">
-            <header>
-              <h5>${escapeHtml(goal.name)}</h5>
-              <span class="goal-status-lite ${badgeForGoalStatus(goal.display_status || goal.status)}">${escapeHtml((goal.display_status || goal.status || 'active').replace('_', ' '))}</span>
-            </header>
-            <p>${escapeHtml(goal.description || 'No description')}</p>
-            <div class="goal-metrics-lite">
-              <span>Progress ${Number(goal.progress || 0)}%</span>
-              <span>Tasks ${Number(goal.tasks_count || 0)}</span>
-              <span>Projects ${Number(goal.projects_count || 0)}</span>
+        <section class="app-panel goals-overview-card">
+          <div class="goals-header">
+            <div>
+              <p class="goals-label">Overview</p>
+              <h3 class="goals-title">Goal momentum</h3>
             </div>
-            <div class="goal-actions-lite">
-              <button data-action="delete-goal" data-goal-id="${goal.id}" class="danger" type="button">Delete</button>
+          </div>
+          <div class="goals-overview-grid">
+            <div class="goals-overview-chart">
+              ${renderGoalMomentumChart(goals)}
             </div>
-            <div class="subgoal-list-lite">
-              ${(Array.isArray(goal.subgoals) ? goal.subgoals : []).slice(0, 6).map((subgoal) => `
-                <label>
-                  <input type="checkbox" data-action="toggle-subgoal" data-subgoal-id="${subgoal.id}" ${subgoal.status === 'completed' ? 'checked' : ''} />
-                  <span>${escapeHtml(subgoal.title)}</span>
-                </label>
-              `).join('')}
-              <form class="subgoal-add-form-lite" data-goal-id="${goal.id}">
-                <input type="text" placeholder="Add sub-goal" name="title" required />
-                <button class="btn btn-secondary" type="submit">Add</button>
-              </form>
+            <div class="goals-summary">
+              <article class="goal-stat-card">
+                <span class="goal-stat-label">Active goals</span>
+                <span class="goal-stat-value">${activeGoalsCount}</span>
+                <span class="goal-stat-meta">Total goals: ${goals.length}</span>
+              </article>
+              <article class="goal-stat-card">
+                <span class="goal-stat-label">Focus tracked</span>
+                <span class="goal-stat-value">${formatDuration(totalGoalSeconds)}</span>
+                <span class="goal-stat-meta">Across all goals</span>
+              </article>
+              <article class="goal-stat-card">
+                <span class="goal-stat-label">Targets set</span>
+                <span class="goal-stat-value">${targetsSet}</span>
+                <span class="goal-stat-meta">Upcoming deadlines</span>
+              </article>
+              <article class="goal-stat-card">
+                <span class="goal-stat-label">Linked scope</span>
+                <span class="goal-stat-value">${linkedProjectsTotal} projects</span>
+                <span class="goal-stat-meta">${linkedTasksTotal} linked tasks</span>
+              </article>
             </div>
-          </article>
-        `).join('')}
-      </div>
+          </div>
+        </section>
+      `}
+
+      <section class="app-panel goals-create-card">
+        <div class="goals-header">
+          <div>
+            <p class="goals-label">Create</p>
+            <h3 class="goals-title">New long-term goal</h3>
+          </div>
+        </div>
+
+        <form id="goal-create-form" class="goals-create-form">
+          <input id="goal-name" type="text" placeholder="Goal name" required />
+          <input id="goal-description" type="text" placeholder="Description (optional)" />
+          <input id="goal-target-date" type="date" />
+          <input id="goal-target-hours" type="number" min="0" step="0.5" placeholder="Target hours" />
+          <select id="goal-label" ${hasLabels ? 'required' : 'disabled'}>
+            ${hasLabels
+              ? '<option value="">Select label</option>'
+              : '<option value="">Create a label first</option>'}
+            ${labels.map((label) => `<option value="${label.id}">${escapeHtml(label.name)}</option>`).join('')}
+          </select>
+          <select id="goal-project">
+            <option value="">Project (optional)</option>
+            ${projects.map((project) => `<option value="${project.id}">${escapeHtml(project.name)}</option>`).join('')}
+          </select>
+          <select id="goal-task">
+            <option value="">Task (optional)</option>
+            ${tasks.map((task) => `<option value="${task.id}">${escapeHtml(task.name)}</option>`).join('')}
+          </select>
+          <button class="btn btn-primary" type="submit">Create Goal</button>
+        </form>
+      </section>
+
+      <section class="app-panel goals-card goals-pipeline-card">
+        <div class="goals-header">
+          <div>
+            <p class="goals-label">Pipeline</p>
+            <h3 class="goals-title">${longTermMode ? 'Goals in progress' : 'Top goals this week'}</h3>
+          </div>
+          ${longTermMode ? '' : `
+            <button class="btn btn-outline-secondary btn-sm" type="button" data-route="/app/long-term-goals">
+              Open long-term
+            </button>
+          `}
+        </div>
+
+        <div class="goals-grid">
+          ${visibleGoals.length ? renderGoalCards(visibleGoals, labels, longTermMode ? 'long-term' : 'overview') : '<p class="muted">No goals yet.</p>'}
+        </div>
+      </section>
+
+      ${longTermMode ? `
+        <section class="app-panel subgoals-card">
+          <div class="goals-header">
+            <div>
+              <p class="goals-label">Breakdown</p>
+              <h3 class="goals-title">Sub-goals</h3>
+            </div>
+          </div>
+
+          <div class="subgoals-grid">
+            ${goalsWithSubgoals.length ? goalsWithSubgoals.map((goal) => {
+              const subgoals = Array.isArray(goal.subgoals) ? goal.subgoals : [];
+              const progress = normalizeGoalPercent(goal.progress);
+              const statusRaw = goal.display_status || goal.status || 'active';
+              const statusTone = goalStatusTone(statusRaw);
+              const statusText = goalStatusLabel(statusRaw);
+              const completed = Number.isFinite(Number(goal.subgoals_completed))
+                ? Number(goal.subgoals_completed)
+                : subgoals.filter((subgoal) => String(subgoal.status || '').toLowerCase() === 'completed').length;
+              const total = Number.isFinite(Number(goal.subgoals_count))
+                ? Number(goal.subgoals_count)
+                : subgoals.length;
+              const goalId = escapeHtml(String(goal.id || ''));
+              return `
+                <article class="subgoal-group">
+                  <div class="subgoal-group-header">
+                    <div>
+                      <h4>${escapeHtml(goal.name || 'Untitled goal')}</h4>
+                      <p class="subgoal-group-meta">${completed} / ${total} completed</p>
+                    </div>
+                    <div class="subgoal-progress">
+                      <div class="deadline-ring" style="--progress: ${progress};" title="Progress ${progress}%">
+                        <span>${progress}%</span>
+                      </div>
+                      <span class="goal-status ${statusTone}">${escapeHtml(statusText)}</span>
+                    </div>
+                  </div>
+
+                  <div class="goal-subgoal-items">
+                    ${subgoals.map((subgoal) => `
+                      <label class="goal-subgoal-item ${String(subgoal.status || '').toLowerCase() === 'completed' ? 'is-done' : ''}">
+                        <input
+                          type="checkbox"
+                          data-action="toggle-subgoal"
+                          data-subgoal-id="${escapeHtml(String(subgoal.id || ''))}"
+                          ${String(subgoal.status || '').toLowerCase() === 'completed' ? 'checked' : ''}
+                        />
+                        <span>${escapeHtml(subgoal.title || 'Untitled sub-goal')}</span>
+                      </label>
+                    `).join('')}
+                  </div>
+
+                  <form class="subgoal-add-form-lite goal-subgoal-add-form" data-goal-id="${goalId}">
+                    <input type="text" placeholder="Add sub-goal" name="title" required />
+                    <button class="btn btn-outline-primary btn-sm" type="submit">Add</button>
+                  </form>
+                </article>
+              `;
+            }).join('') : '<p class="muted">No sub-goals yet.</p>'}
+          </div>
+        </section>
+      ` : ''}
     </div>
   `;
 }
@@ -2944,27 +3524,51 @@ async function bindGoalActions(container, currentPath) {
   const content = container.querySelector('#app-shell-content');
   if (!content) return;
 
+  content.querySelectorAll('[data-route]').forEach((item) => {
+    item.addEventListener('click', (event) => {
+      event.preventDefault();
+      const route = item.dataset.route;
+      if (!route) return;
+      navigate(route);
+    });
+  });
+
   const createForm = content.querySelector('#goal-create-form');
   if (createForm) {
     createForm.addEventListener('submit', async (event) => {
       event.preventDefault();
-      const name = content.querySelector('#goal-name').value.trim();
-      const targetDate = content.querySelector('#goal-target-date').value;
-      const targetHours = content.querySelector('#goal-target-hours').value;
-      const labelId = content.querySelector('#goal-label').value;
-      const projectId = content.querySelector('#goal-project').value;
-      const taskId = content.querySelector('#goal-task').value;
+      const nameInput = content.querySelector('#goal-name');
+      const descriptionInput = content.querySelector('#goal-description');
+      const targetDateInput = content.querySelector('#goal-target-date');
+      const targetHoursInput = content.querySelector('#goal-target-hours');
+      const labelInput = content.querySelector('#goal-label');
+      const projectInput = content.querySelector('#goal-project');
+      const taskInput = content.querySelector('#goal-task');
 
-      if (!name || !labelId) return;
+      const name = nameInput instanceof HTMLInputElement ? nameInput.value.trim() : '';
+      const description = descriptionInput instanceof HTMLInputElement ? descriptionInput.value.trim() : '';
+      const targetDate = targetDateInput instanceof HTMLInputElement ? targetDateInput.value : '';
+      const targetHoursRaw = targetHoursInput instanceof HTMLInputElement ? targetHoursInput.value : '';
+      const labelId = labelInput instanceof HTMLSelectElement ? labelInput.value : '';
+      const projectId = projectInput instanceof HTMLSelectElement ? projectInput.value : '';
+      const taskId = taskInput instanceof HTMLSelectElement ? taskInput.value : '';
+
+      if (!name) return;
+      if (!labelId) {
+        showToast('Please choose a label first', 'warning');
+        return;
+      }
+
+      const targetHours = targetHoursRaw ? Number(targetHoursRaw) : null;
 
       try {
         await appApi.createGoal({
           name,
-          description: '',
+          description,
           status: 'active',
           priority: 'medium',
-          target_date: targetDate,
-          target_hours: targetHours,
+          target_date: targetDate || '',
+          target_hours: Number.isFinite(targetHours) ? targetHours : '',
           label_id: labelId,
           subgoals: '',
           project_ids: projectId ? [projectId] : [],
@@ -2980,8 +3584,10 @@ async function bindGoalActions(container, currentPath) {
 
   content.querySelectorAll('[data-action="delete-goal"]').forEach((button) => {
     button.addEventListener('click', async () => {
+      const goalId = button.dataset.goalId;
+      if (!goalId) return;
       try {
-        await appApi.deleteGoal(button.dataset.goalId);
+        await appApi.deleteGoal(goalId);
         showToast('Goal deleted', 'success');
         await render(container, currentPath, {});
       } catch (error) {
@@ -2992,8 +3598,10 @@ async function bindGoalActions(container, currentPath) {
 
   content.querySelectorAll('[data-action="toggle-subgoal"]').forEach((checkbox) => {
     checkbox.addEventListener('change', async () => {
+      const subgoalId = checkbox.dataset.subgoalId;
+      if (!subgoalId) return;
       try {
-        await appApi.toggleGoalSubgoal(checkbox.dataset.subgoalId, checkbox.checked);
+        await appApi.toggleGoalSubgoal(subgoalId, checkbox.checked);
         showToast('Sub-goal updated', 'success');
         await render(container, currentPath, {});
       } catch (error) {
@@ -3006,11 +3614,13 @@ async function bindGoalActions(container, currentPath) {
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
       const titleInput = form.querySelector('input[name="title"]');
+      if (!(titleInput instanceof HTMLInputElement)) return;
       const title = titleInput.value.trim();
-      if (!title) return;
+      const goalId = form.dataset.goalId;
+      if (!title || !goalId) return;
 
       try {
-        await appApi.addGoalSubgoal(form.dataset.goalId, {
+        await appApi.addGoalSubgoal(goalId, {
           title,
           label: '',
           target_date: '',
@@ -3828,14 +4438,28 @@ async function renderSection(container, section, currentPath) {
     }
 
     if (section === 'calendar') {
-      const payload = await appApi.getCalendarBoard();
+      let payload;
+      try {
+        payload = await appApi.getCalendarBoard();
+      } catch (error) {
+        if (!isLocalhostRuntime()) throw error;
+        payload = {};
+      }
+      payload = withCalendarDemoPayload(payload);
       renderCalendar(content, payload);
       await bindCalendarActions(container);
       return;
     }
 
     if (section === 'goals' || section === 'long-term-goals') {
-      const payload = await appApi.getGoals();
+      let payload;
+      try {
+        payload = await appApi.getGoals();
+      } catch (error) {
+        if (!isLocalhostRuntime()) throw error;
+        payload = {};
+      }
+      payload = withGoalsDemoPayload(payload);
       renderGoals(content, payload, section === 'long-term-goals' ? 'long-term' : 'overview');
       await bindGoalActions(container, currentPath);
       return;
