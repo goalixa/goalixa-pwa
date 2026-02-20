@@ -3635,64 +3635,342 @@ async function bindGoalActions(container, currentPath) {
   });
 }
 
+function currentWeekRangePayload() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const mondayOffset = (today.getDay() + 6) % 7;
+  const weekStartDate = new Date(today);
+  weekStartDate.setDate(today.getDate() - mondayOffset);
+  const weekEndDate = new Date(weekStartDate);
+  weekEndDate.setDate(weekStartDate.getDate() + 6);
+  const formatIso = (value) => value.toISOString().slice(0, 10);
+  const label = `${weekStartDate.toLocaleDateString(undefined, { month: 'short', day: '2-digit' })} - ${weekEndDate.toLocaleDateString(undefined, { month: 'short', day: '2-digit' })}`;
+  return {
+    week_start: formatIso(weekStartDate),
+    week_end: formatIso(weekEndDate),
+    weekly_range_label: label
+  };
+}
+
+function buildWeeklyGoalsDemoPayload() {
+  const base = currentWeekRangePayload();
+  const baseStart = new Date(`${base.week_start}T00:00:00`);
+
+  const labels = [
+    { id: 'weekly-label-impact', name: 'High Impact', color: '#1f6feb' },
+    { id: 'weekly-label-focus', name: 'Deep Work', color: '#22c55e' },
+    { id: 'weekly-label-maintenance', name: 'Maintenance', color: '#f59e0b' }
+  ];
+
+  const longTermGoals = [
+    { id: 'weekly-goal-front', name: 'Unify frontend in PWA' },
+    { id: 'weekly-goal-api', name: 'Stabilize API routing' },
+    { id: 'weekly-goal-health', name: 'Protect focus health' }
+  ];
+
+  const rangeForWeeksAgo = (weeksAgo) => {
+    const start = new Date(baseStart);
+    start.setDate(baseStart.getDate() - (weeksAgo * 7));
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    return {
+      week_start: start.toISOString().slice(0, 10),
+      week_end: end.toISOString().slice(0, 10),
+      week_label: `${start.toLocaleDateString(undefined, { month: 'short', day: '2-digit' })} - ${end.toLocaleDateString(undefined, { month: 'short', day: '2-digit' })}`
+    };
+  };
+
+  const currentRange = rangeForWeeksAgo(0);
+  const previousRange = rangeForWeeksAgo(1);
+  const twoWeeksAgoRange = rangeForWeeksAgo(2);
+
+  const weekly_goals_current = [
+    {
+      id: 'demo-weekly-1',
+      title: 'Finish weekly-goals page migration',
+      target_seconds: 36000,
+      progress_seconds: 22800,
+      progress_percent: 63,
+      status: 'active',
+      long_term_goal_name: 'Unify frontend in PWA',
+      label: labels[0],
+      week_start: currentRange.week_start,
+      week_end: currentRange.week_end,
+      week_label: currentRange.week_label
+    },
+    {
+      id: 'demo-weekly-2',
+      title: 'Run architecture review and write notes',
+      target_seconds: 18000,
+      progress_seconds: 18000,
+      progress_percent: 100,
+      status: 'completed',
+      long_term_goal_name: 'Stabilize API routing',
+      label: labels[2],
+      week_start: currentRange.week_start,
+      week_end: currentRange.week_end,
+      week_label: currentRange.week_label
+    }
+  ];
+
+  const weekly_goals_all = [
+    ...weekly_goals_current,
+    {
+      id: 'demo-weekly-3',
+      title: 'Prepare BFF endpoint matrix',
+      target_seconds: 25200,
+      progress_seconds: 19000,
+      progress_percent: 75,
+      status: 'completed',
+      long_term_goal_name: 'Stabilize API routing',
+      label: labels[1],
+      week_start: previousRange.week_start,
+      week_end: previousRange.week_end,
+      week_label: previousRange.week_label
+    },
+    {
+      id: 'demo-weekly-4',
+      title: 'Refine reports and chart interactions',
+      target_seconds: 21600,
+      progress_seconds: 12600,
+      progress_percent: 58,
+      status: 'active',
+      long_term_goal_name: 'Unify frontend in PWA',
+      label: labels[0],
+      week_start: previousRange.week_start,
+      week_end: previousRange.week_end,
+      week_label: previousRange.week_label
+    },
+    {
+      id: 'demo-weekly-5',
+      title: 'Stabilize timer edge cases',
+      target_seconds: 28800,
+      progress_seconds: 28800,
+      progress_percent: 100,
+      status: 'completed',
+      long_term_goal_name: 'Protect focus health',
+      label: labels[2],
+      week_start: twoWeeksAgoRange.week_start,
+      week_end: twoWeeksAgoRange.week_end,
+      week_label: twoWeeksAgoRange.week_label
+    }
+  ];
+
+  return {
+    ...base,
+    weekly_goals_current,
+    weekly_goals_all,
+    long_term_goals: longTermGoals,
+    labels,
+    __demo: true
+  };
+}
+
+function withWeeklyGoalsDemoPayload(payload) {
+  const safe = payload && typeof payload === 'object' ? payload : {};
+  const hasCurrent = Array.isArray(safe.weekly_goals_current) && safe.weekly_goals_current.length > 0;
+  const hasAll = Array.isArray(safe.weekly_goals_all) && safe.weekly_goals_all.length > 0;
+  if (!isLocalhostRuntime() || hasCurrent || hasAll) {
+    return safe;
+  }
+  const demo = buildWeeklyGoalsDemoPayload();
+  return {
+    ...demo,
+    ...safe,
+    weekly_goals_current: hasCurrent ? safe.weekly_goals_current : demo.weekly_goals_current,
+    weekly_goals_all: hasAll ? safe.weekly_goals_all : demo.weekly_goals_all,
+    long_term_goals: Array.isArray(safe.long_term_goals) && safe.long_term_goals.length ? safe.long_term_goals : demo.long_term_goals,
+    labels: Array.isArray(safe.labels) && safe.labels.length ? safe.labels : demo.labels,
+    weekly_range_label: safe.weekly_range_label || demo.weekly_range_label,
+    week_start: safe.week_start || demo.week_start,
+    week_end: safe.week_end || demo.week_end,
+    __demo: true
+  };
+}
+
+function formatWeeklyTargetHours(seconds) {
+  const safe = Math.max(0, Number(seconds || 0));
+  const hours = safe / 3600;
+  if (!Number.isFinite(hours) || hours <= 0) return '0';
+  return Number.isInteger(hours) ? String(hours) : hours.toFixed(1);
+}
+
+function normalizeWeeklyGoal(goal) {
+  const targetSeconds = Math.max(0, Number(goal?.target_seconds || 0));
+  const progressSeconds = Math.max(0, Number(goal?.progress_seconds || 0));
+  const explicitPercent = Number(goal?.progress_percent);
+  const progressPercent = Number.isFinite(explicitPercent)
+    ? Math.max(0, Math.min(100, Math.round(explicitPercent)))
+    : (targetSeconds > 0 ? Math.max(0, Math.min(100, Math.round((progressSeconds / targetSeconds) * 100))) : 0);
+  return {
+    ...goal,
+    target_seconds: targetSeconds,
+    progress_seconds: progressSeconds,
+    progress_percent: progressPercent
+  };
+}
+
+function groupWeeklyGoalsByWeek(weeklyGoals) {
+  const safe = Array.isArray(weeklyGoals) ? weeklyGoals : [];
+  const groups = new Map();
+
+  safe.forEach((goal) => {
+    const key = String(goal.week_start || goal.week_label || 'unknown-week');
+    if (!groups.has(key)) {
+      groups.set(key, {
+        key,
+        label: goal.week_label || key,
+        goals: []
+      });
+    }
+    groups.get(key).goals.push(goal);
+  });
+
+  return Array.from(groups.values())
+    .sort((left, right) => String(right.key).localeCompare(String(left.key)))
+    .map((group) => ({
+      ...group,
+      goals: group.goals.slice().sort((left, right) => String(left.title || '').localeCompare(String(right.title || '')))
+    }));
+}
+
+function renderWeeklyGoalCard(goal) {
+  const statusRaw = String(goal.status || 'active').toLowerCase();
+  const statusText = goalStatusLabel(statusRaw);
+  const toggleStatus = statusRaw === 'completed' ? 'active' : 'completed';
+  const toggleText = statusRaw === 'completed' ? 'Reopen' : 'Done';
+
+  return `
+    <article class="weekly-goal-item">
+      <div class="weekly-goal-info">
+        <div>
+          <h3>${escapeHtml(goal.title || 'Untitled weekly goal')}</h3>
+          <p>
+            ${formatDuration(goal.progress_seconds)} logged ·
+            Target ${formatWeeklyTargetHours(goal.target_seconds)}h
+            ${goal.long_term_goal_name ? ` · Long-term: ${escapeHtml(goal.long_term_goal_name)}` : ''}
+            ${goal.label && goal.label.name ? ` · Label: ${escapeHtml(goal.label.name)}` : ''}
+          </p>
+        </div>
+        <div class="weekly-goal-actions">
+          <button
+            class="btn ${statusRaw === 'completed' ? 'btn-outline-secondary' : 'btn-outline-success'} btn-sm"
+            data-action="toggle-weekly"
+            data-goal-id="${escapeHtml(String(goal.id || ''))}"
+            data-status="${toggleStatus}"
+            type="button"
+          >
+            ${toggleText}
+          </button>
+          <button
+            class="btn btn-outline-danger btn-sm danger"
+            data-action="delete-weekly"
+            data-goal-id="${escapeHtml(String(goal.id || ''))}"
+            type="button"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+      <div class="weekly-goal-progress">
+        <div class="weekly-goal-bar">
+          <span style="width: ${goal.progress_percent}%;"></span>
+        </div>
+        <span>${goal.progress_percent}%</span>
+      </div>
+      <div class="weekly-goal-status-row">
+        <span class="goal-status ${goalStatusTone(statusRaw)}">${escapeHtml(statusText)}</span>
+      </div>
+    </article>
+  `;
+}
+
 function renderWeeklyGoals(content, payload) {
-  const current = Array.isArray(payload.weekly_goals_current) ? payload.weekly_goals_current : [];
-  const all = Array.isArray(payload.weekly_goals_all) ? payload.weekly_goals_all : [];
+  const current = (Array.isArray(payload.weekly_goals_current) ? payload.weekly_goals_current : [])
+    .map((goal) => normalizeWeeklyGoal(goal));
+  const all = (Array.isArray(payload.weekly_goals_all) ? payload.weekly_goals_all : [])
+    .map((goal) => normalizeWeeklyGoal(goal));
   const longTermGoals = Array.isArray(payload.long_term_goals) ? payload.long_term_goals : [];
   const labels = Array.isArray(payload.labels) ? payload.labels : [];
+  const hasLabels = labels.length > 0;
+  const historyGroups = groupWeeklyGoalsByWeek(all);
+
+  const demoNote = payload.__demo
+    ? `
+      <div class="goals-demo-note">
+        <i class="bi bi-flask"></i>
+        <span>Demo data is enabled on localhost because API returned no weekly goals yet.</span>
+      </div>
+    `
+    : '';
 
   content.innerHTML = `
-    <div class="app-panel">
-      <div class="app-panel-header">
-        <h3>Weekly Goals</h3>
-        <p>${escapeHtml(payload.weekly_range_label || 'Current week')}</p>
-      </div>
+    <div class="weekly-goals-page">
+      ${demoNote}
 
-      <form id="weekly-goal-create-form" class="weekly-goal-form-lite">
-        <input id="weekly-goal-title" type="text" placeholder="Goal title" required />
-        <input id="weekly-goal-hours" type="number" min="0" step="0.5" placeholder="Target hours" />
-        <select id="weekly-goal-long-term">
-          <option value="">No long-term goal</option>
-          ${longTermGoals.map((goal) => `<option value="${goal.id}">${escapeHtml(goal.name)}</option>`).join('')}
-        </select>
-        <select id="weekly-goal-label" required>
-          <option value="">Select label</option>
-          ${labels.map((label) => `<option value="${label.id}">${escapeHtml(label.name)}</option>`).join('')}
-        </select>
-        <button class="btn btn-primary" type="submit">Add Weekly Goal</button>
-      </form>
+      <section class="app-panel weekly-goals-header-panel">
+        <div class="goals-header">
+          <div>
+            <p class="goals-label">Weekly goals</p>
+            <h3 class="goals-title">${escapeHtml(payload.weekly_range_label || 'Current week')}</h3>
+          </div>
+          <button class="btn btn-outline-secondary btn-sm" type="button" data-route="/app/goals">
+            Back to goals
+          </button>
+        </div>
+      </section>
 
-      <div class="goal-list-section">
-        <h4>This Week</h4>
-        ${current.length === 0 ? '<p class="muted">No weekly goals in current week.</p>' : ''}
-        ${current.map((goal) => `
-          <article class="goal-row-lite">
-            <div>
-              <h5>${escapeHtml(goal.title)}</h5>
-              <p>${formatDuration(goal.progress_seconds)} logged • Target ${Number(goal.target_seconds || 0) / 3600}h</p>
-            </div>
-            <div class="task-actions">
-              <span class="task-state ${goal.status === 'completed' ? 'running' : 'idle'}">${escapeHtml(goal.status || 'active')}</span>
-              <button data-action="toggle-weekly" data-goal-id="${goal.id}" data-status="${goal.status === 'completed' ? 'active' : 'completed'}" type="button">${goal.status === 'completed' ? 'Reopen' : 'Done'}</button>
-              <button data-action="delete-weekly" data-goal-id="${goal.id}" class="danger" type="button">Delete</button>
-            </div>
-          </article>
-        `).join('')}
-      </div>
+      <section class="app-panel weekly-goals-card">
+        <div class="goals-header">
+          <div>
+            <p class="goals-label">This week</p>
+            <h3 class="goals-title">Focus targets</h3>
+          </div>
+        </div>
 
-      <div class="goal-list-section">
-        <h4>History</h4>
-        ${all.length === 0 ? '<p class="muted">No weekly history yet.</p>' : ''}
-        ${all.slice(0, 18).map((goal) => `
-          <article class="goal-row-lite secondary">
-            <div>
-              <h5>${escapeHtml(goal.title)}</h5>
-              <p>${escapeHtml(goal.week_label || '')} • ${formatDuration(goal.progress_seconds)} / ${formatDuration(goal.target_seconds)}</p>
-            </div>
-            <span class="task-state ${goal.status === 'completed' ? 'running' : 'idle'}">${escapeHtml(goal.status || 'active')}</span>
-          </article>
-        `).join('')}
-      </div>
+        <form id="weekly-goal-create-form" class="weekly-goal-form">
+          <input id="weekly-goal-title" type="text" placeholder="Goal title" required />
+          <input id="weekly-goal-hours" type="number" min="0" step="0.5" placeholder="Target hours" />
+          <select id="weekly-goal-long-term">
+            <option value="">No long-term goal</option>
+            ${longTermGoals.map((goal) => `<option value="${goal.id}">${escapeHtml(goal.name)}</option>`).join('')}
+          </select>
+          <select id="weekly-goal-label" ${hasLabels ? 'required' : 'disabled'}>
+            ${hasLabels
+              ? '<option value="">Select label</option>'
+              : '<option value="">Create a label first</option>'}
+            ${labels.map((label) => `<option value="${label.id}">${escapeHtml(label.name)}</option>`).join('')}
+          </select>
+          <button class="btn btn-primary btn-sm" type="submit">Add weekly goal</button>
+        </form>
+
+        <div class="weekly-goals-list">
+          ${current.length ? current.map((goal) => renderWeeklyGoalCard(goal)).join('') : '<p class="muted">No weekly goals yet.</p>'}
+        </div>
+      </section>
+
+      <section class="app-panel weekly-goals-history">
+        <div class="goals-header">
+          <div>
+            <p class="goals-label">History</p>
+            <h3 class="goals-title">Previous weeks</h3>
+          </div>
+        </div>
+
+        <div class="weekly-history-list">
+          ${historyGroups.length ? historyGroups.map((group) => `
+            <article class="weekly-history-group">
+              <div class="weekly-history-header">
+                <h4>${escapeHtml(group.label || 'Week')}</h4>
+                <span>${group.goals.length} goals</span>
+              </div>
+              <div class="weekly-goals-list">
+                ${group.goals.map((goal) => renderWeeklyGoalCard(goal)).join('')}
+              </div>
+            </article>
+          `).join('') : '<p class="muted">No weekly history yet.</p>'}
+        </div>
+      </section>
     </div>
   `;
 }
@@ -3701,22 +3979,44 @@ async function bindWeeklyGoalActions(container, currentPath, payload) {
   const content = container.querySelector('#app-shell-content');
   if (!content) return;
 
+  content.querySelectorAll('[data-route]').forEach((item) => {
+    item.addEventListener('click', (event) => {
+      event.preventDefault();
+      const route = item.dataset.route;
+      if (!route) return;
+      navigate(route);
+    });
+  });
+
   const form = content.querySelector('#weekly-goal-create-form');
   if (form) {
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
-      const title = content.querySelector('#weekly-goal-title').value.trim();
-      const targetHours = content.querySelector('#weekly-goal-hours').value;
-      const longTermGoalId = content.querySelector('#weekly-goal-long-term').value;
-      const labelId = content.querySelector('#weekly-goal-label').value;
-      if (!title || !labelId) return;
+      const titleInput = content.querySelector('#weekly-goal-title');
+      const targetHoursInput = content.querySelector('#weekly-goal-hours');
+      const longTermInput = content.querySelector('#weekly-goal-long-term');
+      const labelInput = content.querySelector('#weekly-goal-label');
+
+      const title = titleInput instanceof HTMLInputElement ? titleInput.value.trim() : '';
+      const targetHours = targetHoursInput instanceof HTMLInputElement ? targetHoursInput.value : '';
+      const longTermGoalId = longTermInput instanceof HTMLSelectElement ? longTermInput.value : '';
+      const labelId = labelInput instanceof HTMLSelectElement ? labelInput.value : '';
+      const fallbackRange = currentWeekRangePayload();
+      const weekStart = payload.week_start || fallbackRange.week_start;
+      const weekEnd = payload.week_end || fallbackRange.week_end;
+
+      if (!title) return;
+      if (!labelId) {
+        showToast('Please choose a label first', 'warning');
+        return;
+      }
 
       try {
         await appApi.createWeeklyGoal({
           title,
-          target_hours: targetHours,
-          week_start: payload.week_start,
-          week_end: payload.week_end,
+          target_hours: targetHours || '',
+          week_start: weekStart,
+          week_end: weekEnd,
           long_term_goal_id: longTermGoalId || null,
           label_id: labelId
         });
@@ -3730,8 +4030,17 @@ async function bindWeeklyGoalActions(container, currentPath, payload) {
 
   content.querySelectorAll('[data-action="toggle-weekly"]').forEach((button) => {
     button.addEventListener('click', async () => {
+      const goalId = button.dataset.goalId;
+      const status = button.dataset.status;
+      if (!goalId || !status) return;
+
+      if (payload.__demo && String(goalId).startsWith('demo-')) {
+        showToast('Demo goal: connect API data to update this item.', 'info');
+        return;
+      }
+
       try {
-        await appApi.toggleWeeklyGoal(button.dataset.goalId, button.dataset.status);
+        await appApi.toggleWeeklyGoal(goalId, status);
         showToast('Weekly goal updated', 'success');
         await render(container, currentPath, {});
       } catch (error) {
@@ -3742,8 +4051,16 @@ async function bindWeeklyGoalActions(container, currentPath, payload) {
 
   content.querySelectorAll('[data-action="delete-weekly"]').forEach((button) => {
     button.addEventListener('click', async () => {
+      const goalId = button.dataset.goalId;
+      if (!goalId) return;
+
+      if (payload.__demo && String(goalId).startsWith('demo-')) {
+        showToast('Demo goal: connect API data to delete this item.', 'info');
+        return;
+      }
+
       try {
-        await appApi.deleteWeeklyGoal(button.dataset.goalId);
+        await appApi.deleteWeeklyGoal(goalId);
         showToast('Weekly goal deleted', 'success');
         await render(container, currentPath, {});
       } catch (error) {
@@ -4466,7 +4783,14 @@ async function renderSection(container, section, currentPath) {
     }
 
     if (section === 'weekly-goals') {
-      const payload = await appApi.getWeeklyGoals();
+      let payload;
+      try {
+        payload = await appApi.getWeeklyGoals();
+      } catch (error) {
+        if (!isLocalhostRuntime()) throw error;
+        payload = {};
+      }
+      payload = withWeeklyGoalsDemoPayload(payload);
       renderWeeklyGoals(content, payload);
       await bindWeeklyGoalActions(container, currentPath, payload);
       return;

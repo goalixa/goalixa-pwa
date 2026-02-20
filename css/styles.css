@@ -5235,6 +5235,179 @@ footer {
   }
 }
 
+/* ============================================
+   WEEKLY GOALS (App Parity Migration)
+   ============================================ */
+.weekly-goals-page {
+  display: grid;
+  gap: 14px;
+}
+
+.weekly-goals-page .goals-demo-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px dashed rgba(31, 111, 235, 0.45);
+  background: rgba(31, 111, 235, 0.08);
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.weekly-goals-page .goals-demo-note i {
+  color: var(--accent);
+}
+
+.weekly-goals-page .weekly-goals-header-panel {
+  padding: 12px 14px;
+}
+
+.weekly-goals-page .weekly-goals-card,
+.weekly-goals-page .weekly-goals-history {
+  display: grid;
+  gap: 12px;
+}
+
+.weekly-goals-page .weekly-goal-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+  align-items: end;
+}
+
+.weekly-goals-page .weekly-goal-form input,
+.weekly-goals-page .weekly-goal-form select {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--text);
+  padding: 10px 12px;
+  min-height: 40px;
+}
+
+.weekly-goals-page .weekly-goals-list {
+  display: grid;
+  gap: 10px;
+}
+
+.weekly-goals-page .weekly-goal-item {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  background: var(--card);
+  display: grid;
+  gap: 10px;
+}
+
+.weekly-goals-page .weekly-goal-info {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.weekly-goals-page .weekly-goal-info h3 {
+  margin: 0 0 4px;
+  font-size: 0.98rem;
+}
+
+.weekly-goals-page .weekly-goal-info p {
+  margin: 0;
+  font-size: 0.84rem;
+  color: var(--muted);
+}
+
+.weekly-goals-page .weekly-goal-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.weekly-goals-page .weekly-goal-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.weekly-goals-page .weekly-goal-progress > span {
+  font-size: 0.82rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.weekly-goals-page .weekly-goal-bar {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(31, 111, 235, 0.12);
+  overflow: hidden;
+}
+
+.weekly-goals-page .weekly-goal-bar > span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #1f6feb, #60a5fa);
+}
+
+.weekly-goals-page .weekly-goal-status-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.weekly-goals-page .weekly-history-list {
+  display: grid;
+  gap: 12px;
+}
+
+.weekly-goals-page .weekly-history-group {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+  background: var(--card);
+}
+
+.weekly-goals-page .weekly-history-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.weekly-goals-page .weekly-history-header h4 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.weekly-goals-page .weekly-history-header span {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+[data-theme="dark"] .weekly-goals-page .weekly-goal-item,
+[data-theme="dark"] .weekly-goals-page .weekly-history-group {
+  background: linear-gradient(145deg, #1a2336 0%, #16213e 100%);
+  border-color: rgba(139, 179, 255, 0.2);
+}
+
+[data-theme="dark"] .weekly-goals-page .goals-demo-note {
+  border-color: rgba(139, 179, 255, 0.45);
+  background: rgba(139, 179, 255, 0.12);
+}
+
+@media (max-width: 768px) {
+  .weekly-goals-page .weekly-goal-info {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .weekly-goals-page .weekly-goal-status-row {
+    justify-content: flex-start;
+  }
+}
+
 @media (max-width: 992px) {
   .timer-range-card {
     grid-template-columns: 1fr;
