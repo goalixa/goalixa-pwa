@@ -4632,93 +4632,307 @@ async function bindHabitActions(container, currentPath, payload) {
   });
 }
 
+function buildPlannerDemoPayload() {
+  const today = new Date().toISOString().slice(0, 10);
+  const habits = [
+    {
+      id: 'demo-planner-habit-1',
+      name: 'Morning architecture pass',
+      meta: 'Daily • Morning',
+      frequency: 'Daily',
+      time_of_day: 'Morning',
+      done: true,
+      streak: 9
+    },
+    {
+      id: 'demo-planner-habit-2',
+      name: 'Ship one UI improvement',
+      meta: 'Weekdays • Afternoon',
+      frequency: 'Weekdays',
+      time_of_day: 'Afternoon',
+      done: false,
+      streak: 6
+    },
+    {
+      id: 'demo-planner-habit-3',
+      name: 'Evening retrospective',
+      meta: 'Daily • Evening',
+      frequency: 'Daily',
+      time_of_day: 'Evening',
+      done: false,
+      streak: 12
+    }
+  ];
+
+  const todos = [
+    { id: 'demo-planner-todo-1', name: 'Review API gateway path map' },
+    { id: 'demo-planner-todo-2', name: 'Finalize BFF route list' }
+  ];
+
+  const doneTodos = [
+    { id: 'demo-planner-done-1', name: 'Migrate weekly goals to PWA' }
+  ];
+
+  return {
+    today,
+    habits,
+    habits_summary: {
+      total: habits.length,
+      completed: habits.filter((habit) => Boolean(habit.done)).length,
+      best_streak: Math.max(0, ...habits.map((habit) => Number(habit.streak || 0)))
+    },
+    todos,
+    done_todos: doneTodos,
+    __demo: true
+  };
+}
+
+function withPlannerDemoPayload(payload) {
+  const safe = payload && typeof payload === 'object' ? payload : {};
+  const hasHabits = Array.isArray(safe.habits) && safe.habits.length > 0;
+  const hasTodos = Array.isArray(safe.todos) && safe.todos.length > 0;
+  const hasDoneTodos = Array.isArray(safe.done_todos) && safe.done_todos.length > 0;
+
+  if (!isLocalhostRuntime() || hasHabits || hasTodos || hasDoneTodos) {
+    return safe;
+  }
+
+  const demo = buildPlannerDemoPayload();
+  return {
+    ...demo,
+    ...safe,
+    habits: hasHabits ? safe.habits : demo.habits,
+    todos: hasTodos ? safe.todos : demo.todos,
+    done_todos: hasDoneTodos ? safe.done_todos : demo.done_todos,
+    habits_summary: safe.habits_summary && typeof safe.habits_summary === 'object'
+      ? safe.habits_summary
+      : demo.habits_summary,
+    today: safe.today || demo.today,
+    __demo: true
+  };
+}
+
+function normalizePlannerHabitMeta(habit) {
+  if (habit && habit.meta) return String(habit.meta);
+  const parts = [];
+  if (habit && habit.frequency) parts.push(String(habit.frequency));
+  if (habit && habit.time_of_day) parts.push(String(habit.time_of_day));
+  return parts.length ? parts.join(' • ') : 'Anytime';
+}
+
 function renderPlanner(content, payload) {
   const habits = Array.isArray(payload.habits) ? payload.habits : [];
   const todos = Array.isArray(payload.todos) ? payload.todos : [];
   const doneTodos = Array.isArray(payload.done_todos) ? payload.done_todos : [];
+  const habitsSummary = payload.habits_summary && typeof payload.habits_summary === 'object'
+    ? payload.habits_summary
+    : {
+      total: habits.length,
+      completed: habits.filter((habit) => Boolean(habit.done)).length,
+      best_streak: Math.max(0, ...habits.map((habit) => Number(habit.streak || 0)))
+    };
+
+  const demoNote = payload.__demo
+    ? `
+      <div class="goals-demo-note">
+        <i class="bi bi-flask"></i>
+        <span>Demo data is enabled on localhost because API returned no planner data yet.</span>
+      </div>
+    `
+    : '';
 
   content.innerHTML = `
-    <div class="app-panel">
-      <div class="app-panel-header">
-        <h3>Planner</h3>
-        <p>Habits and to-dos in one board.</p>
-      </div>
+    <div class="planner-page" data-planner-today="${escapeHtml(payload.today || '')}" data-planner-demo="${payload.__demo ? '1' : '0'}">
+      ${demoNote}
 
-      <div class="planner-columns-lite">
-        <section>
-          <h4>Habits</h4>
-          <form id="planner-habit-form" class="inline-actions-form">
+      <section class="planner-hero">
+        <article class="planner-stat-card">
+          <span class="planner-stat-label">Habits done</span>
+          <span class="planner-stat-value">${Number(habitsSummary.completed || 0)}</span>
+          <span class="planner-stat-meta">Out of ${Number(habitsSummary.total || habits.length)}</span>
+        </article>
+        <article class="planner-stat-card">
+          <span class="planner-stat-label">To-do items</span>
+          <span class="planner-stat-value">${todos.length}</span>
+          <span class="planner-stat-meta">${doneTodos.length} done today</span>
+        </article>
+        <article class="planner-stat-card">
+          <span class="planner-stat-label">Best habit streak</span>
+          <span class="planner-stat-value">${Number(habitsSummary.best_streak || 0)} days</span>
+          <span class="planner-stat-meta">Keep the chain strong</span>
+        </article>
+      </section>
+
+      <section class="app-panel planner-headline">
+        <div class="planner-headline-row">
+          <div>
+            <p class="goals-label">Planner</p>
+            <h3 class="goals-title">Habits and to-dos in one focused view</h3>
+          </div>
+          <div class="planner-toggle" role="group" aria-label="Planner view toggle">
+            <button class="planner-toggle-btn is-active" type="button" data-planner-panel="habits" aria-pressed="true">Habits</button>
+            <button class="planner-toggle-btn" type="button" data-planner-panel="todos" aria-pressed="false">To-dos</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="planner-grid">
+        <article class="app-panel planner-card is-active" data-planner-section="habits">
+          <div class="planner-card-header">
+            <div>
+              <p class="goals-label">Habits</p>
+              <h3 class="goals-title">Always-on routines</h3>
+            </div>
+            <span class="planner-panel-meta">${Number(habitsSummary.completed || 0)} / ${Number(habitsSummary.total || habits.length)}</span>
+          </div>
+
+          <form id="planner-habit-form" class="planner-form">
             <input id="planner-habit-name" type="text" placeholder="New habit" required />
-            <button class="btn btn-primary" type="submit">Add Habit</button>
+            <select id="planner-habit-frequency">
+              <option value="Daily">Daily</option>
+              <option value="Weekdays">Weekdays</option>
+              <option value="Weekends">Weekends</option>
+            </select>
+            <select id="planner-habit-time">
+              <option value="">Anytime</option>
+              <option value="Morning">Morning</option>
+              <option value="Afternoon">Afternoon</option>
+              <option value="Evening">Evening</option>
+            </select>
+            <button class="btn btn-primary btn-sm" type="submit">Add habit</button>
           </form>
-          ${habits.length === 0 ? '<p class="muted">No habits.</p>' : ''}
-          ${habits.map((habit) => `
-            <article class="habit-row-lite ${habit.done ? 'is-done' : ''}">
-              <label>
-                <input type="checkbox" data-action="planner-toggle-habit" data-habit-id="${habit.id}" ${habit.done ? 'checked' : ''} />
-                <span>${escapeHtml(habit.name)}</span>
-              </label>
-              <span class="task-state ${habit.done ? 'running' : 'idle'}">${habit.streak}d</span>
-            </article>
-          `).join('')}
-        </section>
 
-        <section>
-          <h4>To-dos</h4>
-          <form id="todo-create-form" class="inline-actions-form">
+          <div class="planner-habit-list">
+            ${habits.length ? habits.map((habit) => `
+              <article class="planner-habit-row ${habit.done ? 'is-done' : ''}">
+                <label class="planner-habit-left">
+                  <input type="checkbox" data-action="planner-toggle-habit" data-habit-id="${escapeHtml(String(habit.id || ''))}" ${habit.done ? 'checked' : ''} />
+                  <span class="planner-habit-text">
+                    <span class="planner-habit-name">${escapeHtml(habit.name || 'Untitled habit')}</span>
+                    <span class="planner-habit-meta">${escapeHtml(normalizePlannerHabitMeta(habit))}</span>
+                  </span>
+                </label>
+                <span class="planner-badge">
+                  <i class="bi bi-fire"></i>
+                  ${Number(habit.streak || 0)}d
+                </span>
+              </article>
+            `).join('') : '<p class="muted">No habits yet. Add one to build your rhythm.</p>'}
+          </div>
+        </article>
+
+        <article class="app-panel planner-card" data-planner-section="todos">
+          <div class="planner-card-header">
+            <div>
+              <p class="goals-label">To-do</p>
+              <h3 class="goals-title">Daily execution list</h3>
+            </div>
+            <span class="planner-panel-meta">${doneTodos.length} done today</span>
+          </div>
+
+          <form id="todo-create-form" class="planner-form planner-task-form">
             <input id="todo-name" type="text" placeholder="New to-do" required />
-            <button class="btn btn-primary" type="submit">Add To-do</button>
+            <button class="btn btn-primary btn-sm" type="submit">Add</button>
           </form>
 
-          <div class="todo-group-lite">
-            <h5>Open</h5>
-            ${todos.length === 0 ? '<p class="muted">No open to-dos.</p>' : ''}
-            ${todos.map((todo) => `
-              <article class="todo-row-lite">
-                <span>${escapeHtml(todo.name)}</span>
-                <div class="task-actions">
-                  <button data-action="todo-done" data-todo-id="${todo.id}" type="button">Done</button>
-                  <button data-action="todo-delete" data-todo-id="${todo.id}" class="danger" type="button">Delete</button>
-                </div>
-              </article>
-            `).join('')}
+          <div class="planner-todo">
+            <h4>To do now</h4>
+            ${todos.length ? `
+              <ul class="planner-task-list">
+                ${todos.map((todo) => `
+                  <li class="planner-task-item">
+                    <div class="planner-task-info">
+                      <span class="planner-task-title">${escapeHtml(todo.name || 'Untitled task')}</span>
+                      <span class="planner-task-meta">Today</span>
+                    </div>
+                    <div class="planner-task-actions">
+                      <button class="btn btn-outline-success btn-sm" data-action="todo-done" data-todo-id="${escapeHtml(String(todo.id || ''))}" type="button">
+                        Done
+                      </button>
+                      <button class="btn btn-outline-danger btn-sm danger" data-action="todo-delete" data-todo-id="${escapeHtml(String(todo.id || ''))}" type="button">
+                        Delete
+                      </button>
+                    </div>
+                  </li>
+                `).join('')}
+              </ul>
+            ` : '<p class="muted">All clear. Add a to-do or plan tomorrow.</p>'}
           </div>
 
-          <div class="todo-group-lite">
-            <h5>Done Today</h5>
-            ${doneTodos.length === 0 ? '<p class="muted">Nothing completed yet.</p>' : ''}
-            ${doneTodos.map((todo) => `
-              <article class="todo-row-lite done">
-                <span>${escapeHtml(todo.name)}</span>
-                <div class="task-actions">
-                  <button data-action="todo-reopen" data-todo-id="${todo.id}" type="button">Reopen</button>
-                  <button data-action="todo-delete" data-todo-id="${todo.id}" class="danger" type="button">Delete</button>
-                </div>
-              </article>
-            `).join('')}
+          <div class="planner-todo planner-todo-done">
+            <h4>Done today</h4>
+            ${doneTodos.length ? `
+              <ul class="planner-task-list">
+                ${doneTodos.map((todo) => `
+                  <li class="planner-task-item is-done">
+                    <div class="planner-task-info">
+                      <span class="planner-task-title">${escapeHtml(todo.name || 'Untitled task')}</span>
+                      <span class="planner-task-meta">Done</span>
+                    </div>
+                    <div class="planner-task-actions">
+                      <button class="btn btn-outline-secondary btn-sm" data-action="todo-reopen" data-todo-id="${escapeHtml(String(todo.id || ''))}" type="button">
+                        Reopen
+                      </button>
+                      <button class="btn btn-outline-danger btn-sm danger" data-action="todo-delete" data-todo-id="${escapeHtml(String(todo.id || ''))}" type="button">
+                        Delete
+                      </button>
+                    </div>
+                  </li>
+                `).join('')}
+              </ul>
+            ` : '<p class="muted">Nothing checked off yet.</p>'}
           </div>
-        </section>
-      </div>
+        </article>
+      </section>
     </div>
   `;
 }
 
-async function bindPlannerActions(container, currentPath, today) {
+async function bindPlannerActions(container, currentPath, payload) {
   const content = container.querySelector('#app-shell-content');
   if (!content) return;
+
+  const plannerPage = content.querySelector('.planner-page');
+  const today = plannerPage?.dataset.plannerToday || payload.today || new Date().toISOString().slice(0, 10);
+  const isDemo = plannerPage?.dataset.plannerDemo === '1';
+
+  const activatePlannerPanel = (target) => {
+    const safeTarget = target === 'todos' ? 'todos' : 'habits';
+    content.querySelectorAll('[data-planner-panel]').forEach((button) => {
+      const isActive = button.dataset.plannerPanel === safeTarget;
+      button.classList.toggle('is-active', isActive);
+      button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    });
+    content.querySelectorAll('[data-planner-section]').forEach((panel) => {
+      panel.classList.toggle('is-active', panel.dataset.plannerSection === safeTarget);
+    });
+  };
+
+  content.querySelectorAll('[data-planner-panel]').forEach((button) => {
+    button.addEventListener('click', () => {
+      activatePlannerPanel(button.dataset.plannerPanel);
+    });
+  });
+
+  activatePlannerPanel('habits');
 
   const habitForm = content.querySelector('#planner-habit-form');
   if (habitForm) {
     habitForm.addEventListener('submit', async (event) => {
       event.preventDefault();
-      const name = content.querySelector('#planner-habit-name').value.trim();
+      const nameInput = content.querySelector('#planner-habit-name');
+      const frequencyInput = content.querySelector('#planner-habit-frequency');
+      const timeInput = content.querySelector('#planner-habit-time');
+      const name = nameInput instanceof HTMLInputElement ? nameInput.value.trim() : '';
+      const frequency = frequencyInput instanceof HTMLSelectElement ? frequencyInput.value : 'Daily';
+      const timeOfDay = timeInput instanceof HTMLSelectElement ? timeInput.value : '';
       if (!name) return;
 
       try {
         await appApi.createHabit({
           name,
-          frequency: 'Daily',
-          time_of_day: '',
+          frequency,
+          time_of_day: timeOfDay,
           reminder: '',
           notes: '',
           goal_name: '',
@@ -4734,8 +4948,17 @@ async function bindPlannerActions(container, currentPath, today) {
 
   content.querySelectorAll('[data-action="planner-toggle-habit"]').forEach((checkbox) => {
     checkbox.addEventListener('change', async () => {
+      const habitId = checkbox.dataset.habitId;
+      if (!habitId) return;
+
+      if (isDemo && String(habitId).startsWith('demo-')) {
+        showToast('Demo habit: connect API data to update this item.', 'info');
+        checkbox.checked = !checkbox.checked;
+        return;
+      }
+
       try {
-        await appApi.toggleHabit(checkbox.dataset.habitId, { done: checkbox.checked, date: today });
+        await appApi.toggleHabit(habitId, { done: checkbox.checked, date: today });
         await render(container, currentPath, {});
       } catch (error) {
         showToast(error.message || 'Failed to update habit', 'error');
@@ -4747,7 +4970,8 @@ async function bindPlannerActions(container, currentPath, today) {
   if (todoForm) {
     todoForm.addEventListener('submit', async (event) => {
       event.preventDefault();
-      const name = content.querySelector('#todo-name').value.trim();
+      const nameInput = content.querySelector('#todo-name');
+      const name = nameInput instanceof HTMLInputElement ? nameInput.value.trim() : '';
       if (!name) return;
       try {
         await appApi.createTodo(name);
@@ -4761,8 +4985,14 @@ async function bindPlannerActions(container, currentPath, today) {
 
   content.querySelectorAll('[data-action="todo-done"]').forEach((button) => {
     button.addEventListener('click', async () => {
+      const todoId = button.dataset.todoId;
+      if (!todoId) return;
+      if (isDemo && String(todoId).startsWith('demo-')) {
+        showToast('Demo to-do: connect API data to update this item.', 'info');
+        return;
+      }
       try {
-        await appApi.toggleTodo(button.dataset.todoId, true);
+        await appApi.toggleTodo(todoId, true);
         await render(container, currentPath, {});
       } catch (error) {
         showToast(error.message || 'Failed to complete to-do', 'error');
@@ -4772,8 +5002,14 @@ async function bindPlannerActions(container, currentPath, today) {
 
   content.querySelectorAll('[data-action="todo-reopen"]').forEach((button) => {
     button.addEventListener('click', async () => {
+      const todoId = button.dataset.todoId;
+      if (!todoId) return;
+      if (isDemo && String(todoId).startsWith('demo-')) {
+        showToast('Demo to-do: connect API data to update this item.', 'info');
+        return;
+      }
       try {
-        await appApi.toggleTodo(button.dataset.todoId, false);
+        await appApi.toggleTodo(todoId, false);
         await render(container, currentPath, {});
       } catch (error) {
         showToast(error.message || 'Failed to reopen to-do', 'error');
@@ -4783,8 +5019,14 @@ async function bindPlannerActions(container, currentPath, today) {
 
   content.querySelectorAll('[data-action="todo-delete"]').forEach((button) => {
     button.addEventListener('click', async () => {
+      const todoId = button.dataset.todoId;
+      if (!todoId) return;
+      if (isDemo && String(todoId).startsWith('demo-')) {
+        showToast('Demo to-do: connect API data to delete this item.', 'info');
+        return;
+      }
       try {
-        await appApi.deleteTodo(button.dataset.todoId);
+        await appApi.deleteTodo(todoId);
         await render(container, currentPath, {});
       } catch (error) {
         showToast(error.message || 'Failed to delete to-do', 'error');
@@ -5265,9 +5507,16 @@ async function renderSection(container, section, currentPath) {
     }
 
     if (section === 'planner') {
-      const payload = await appApi.getPlanner();
+      let payload;
+      try {
+        payload = await appApi.getPlanner();
+      } catch (error) {
+        if (!isLocalhostRuntime()) throw error;
+        payload = {};
+      }
+      payload = withPlannerDemoPayload(payload);
       renderPlanner(content, payload);
-      await bindPlannerActions(container, currentPath, payload.today);
+      await bindPlannerActions(container, currentPath, payload);
       return;
     }
 
