@@ -6914,6 +6914,282 @@ footer {
   }
 }
 
+/* ============================================
+   ACCOUNT (App Parity Migration)
+   ============================================ */
+.account-page {
+  display: grid;
+  gap: 14px;
+}
+
+.account-page .goals-demo-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px dashed rgba(31, 111, 235, 0.45);
+  background: rgba(31, 111, 235, 0.08);
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.account-page .goals-demo-note i {
+  color: var(--accent);
+}
+
+.account-page .profile-card-lg {
+  display: grid;
+  gap: 12px;
+}
+
+.account-page .profile-card-lg-head {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: start;
+}
+
+.account-page .profile-avatar {
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #1f6feb, #60a5fa);
+  color: #ffffff;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+}
+
+.account-page .profile-avatar.lg {
+  width: 64px;
+  height: 64px;
+  font-size: 1.35rem;
+}
+
+.account-page .profile-main {
+  display: grid;
+  gap: 8px;
+}
+
+.account-page .profile-name-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.account-page .profile-name-row h3 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.account-page .profile-badge {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--soft);
+  color: var(--muted);
+  padding: 4px 10px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.account-page .profile-email {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.account-page .profile-bio {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.account-page .profile-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.account-page .meta-label {
+  margin: 0;
+  font-size: 0.73rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  font-weight: 700;
+}
+
+.account-page .meta-value {
+  margin: 2px 0 0;
+  font-size: 0.88rem;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.account-page .profile-actions-vertical {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+
+.account-page .profile-form {
+  display: grid;
+  gap: 10px;
+}
+
+.account-page .profile-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.account-page .profile-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.account-page .profile-field-card {
+  display: grid;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.account-page .profile-field-card input,
+.account-page .profile-field-card select,
+.account-page .profile-field-card textarea {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--text);
+  padding: 10px 12px;
+}
+
+.account-page .profile-field-card input:disabled,
+.account-page .profile-field-card textarea:disabled {
+  opacity: 0.78;
+  cursor: not-allowed;
+}
+
+.account-page .profile-hint {
+  font-size: 0.76rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.account-page .account-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+.account-page .account-card {
+  display: grid;
+  gap: 10px;
+}
+
+.account-page .account-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.account-page .account-form-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.account-page .account-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.account-page .profile-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--soft);
+  color: var(--text);
+  padding: 8px 12px;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.account-page .profile-switch input {
+  accent-color: var(--accent);
+}
+
+.account-page .profile-switch-grid {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+[data-theme="dark"] .account-page .profile-avatar {
+  background: linear-gradient(135deg, #5a8dff, #8bb3ff);
+  color: #091224;
+}
+
+[data-theme="dark"] .account-page .profile-badge,
+[data-theme="dark"] .account-page .profile-switch {
+  border-color: rgba(139, 179, 255, 0.25);
+  background: rgba(18, 23, 34, 0.9);
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .account-page .goals-demo-note {
+  border-color: rgba(139, 179, 255, 0.45);
+  background: rgba(139, 179, 255, 0.12);
+}
+
+[data-theme="dark"] .account-page .profile-field-card input,
+[data-theme="dark"] .account-page .profile-field-card select,
+[data-theme="dark"] .account-page .profile-field-card textarea {
+  background: #121722;
+  border-color: rgba(139, 179, 255, 0.25);
+}
+
+@media (max-width: 1024px) {
+  .account-page .profile-card-lg-head {
+    grid-template-columns: 1fr;
+  }
+
+  .account-page .profile-actions-vertical {
+    justify-items: start;
+  }
+
+  .account-page .account-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .account-page .profile-meta-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .account-page .profile-form-actions,
+  .account-page .account-form-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .account-page .profile-switch-grid {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
 @media (max-width: 992px) {
   .timer-range-card {
     grid-template-columns: 1fr;

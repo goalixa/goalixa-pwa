@@ -6183,52 +6183,255 @@ async function bindLabelActions(container, currentPath) {
   });
 }
 
+const ACCOUNT_TIMEZONE_OPTIONS = [
+  'UTC',
+  'Asia/Tehran',
+  'Europe/London',
+  'Europe/Berlin',
+  'America/New_York',
+  'America/Chicago',
+  'America/Los_Angeles',
+  'Asia/Dubai',
+  'Asia/Tokyo'
+];
+
+function buildAccountDemoPayload() {
+  return {
+    user: {
+      id: 'demo-user-1',
+      email: 'demo@goalixa.local'
+    },
+    profile: {
+      full_name: 'Demo Product Owner',
+      phone: '+1 555 0147',
+      bio: 'Focused on shipping the PWA-first Goalixa architecture.',
+      user_id: 'demo-user-1'
+    },
+    timezone_name: 'America/Los_Angeles',
+    timezone_options: ACCOUNT_TIMEZONE_OPTIONS,
+    notification_settings: {
+      enabled: true,
+      interval_minutes: 10,
+      show_toast: true,
+      show_system: false,
+      play_sound: false,
+      title: 'Tracking reminder',
+      message: 'Start a Pomodoro to keep tracking your focus.'
+    },
+    __demo: true
+  };
+}
+
+function withAccountDemoPayload(payload) {
+  const safe = payload && typeof payload === 'object' ? payload : {};
+  const hasUser = safe.user && typeof safe.user === 'object' && (safe.user.email || safe.user.id);
+  if (!isLocalhostRuntime() || hasUser) {
+    return safe;
+  }
+
+  const demo = buildAccountDemoPayload();
+  return {
+    ...demo,
+    ...safe,
+    user: safe.user && typeof safe.user === 'object' ? { ...demo.user, ...safe.user } : demo.user,
+    profile: safe.profile && typeof safe.profile === 'object' ? { ...demo.profile, ...safe.profile } : demo.profile,
+    notification_settings: safe.notification_settings && typeof safe.notification_settings === 'object'
+      ? { ...demo.notification_settings, ...safe.notification_settings }
+      : demo.notification_settings,
+    timezone_name: safe.timezone_name || demo.timezone_name,
+    timezone_options: Array.isArray(safe.timezone_options) && safe.timezone_options.length
+      ? safe.timezone_options
+      : demo.timezone_options,
+    __demo: true
+  };
+}
+
 function renderAccount(content, payload) {
-  const user = payload.user || {};
-  const profile = payload.profile || {};
-  const settings = payload.notification_settings || {};
-  const timezones = Array.isArray(payload.timezone_options) ? payload.timezone_options : [];
+  const user = payload.user && typeof payload.user === 'object' ? payload.user : {};
+  const profile = payload.profile && typeof payload.profile === 'object' ? payload.profile : {};
+  const settings = payload.notification_settings && typeof payload.notification_settings === 'object'
+    ? payload.notification_settings
+    : {};
+  const timezoneName = payload.timezone_name || 'UTC';
+  const timezoneOptions = Array.isArray(payload.timezone_options) ? payload.timezone_options : ACCOUNT_TIMEZONE_OPTIONS;
+  const mergedTimezoneOptions = Array.from(new Set([...timezoneOptions, timezoneName].filter(Boolean)));
+  const nameFromEmail = String(user.email || '').split('@')[0] || 'Goalixa User';
+  const displayName = profile.full_name || nameFromEmail;
+  const avatarText = (displayName || 'U').trim().charAt(0).toUpperCase();
+
+  const demoNote = payload.__demo
+    ? `
+      <div class="goals-demo-note">
+        <i class="bi bi-flask"></i>
+        <span>Demo data is enabled on localhost because API returned no account payload yet.</span>
+      </div>
+    `
+    : '';
 
   content.innerHTML = `
-    <div class="app-panel">
-      <div class="app-panel-header">
-        <h3>Account</h3>
-        <p>Profile, timezone, and notification settings.</p>
-      </div>
+    <div class="account-page" data-account-demo="${payload.__demo ? '1' : '0'}">
+      ${demoNote}
 
-      <div class="account-summary-lite">
-        <article class="stat-card"><h4>Email</h4><p>${escapeHtml(user.email || '-')}</p></article>
-        <article class="stat-card"><h4>User ID</h4><p>${escapeHtml(user.id || '-')}</p></article>
-        <article class="stat-card"><h4>Timezone</h4><p>${escapeHtml(payload.timezone_name || 'UTC')}</p></article>
-      </div>
+      <section class="app-panel profile-card-lg">
+        <div class="profile-card-lg-head">
+          <div class="profile-avatar lg" aria-hidden="true">${escapeHtml(avatarText)}</div>
+          <div class="profile-main">
+            <div class="profile-name-row">
+              <h3>${escapeHtml(displayName)}</h3>
+              <span class="profile-badge">Member</span>
+            </div>
+            <p class="profile-email">${escapeHtml(user.email || '-')}</p>
+            ${profile.bio ? `<p class="profile-bio">${escapeHtml(profile.bio)}</p>` : ''}
 
-      <form id="profile-form" class="account-form-lite">
-        <h4>Profile</h4>
-        <input id="profile-full-name" type="text" placeholder="Full name" value="${escapeHtml(profile.full_name || '')}" />
-        <input id="profile-phone" type="tel" placeholder="Phone" value="${escapeHtml(profile.phone || '')}" />
-        <textarea id="profile-bio" rows="3" placeholder="Bio">${escapeHtml(profile.bio || '')}</textarea>
-        <button class="btn btn-primary" type="submit">Save Profile</button>
-      </form>
+            <div class="profile-meta-grid">
+              <div>
+                <p class="meta-label">User ID</p>
+                <p class="meta-value">${escapeHtml(profile.user_id || user.id || '-')}</p>
+              </div>
+              <div>
+                <p class="meta-label">Phone</p>
+                <p class="meta-value">${escapeHtml(profile.phone || 'Not set')}</p>
+              </div>
+              <div>
+                <p class="meta-label">Timezone</p>
+                <p class="meta-value">${escapeHtml(timezoneName)}</p>
+              </div>
+            </div>
+          </div>
 
-      <form id="timezone-form" class="account-form-lite compact">
-        <h4>Timezone</h4>
-        <select id="timezone-select">
-          ${timezones.map((timezone) => `<option value="${escapeHtml(timezone)}" ${timezone === payload.timezone_name ? 'selected' : ''}>${escapeHtml(timezone)}</option>`).join('')}
-        </select>
-        <button class="btn btn-secondary" type="submit">Save Timezone</button>
-      </form>
+          <div class="profile-actions-vertical">
+            <button class="btn btn-outline-primary btn-sm" type="button" data-action="account-change-password">
+              <i class="bi bi-shield-lock"></i>
+              Change password
+            </button>
+            <button class="btn btn-primary btn-sm" type="button" data-action="account-logout">
+              <i class="bi bi-box-arrow-right"></i>
+              Log out
+            </button>
+          </div>
+        </div>
 
-      <form id="notifications-form" class="account-form-lite">
-        <h4>Notifications</h4>
-        <label><input type="checkbox" id="notif-enabled" ${settings.enabled ? 'checked' : ''} /> Enabled</label>
-        <label><input type="checkbox" id="notif-toast" ${settings.show_toast ? 'checked' : ''} /> In-app popup</label>
-        <label><input type="checkbox" id="notif-system" ${settings.show_system ? 'checked' : ''} /> System notification</label>
-        <label><input type="checkbox" id="notif-sound" ${settings.play_sound ? 'checked' : ''} /> Play sound</label>
-        <input id="notif-interval" type="number" min="1" max="240" value="${Number(settings.interval_minutes || 30)}" />
-        <input id="notif-title" type="text" value="${escapeHtml(settings.title || '')}" placeholder="Notification title" />
-        <textarea id="notif-message" rows="2" placeholder="Notification message">${escapeHtml(settings.message || '')}</textarea>
-        <button class="btn btn-primary" type="submit">Save Notification Settings</button>
-      </form>
+        <form id="profile-form" class="profile-form">
+          <div class="profile-form-actions top">
+            <button class="btn btn-outline-secondary btn-sm" type="button" id="profile-edit" data-action="profile-edit">
+              <i class="bi bi-pencil"></i>
+              Edit profile
+            </button>
+            <button class="btn btn-outline-primary btn-sm" type="submit" id="profile-save" hidden>
+              <i class="bi bi-check2-circle"></i>
+              Save changes
+            </button>
+          </div>
+
+          <div class="profile-form-grid">
+            <label class="profile-field-card">
+              Full name
+              <input data-profile-field type="text" name="full_name" value="${escapeHtml(profile.full_name || '')}" placeholder="e.g. Sara Ahmadi" minlength="2" maxlength="80" disabled />
+              <span class="profile-hint">Use your real name so teammates recognize you.</span>
+            </label>
+            <label class="profile-field-card">
+              Phone
+              <input data-profile-field type="tel" name="phone" value="${escapeHtml(profile.phone || '')}" placeholder="+1 555 123 4567" inputmode="tel" disabled />
+              <span class="profile-hint">Include country code for notification SMS or calls.</span>
+            </label>
+          </div>
+
+          <label class="profile-field-card">
+            Bio
+            <textarea data-profile-field name="bio" rows="3" maxlength="160" placeholder="Short bio or role" disabled>${escapeHtml(profile.bio || '')}</textarea>
+            <span class="profile-hint">Max 160 characters. Share your role, focus area, or motto.</span>
+          </label>
+        </form>
+      </section>
+
+      <section class="account-grid">
+        <section class="app-panel account-card">
+          <div class="account-card-header">
+            <div>
+              <p class="goals-label">App settings</p>
+              <h3 class="goals-title">Timezone</h3>
+            </div>
+          </div>
+
+          <form id="timezone-form" class="account-form-grid">
+            <label class="profile-field-card">
+              Timezone
+              <select id="timezone-select" name="timezone">
+                ${mergedTimezoneOptions.map((timezone) => `<option value="${escapeHtml(timezone)}" ${timezone === timezoneName ? 'selected' : ''}>${escapeHtml(timezone)}</option>`).join('')}
+              </select>
+            </label>
+
+            <div class="account-form-actions">
+              <button class="btn btn-outline-primary btn-sm" type="submit">
+                <i class="bi bi-check2-circle"></i>
+                Save settings
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <section class="app-panel account-card">
+          <div class="account-card-header">
+            <div>
+              <p class="goals-label">Notifications</p>
+              <h3 class="goals-title">Focus reminder channels</h3>
+            </div>
+          </div>
+
+          <form id="notifications-form" class="account-form-grid">
+            <label class="profile-switch">
+              <input type="checkbox" id="notif-enabled" ${settings.enabled ? 'checked' : ''} />
+              <span>Remind me to track focus when Pomodoro is off</span>
+            </label>
+
+            <label class="profile-field-card">
+              Reminder interval (minutes)
+              <select id="notif-interval" name="notifications_interval_minutes">
+                ${[1, 5, 10, 15, 20, 30].map((minutes) => `
+                  <option value="${minutes}" ${Number(settings.interval_minutes || 30) === minutes ? 'selected' : ''}>
+                    ${minutes} minute${minutes === 1 ? '' : 's'}
+                  </option>
+                `).join('')}
+              </select>
+            </label>
+
+            <div class="profile-switch-grid">
+              <label class="profile-switch">
+                <input type="checkbox" id="notif-toast" ${settings.show_toast ? 'checked' : ''} />
+                <span>Show in-page popup</span>
+              </label>
+              <label class="profile-switch">
+                <input type="checkbox" id="notif-system" ${settings.show_system ? 'checked' : ''} />
+                <span>Send system notification</span>
+              </label>
+              <label class="profile-switch">
+                <input type="checkbox" id="notif-sound" ${settings.play_sound ? 'checked' : ''} />
+                <span>Play sound</span>
+              </label>
+            </div>
+
+            <label class="profile-field-card">
+              Popup title
+              <input id="notif-title" type="text" value="${escapeHtml(settings.title || '')}" placeholder="Tracking reminder" />
+            </label>
+            <label class="profile-field-card">
+              Popup message
+              <textarea id="notif-message" rows="3" placeholder="Reminder message">${escapeHtml(settings.message || '')}</textarea>
+            </label>
+
+            <div class="account-form-actions">
+              <button class="btn btn-outline-primary btn-sm" type="submit">
+                <i class="bi bi-check2-circle"></i>
+                Save notification settings
+              </button>
+              <button class="btn btn-outline-secondary btn-sm" type="button" data-action="test-account-notification">
+                <i class="bi bi-bell"></i>
+                Test notification
+              </button>
+            </div>
+          </form>
+        </section>
+      </section>
     </div>
   `;
 }
@@ -6238,19 +6441,49 @@ async function bindAccountActions(container, currentPath) {
   if (!content) return;
 
   const profileForm = content.querySelector('#profile-form');
+  const profileEditButton = content.querySelector('[data-action="profile-edit"]');
+  const profileSaveButton = content.querySelector('#profile-save');
+  const profileFields = Array.from(content.querySelectorAll('[data-profile-field]'));
+
+  const setProfileEditable = (editable) => {
+    profileFields.forEach((field) => {
+      field.disabled = !editable;
+    });
+    if (profileSaveButton instanceof HTMLButtonElement) {
+      profileSaveButton.hidden = !editable;
+    }
+    if (profileEditButton instanceof HTMLButtonElement) {
+      profileEditButton.hidden = editable;
+    }
+  };
+
+  setProfileEditable(false);
+
+  if (profileEditButton instanceof HTMLButtonElement) {
+    profileEditButton.addEventListener('click', () => {
+      setProfileEditable(true);
+      const firstField = profileFields[0];
+      if (firstField instanceof HTMLInputElement || firstField instanceof HTMLTextAreaElement) {
+        firstField.focus();
+        firstField.select?.();
+      }
+    });
+  }
+
   if (profileForm) {
     profileForm.addEventListener('submit', async (event) => {
       event.preventDefault();
       try {
         await appApi.updateProfile({
-          full_name: content.querySelector('#profile-full-name').value,
-          phone: content.querySelector('#profile-phone').value,
-          bio: content.querySelector('#profile-bio').value
+          full_name: profileForm.querySelector('input[name="full_name"]')?.value || '',
+          phone: profileForm.querySelector('input[name="phone"]')?.value || '',
+          bio: profileForm.querySelector('textarea[name="bio"]')?.value || ''
         });
         showToast('Profile updated', 'success');
         await render(container, currentPath, {});
       } catch (error) {
         showToast(error.message || 'Failed to update profile', 'error');
+        setProfileEditable(true);
       }
     });
   }
@@ -6288,6 +6521,28 @@ async function bindAccountActions(container, currentPath) {
       } catch (error) {
         showToast(error.message || 'Failed to update notification settings', 'error');
       }
+    });
+  }
+
+  const changePasswordButton = content.querySelector('[data-action="account-change-password"]');
+  if (changePasswordButton) {
+    changePasswordButton.addEventListener('click', () => {
+      navigate('/forgot-password');
+    });
+  }
+
+  const logoutButton = content.querySelector('[data-action="account-logout"]');
+  if (logoutButton) {
+    logoutButton.addEventListener('click', async () => {
+      await logout();
+      navigate('/login');
+    });
+  }
+
+  const testNotificationButton = content.querySelector('[data-action="test-account-notification"]');
+  if (testNotificationButton) {
+    testNotificationButton.addEventListener('click', () => {
+      showToast('Test notification sent. Check enabled channels.', 'info');
     });
   }
 }
@@ -6497,7 +6752,14 @@ async function renderSection(container, section, currentPath) {
     }
 
     if (section === 'account') {
-      const payload = await appApi.getAccount();
+      let payload;
+      try {
+        payload = await appApi.getAccount();
+      } catch (error) {
+        if (!isLocalhostRuntime()) throw error;
+        payload = {};
+      }
+      payload = withAccountDemoPayload(payload);
       renderAccount(content, payload);
       await bindAccountActions(container, currentPath);
       return;
