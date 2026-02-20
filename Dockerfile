@@ -12,6 +12,7 @@ COPY index.html offline.html /usr/share/nginx/html/
 COPY css /usr/share/nginx/html/css
 COPY js /usr/share/nginx/html/js
 COPY icons /usr/share/nginx/html/icons
+COPY vendor /usr/share/nginx/html/vendor
 COPY manifest.webmanifest /usr/share/nginx/html/
 COPY sw.js /usr/share/nginx/html/
 

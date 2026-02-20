@@ -251,6 +251,16 @@ export const appApi = {
     });
   },
 
+  async bulkTaskAction(taskIds = [], action = '') {
+    return apiRequest(buildUrl('/app/tasks/bulk'), {
+      method: 'POST',
+      body: {
+        task_ids: taskIds,
+        action
+      }
+    });
+  },
+
   async reopenTask(taskId) {
     return apiRequest(buildUrl(`/app/tasks/${taskId}/reopen`), {
       method: 'POST'

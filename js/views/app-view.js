@@ -25,6 +25,8 @@ const NAV_ITEMS = [
   { key: 'account', label: 'Account', icon: 'fa-user-gear' }
 ];
 
+let timerViewCleanup = null;
+
 function resolveSection(path) {
   const subPath = path.replace('/app', '') || '/overview';
   const trimmed = subPath.startsWith('/') ? subPath.slice(1) : subPath;
@@ -52,6 +54,28 @@ function formatDuration(seconds) {
     return `${m}m`;
   }
   return `${h}h ${m}m`;
+}
+
+function formatDurationClock(seconds) {
+  const safe = Math.max(0, Math.floor(Number(seconds || 0)));
+  const hours = Math.floor(safe / 3600);
+  const minutes = Math.floor((safe % 3600) / 60);
+  const secs = safe % 60;
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+}
+
+function formatDurationHm(seconds) {
+  const safe = Math.max(0, Math.floor(Number(seconds || 0)));
+  const hours = Math.floor(safe / 3600);
+  const minutes = Math.floor((safe % 3600) / 60);
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+}
+
+function formatPomodoroClock(seconds) {
+  const safe = Math.max(0, Math.floor(Number(seconds || 0)));
+  const minutes = Math.floor(safe / 60);
+  const remaining = safe % 60;
+  return `${String(minutes).padStart(2, '0')}:${String(remaining).padStart(2, '0')}`;
 }
 
 function formatDateTime(value) {
@@ -561,122 +585,1376 @@ function renderReports(content, report, range) {
   `;
 }
 
+function normalizeTaskIdValue(value) {
+  const parsed = Number.parseInt(String(value), 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return '';
+  }
+  return String(parsed);
+}
+
+function renderTimerTaskEntries(entries) {
+  const safeEntries = Array.isArray(entries) ? entries : [];
+  return safeEntries.map((entry) => `
+    <div class="timer-task-entry">
+      <span class="timer-task-entry-time">${escapeHtml(entry.start_time || '-')} - ${escapeHtml(entry.end_time || '-')}</span>
+      <span class="timer-task-entry-duration">${formatDurationClock(entry.duration_seconds || 0)}</span>
+    </div>
+  `).join('');
+}
+
 function renderTimer(content, payload) {
   const groups = Array.isArray(payload.timer_list_groups) ? payload.timer_list_groups : [];
+  const groupsReversed = groups.slice().reverse();
+  const weekDays = Array.isArray(payload.week_days) ? payload.week_days : [];
+  const taskRows = Array.isArray(payload.task_rows) ? payload.task_rows : [];
+  const projects = Array.isArray(payload.projects) ? payload.projects : [];
+  const labels = Array.isArray(payload.labels) ? payload.labels : [];
+  const todayTotalSeconds = Number(payload.today_total_seconds || 0);
+  const todayTargetSeconds = Number(payload.today_target_seconds || 0);
+  const targetReached = todayTargetSeconds > 0 && todayTotalSeconds >= todayTargetSeconds;
+  const progress = todayTargetSeconds > 0 ? Math.min(100, (todayTotalSeconds / todayTargetSeconds) * 100) : 0;
 
   content.innerHTML = `
-    <div class="app-panel">
-      <div class="app-panel-header">
-        <h3>Timer</h3>
-        <p>Focus tracking, daily target, and recent sessions.</p>
-      </div>
-
-      <div class="stats-grid">
-        <article class="stat-card"><h4>Today</h4><p>${formatDuration(payload.today_total_seconds)}</p></article>
-        <article class="stat-card"><h4>Target</h4><p>${formatDuration(payload.today_target_seconds)}</p></article>
-        <article class="stat-card"><h4>Week</h4><p>${formatDuration(payload.week_total_seconds)}</p></article>
-        <article class="stat-card"><h4>Range</h4><p>${escapeHtml(payload.timer_range_start)} → ${escapeHtml(payload.timer_range_end)}</p></article>
-      </div>
-
-      <form id="daily-target-form" class="inline-actions-form">
-        <input id="daily-target-seconds" type="number" min="1" step="300" placeholder="Target seconds" value="${Number(payload.today_target_seconds || 0)}" required />
-        <button class="btn btn-secondary" type="submit">Save Daily Target</button>
-      </form>
-
-      <form id="timer-quick-task-form" class="task-create-form">
-        <input id="timer-task-name" type="text" placeholder="Quick task" required />
-        <select id="timer-task-project">
-          <option value="">No project</option>
-          ${(Array.isArray(payload.projects) ? payload.projects : []).map((project) => `<option value="${project.id}">${escapeHtml(project.name)}</option>`).join('')}
-        </select>
-        <select id="timer-task-priority">
-          <option value="low">Low</option>
-          <option value="medium" selected>Medium</option>
-          <option value="high">High</option>
-        </select>
-        <button class="btn btn-primary" type="submit">Add Task</button>
-      </form>
-
-      <div class="event-list">
-        ${groups.length === 0 ? '<p class="muted">No timer entries in this range.</p>' : ''}
-        ${groups.map((group) => `
-          <article class="group-card">
-            <header class="group-card-header">
-              <h5>${escapeHtml(group.label)}</h5>
-              <span>${formatDuration(group.total_seconds)}</span>
-            </header>
-            ${(Array.isArray(group.tasks) ? group.tasks : []).map((task) => `
-              <div class="event-item">
-                <div>
-                  <h5>${escapeHtml(task.task_name)}</h5>
-                  <p>${escapeHtml(task.project_name || 'No project')} • ${formatDuration(task.total_seconds)} • ${(Array.isArray(task.entries) ? task.entries.length : 0)} sessions</p>
+    <div class="app-panel timer-page-panel">
+      <div
+        class="timer-page"
+        data-today-total-seconds="${todayTotalSeconds}"
+        data-today-target-seconds="${todayTargetSeconds}"
+        data-today-date="${escapeHtml(payload.today_date || '')}"
+      >
+        <header class="timer-hero">
+          <div class="timer-controls">
+            <div class="timer-select">
+              <label class="timer-input-label" for="task-picker">Current task</label>
+              <div class="timer-input-group">
+                <input
+                  id="task-picker"
+                  type="text"
+                  placeholder="What are you working on?"
+                  autocomplete="off"
+                  aria-expanded="false"
+                  aria-controls="task-dropdown"
+                />
+                <button class="timer-clear" id="task-clear" type="button" aria-label="Clear selected task" disabled>
+                  <i class="bi bi-x"></i>
+                </button>
+              </div>
+              <div class="timer-dropdown" id="task-dropdown">
+                <div class="timer-bulk-controls">
+                  <span class="timer-bulk-count" id="timer-bulk-count">0 selected</span>
+                  <button class="btn btn-outline-secondary btn-xs" id="timer-bulk-clear" type="button" disabled>
+                    Clear
+                  </button>
+                  <button class="btn btn-outline-primary btn-xs" id="timer-bulk-apply" type="button" disabled>
+                    Apply
+                  </button>
                 </div>
-                <div class="task-actions">
-                  ${task.is_running
-                    ? `<button data-action="stop" data-task-id="${task.task_id}" type="button">Stop</button>`
-                    : `<button data-action="start" data-task-id="${task.task_id}" type="button">Start</button>`}
+                <div class="timer-list" id="timer-search-list">
+                  <div class="timer-empty-state">Loading tasks...</div>
                 </div>
               </div>
-            `).join('')}
-          </article>
-        `).join('')}
+            </div>
+            <div class="daily-target-inline">
+              <label class="timer-input-label" for="focus-compact-time">Today's Target</label>
+              <div class="focus-compact">
+                <div class="focus-time" id="focus-compact-time">
+                  <span class="focus-segment is-active" data-segment="hours">00</span>
+                  <span class="focus-separator">:</span>
+                  <span class="focus-segment" data-segment="minutes">00</span>
+                </div>
+                <div class="focus-compact-actions">
+                  <button class="btn btn-outline-secondary btn-xs" type="button" id="focus-compact-minus" aria-label="Decrease target">-</button>
+                  <button class="btn btn-outline-secondary btn-xs" type="button" id="focus-compact-plus" aria-label="Increase target">+</button>
+                  <button class="btn btn-outline-primary btn-sm" type="button" id="daily-target-set" aria-label="Save target">
+                    <i class="bi bi-check2"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <section class="timer-range-section">
+          <div class="timer-range-card">
+            <div class="timer-range-left">
+              <div class="calendar-row">
+                <input
+                  class="calendar-input"
+                  id="timer-range"
+                  type="text"
+                  readonly
+                  data-start="${escapeHtml(payload.timer_range_start || '')}"
+                  data-end="${escapeHtml(payload.timer_range_end || '')}"
+                />
+              </div>
+            </div>
+            <div class="timer-range-summary">
+              <div class="timer-summary-item">
+                <span class="timer-summary-label">TODAY</span>
+                <span class="timer-summary-value">${formatDurationClock(todayTotalSeconds)}</span>
+              </div>
+              <div class="timer-summary-item">
+                <span class="timer-summary-label">WEEK TOTAL</span>
+                <span class="timer-summary-value">${formatDurationClock(payload.week_total_seconds || 0)}</span>
+              </div>
+            </div>
+            <div class="timer-range-right">
+              <div class="timer-view-toggle" role="tablist" aria-label="View options">
+                <button class="timer-view-tab" data-view-button="calendar" role="tab" aria-selected="false" title="Calendar view">
+                  <i class="bi bi-calendar-week"></i>
+                  <span class="view-label">Calendar</span>
+                </button>
+                <button class="timer-view-tab" data-view-button="list" role="tab" aria-selected="false" title="List view">
+                  <i class="bi bi-list-task"></i>
+                  <span class="view-label">List</span>
+                </button>
+                <button class="timer-view-tab is-active" data-view-button="timesheet" role="tab" aria-selected="true" title="Timesheet view">
+                  <i class="bi bi-clock-history"></i>
+                  <span class="view-label">Timesheet</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="timer-range-section">
+          <div class="card pomodoro-card" data-tour-id="pomodoro">
+            <div class="focus-progress" aria-live="polite">
+              <div class="focus-progress-bar" aria-label="Daily focus progress">
+                <div class="focus-progress-fill" style="width: ${progress}%;"></div>
+              </div>
+            </div>
+            <div class="pomodoro-header">
+              <div class="pomodoro-copy">
+                <p class="pomodoro-label">Pomodoro</p>
+                <h2 class="pomodoro-mode" id="pomodoro-mode">Focus</h2>
+                <div class="pomodoro-status">
+                  <p class="pomodoro-task" id="pomodoro-task">No task selected</p>
+                  <p class="pomodoro-meta" id="pomodoro-meta" aria-live="polite">Session 1 of 4</p>
+                </div>
+                <div class="pomodoro-dots" aria-hidden="true">
+                  <span data-session-dot="1"></span>
+                  <span data-session-dot="2"></span>
+                  <span data-session-dot="3"></span>
+                  <span data-session-dot="4"></span>
+                </div>
+              </div>
+              <div class="pomodoro-clock">
+                <div class="pomodoro-ring">
+                  <div class="pomodoro-dial" id="pomodoro-display" role="timer" aria-live="polite">25:00</div>
+                  <span class="pomodoro-caption">Remaining</span>
+                </div>
+              </div>
+            </div>
+            <div class="pomodoro-controls">
+              <button class="btn btn-primary btn-sm" type="button" id="pomodoro-toggle">
+                <i class="bi bi-play-fill" id="pomodoro-toggle-icon"></i>
+                <span id="pomodoro-toggle-text">Start</span>
+              </button>
+              <button class="btn btn-outline-secondary btn-sm" type="button" id="pomodoro-reset">
+                <i class="bi bi-arrow-counterclockwise"></i>
+                <span class="btn-text">Reset</span>
+              </button>
+              <button class="btn btn-outline-secondary btn-sm" type="button" id="pomodoro-skip">
+                <i class="bi bi-skip-forward-fill"></i>
+                <span class="btn-text">Skip</span>
+              </button>
+              <button class="btn btn-outline-success btn-sm" type="button" id="pomodoro-done">
+                <i class="bi bi-check2-circle"></i>
+                <span class="btn-text">Done today</span>
+              </button>
+            </div>
+            <div class="pomodoro-presets">
+              <button class="btn btn-light btn-sm" type="button" data-pomodoro-mode="work">Focus 25</button>
+              <button class="btn btn-light btn-sm" type="button" data-pomodoro-mode="short">Break 5</button>
+              <button class="btn btn-light btn-sm" type="button" data-pomodoro-mode="long">Break 15</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="timer-range-section timer-task-create-section">
+          <div class="card timer-task-create-card">
+            <div class="timer-task-create-header">
+              <div>
+                <p class="timer-input-label">Quick add</p>
+                <h3 class="timer-task-create-title">Add task</h3>
+              </div>
+            </div>
+            <form class="task-form timer-quick-task-form" id="timer-quick-task-form">
+              <input id="timer-quick-task-name" type="text" name="name" placeholder="Task name" required />
+              <select id="timer-quick-task-project" name="project_id">
+                <option value="" selected>No project</option>
+                ${projects.map((project) => `<option value="${project.id}">${escapeHtml(project.name)}</option>`).join('')}
+              </select>
+              <select id="timer-quick-task-priority" name="priority">
+                <option value="low">Low priority</option>
+                <option value="medium" selected>Medium priority</option>
+                <option value="high">High priority</option>
+              </select>
+              <select id="timer-quick-task-label" name="label_ids">
+                <option value="" selected>Label (optional)</option>
+                ${labels.map((label) => `<option value="${label.id}">${escapeHtml(label.name)}</option>`).join('')}
+              </select>
+              <button class="btn btn-primary btn-sm" type="submit">
+                <i class="bi bi-plus-lg"></i>
+                Add task
+              </button>
+            </form>
+            <p class="timer-quick-task-feedback" id="timer-quick-task-feedback" role="status" aria-live="polite" hidden></p>
+          </div>
+        </section>
+
+        <section class="timer-calendar-section timer-view-panel" data-view-panel="calendar">
+          <div class="card timer-calendar-card">
+            <div class="calendar-week-board">
+              <div class="calendar-week-grid calendar-week-header-row">
+                <div class="calendar-weekday calendar-task-header">Tasks</div>
+                ${weekDays.map((day) => `
+                  <div class="calendar-weekday${day.is_today ? ' is-today' : ''}">
+                    <span class="calendar-weekday-name">${escapeHtml(day.day || '')}</span>
+                    <span class="calendar-weekday-date">${escapeHtml(day.date || '')}</span>
+                  </div>
+                `).join('')}
+              </div>
+              ${taskRows.length ? `
+                <div class="calendar-week-body">
+                  ${taskRows.map((task) => `
+                    <div class="calendar-week-grid calendar-week-row" data-task-id="${task.id}">
+                      <div class="calendar-task-cell">
+                        <span class="calendar-task-name">${escapeHtml(task.name || '')}</span>
+                        <span class="calendar-task-meta">${escapeHtml(task.project_name || 'No project')}</span>
+                      </div>
+                      ${weekDays.map((day, index) => {
+                        const checked = Array.isArray(task.week_checks) ? Boolean(task.week_checks[index]) : false;
+                        const checkClass = checked ? ' is-checked' : (day.is_future ? '' : ' is-missed');
+                        return `
+                          <div class="calendar-day-cell${day.is_today ? ' is-today' : ''}">
+                            <span class="calendar-check${checkClass}" title="${escapeHtml(day.full || '')}"></span>
+                          </div>
+                        `;
+                      }).join('')}
+                    </div>
+                  `).join('')}
+                </div>
+              ` : '<p class="empty">No tasks yet.</p>'}
+            </div>
+          </div>
+        </section>
+
+        <section class="timer-calendar-section timer-view-panel" data-view-panel="list">
+          <div class="card timer-list-card">
+            ${groupsReversed.length ? groupsReversed.map((group) => `
+              <div class="timer-list-group">
+                <div class="timer-list-header">
+                  <span class="timer-list-day">${escapeHtml(group.label || '')}</span>
+                  <span class="timer-list-total">${formatDurationClock(group.total_seconds || 0)}</span>
+                </div>
+                ${(Array.isArray(group.tasks) ? group.tasks : []).map((task) => `
+                  <div class="timer-list-item timer-task-item" data-task-id="${task.task_id}">
+                    <div class="timer-list-row timer-task-toggle" role="button" tabindex="0" aria-expanded="false" data-task-toggle>
+                      <div class="timer-list-left">
+                        ${Array.isArray(task.labels) && task.labels.length ? `<span class="timer-list-label">${escapeHtml(task.labels.join(', '))}</span>` : ''}
+                      </div>
+                      <div class="timer-list-center">
+                        <span class="timer-list-title">${escapeHtml(task.task_name || '')}</span>
+                        <span class="timer-list-project">${escapeHtml(task.project_name || 'No project')}</span>
+                      </div>
+                      <div class="timer-list-right">
+                        <span class="timer-list-duration">${formatDurationClock(task.total_seconds || 0)}</span>
+                        <span class="timer-list-time">${Array.isArray(task.entries) ? task.entries.length : 0} sessions</span>
+                        <div class="timer-list-actions">
+                          ${task.is_running
+                            ? `
+                              <button class="btn btn-outline-warning btn-sm timer-list-action pause" type="button" aria-label="Pause task timer" data-action="stop" data-task-id="${task.task_id}">
+                                <i class="bi bi-pause-fill"></i>
+                              </button>
+                            `
+                            : `
+                              <button class="btn btn-outline-primary btn-sm timer-list-action resume" type="button" aria-label="Start task timer" data-action="start" data-task-id="${task.task_id}">
+                                <i class="bi bi-play-fill"></i>
+                              </button>
+                            `}
+                        </div>
+                      </div>
+                    </div>
+                    <div class="timer-task-details">
+                      ${renderTimerTaskEntries(task.entries)}
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            `).join('') : '<div class="timer-empty-state">No entries yet.</div>'}
+          </div>
+        </section>
+
+        <section class="timer-calendar-section timer-view-panel is-active" data-view-panel="timesheet">
+          <div class="card timer-timesheet-card">
+            ${groupsReversed.length ? `
+              <div class="timesheet-header">
+                <div>
+                  <h3 class="timesheet-title">Timesheet</h3>
+                  <p class="timesheet-subtitle">Grouped by day for the selected range.</p>
+                  ${todayTargetSeconds > 0 ? `
+                    <div class="timesheet-target-banner ${targetReached ? 'is-success' : ''}">
+                      <span class="timesheet-target-label">
+                        <i class="bi ${targetReached ? 'bi-emoji-smile' : 'bi-flag'}"></i>
+                        Today's target: ${formatDurationClock(todayTargetSeconds)}
+                      </span>
+                      <span class="timesheet-target-progress">
+                        ${formatDurationClock(todayTotalSeconds)} / ${formatDurationClock(todayTargetSeconds)}
+                      </span>
+                      ${targetReached ? '<span class="timesheet-target-congrats">Great job! You hit today\'s focus goal.</span>' : ''}
+                    </div>
+                  ` : ''}
+                </div>
+              </div>
+              <div class="timesheet-table">
+                ${groupsReversed.map((group) => `
+                  <div class="timesheet-row">
+                    <div class="timesheet-day">
+                      <div class="timesheet-day-label">${escapeHtml(group.label || '')}</div>
+                      <div class="timesheet-day-total">${formatDurationClock(group.total_seconds || 0)}</div>
+                    </div>
+                    <div class="timesheet-entries">
+                      ${(Array.isArray(group.tasks) && group.tasks.length) ? group.tasks.map((task) => `
+                        <div class="timesheet-task${task.status === 'completed' ? ' is-completed' : ''}" data-task-id="${task.task_id}">
+                          <div class="timesheet-task-summary" role="button" tabindex="0" aria-expanded="false" data-task-toggle>
+                            <div>
+                              <div class="timesheet-task-title">${escapeHtml(task.task_name || '')}</div>
+                              <div class="timesheet-task-meta">${escapeHtml(task.project_name || 'No project')}</div>
+                            </div>
+                            <div class="timesheet-task-right">
+                              <div class="timesheet-task-duration">${formatDurationClock(task.total_seconds || 0)}</div>
+                              <div class="timesheet-task-actions">
+                                ${task.status === 'completed'
+                                  ? `
+                                    <span class="timesheet-task-state is-completed">
+                                      <i class="bi bi-emoji-smile"></i>
+                                      Completed
+                                    </span>
+                                  `
+                                  : `
+                                    <button
+                                      class="btn btn-outline-success btn-sm timesheet-complete-btn"
+                                      type="button"
+                                      aria-label="Complete task"
+                                      data-action="complete"
+                                      data-task-id="${task.task_id}"
+                                    >
+                                      <i class="bi bi-check-lg"></i>
+                                      Complete
+                                    </button>
+                                  `}
+                              </div>
+                            </div>
+                          </div>
+                          <div class="timesheet-task-details">
+                            ${renderTimerTaskEntries(task.entries)}
+                          </div>
+                        </div>
+                      `).join('') : '<div class="timer-empty-state">No entries for this day.</div>'}
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            ` : '<div class="timer-empty-state">No timesheet data yet.</div>'}
+          </div>
+        </section>
       </div>
     </div>
   `;
 }
 
+async function ensureLitepickerAssets() {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  if (window.Litepicker) {
+    return true;
+  }
+
+  let stylesheet = document.querySelector('link[data-goalixa-litepicker="1"]');
+  if (!stylesheet) {
+    stylesheet = document.createElement('link');
+    stylesheet.rel = 'stylesheet';
+    stylesheet.href = '/vendor/litepicker/litepicker.css';
+    stylesheet.dataset.goalixaLitepicker = '1';
+    document.head.appendChild(stylesheet);
+  }
+
+  let script = document.querySelector('script[data-goalixa-litepicker="1"]');
+  if (!script) {
+    script = document.createElement('script');
+    script.src = '/vendor/litepicker/litepicker.js';
+    script.async = true;
+    script.dataset.goalixaLitepicker = '1';
+    document.head.appendChild(script);
+  }
+
+  if (!window.Litepicker) {
+    await new Promise((resolve) => {
+      const onReady = () => resolve();
+      script.addEventListener('load', onReady, { once: true });
+      script.addEventListener('error', onReady, { once: true });
+      setTimeout(onReady, 2000);
+    });
+  }
+
+  return Boolean(window.Litepicker);
+}
+
 async function bindTimerActions(container, currentPath) {
+  if (typeof timerViewCleanup === 'function') {
+    timerViewCleanup();
+    timerViewCleanup = null;
+  }
+
   const content = container.querySelector('#app-shell-content');
   if (!content) return;
 
-  const targetForm = content.querySelector('#daily-target-form');
-  if (targetForm) {
-    targetForm.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      const value = Number(content.querySelector('#daily-target-seconds').value || 0);
-      if (!value) return;
-      try {
-        await appApi.setDailyTarget(value);
-        showToast('Daily target updated', 'success');
-        await render(container, currentPath, {});
-      } catch (error) {
-        showToast(error.message || 'Failed to update target', 'error');
+  const timerPage = content.querySelector('.timer-page');
+  if (!timerPage) return;
+
+  const abortController = new AbortController();
+  const { signal } = abortController;
+  let intervalId = null;
+  let pickerInstance = null;
+
+  const stopInterval = () => {
+    if (intervalId) {
+      clearInterval(intervalId);
+      intervalId = null;
+    }
+  };
+
+  timerViewCleanup = () => {
+    stopInterval();
+    if (pickerInstance && typeof pickerInstance.destroy === 'function') {
+      pickerInstance.destroy();
+    }
+    abortController.abort();
+  };
+
+  const rangeInput = content.querySelector('#timer-range');
+  const viewTabs = content.querySelectorAll('.timer-view-tab');
+  const panels = content.querySelectorAll('[data-view-panel]');
+  const taskPicker = content.querySelector('#task-picker');
+  const taskDropdown = content.querySelector('#task-dropdown');
+  const taskList = content.querySelector('#timer-search-list');
+  const taskClear = content.querySelector('#task-clear');
+  const timerBulkCount = content.querySelector('#timer-bulk-count');
+  const timerBulkClear = content.querySelector('#timer-bulk-clear');
+  const timerBulkApply = content.querySelector('#timer-bulk-apply');
+  const timerQuickTaskForm = content.querySelector('#timer-quick-task-form');
+  const timerQuickTaskName = content.querySelector('#timer-quick-task-name');
+  const timerQuickTaskProject = content.querySelector('#timer-quick-task-project');
+  const timerQuickTaskPriority = content.querySelector('#timer-quick-task-priority');
+  const timerQuickTaskLabel = content.querySelector('#timer-quick-task-label');
+  const timerQuickTaskFeedback = content.querySelector('#timer-quick-task-feedback');
+  const focusTimeLabel = content.querySelector('#focus-compact-time');
+  const focusProgressFill = content.querySelector('.focus-progress-fill');
+
+  let todayTotalSeconds = Number(timerPage.dataset.todayTotalSeconds || 0);
+  let targetSeconds = Math.max(0, Number(timerPage.dataset.todayTargetSeconds || 0));
+
+  const setQuickTaskFeedback = (message, state = '') => {
+    if (!timerQuickTaskFeedback) return;
+    timerQuickTaskFeedback.textContent = message || '';
+    timerQuickTaskFeedback.hidden = !message;
+    timerQuickTaskFeedback.classList.toggle('is-success', state === 'success');
+    timerQuickTaskFeedback.classList.toggle('is-error', state === 'error');
+  };
+
+  const setProgressFill = () => {
+    if (!focusProgressFill) return;
+    if (!targetSeconds) {
+      focusProgressFill.style.width = '0%';
+      return;
+    }
+    const percent = Math.min(100, (todayTotalSeconds / targetSeconds) * 100);
+    focusProgressFill.style.width = `${percent}%`;
+  };
+
+  const setTimeDisplay = () => {
+    if (!focusTimeLabel) return;
+    const h = Math.floor(targetSeconds / 3600);
+    const m = Math.floor((targetSeconds % 3600) / 60);
+    const hoursEl = focusTimeLabel.querySelector('.focus-segment[data-segment="hours"]');
+    const minutesEl = focusTimeLabel.querySelector('.focus-segment[data-segment="minutes"]');
+    if (hoursEl) hoursEl.textContent = String(h).padStart(2, '0');
+    if (minutesEl) minutesEl.textContent = String(m).padStart(2, '0');
+  };
+
+  setTimeDisplay();
+  setProgressFill();
+
+  let activeSegment = 'hours';
+  const hoursEl = content.querySelector('.focus-segment[data-segment="hours"]');
+  const minutesEl = content.querySelector('.focus-segment[data-segment="minutes"]');
+
+  const setActiveSegment = (segment) => {
+    activeSegment = segment;
+    if (hoursEl) hoursEl.classList.toggle('is-active', segment === 'hours');
+    if (minutesEl) minutesEl.classList.toggle('is-active', segment === 'minutes');
+  };
+
+  const adjustTarget = (delta) => {
+    const step = activeSegment === 'hours' ? 3600 : 60;
+    targetSeconds = Math.max(0, targetSeconds + delta * step);
+    setTimeDisplay();
+    setProgressFill();
+  };
+
+  hoursEl?.addEventListener('click', () => setActiveSegment('hours'), { signal });
+  minutesEl?.addEventListener('click', () => setActiveSegment('minutes'), { signal });
+  content.querySelector('#focus-compact-minus')?.addEventListener('click', () => adjustTarget(-1), { signal });
+  content.querySelector('#focus-compact-plus')?.addEventListener('click', () => adjustTarget(1), { signal });
+
+  content.querySelector('#daily-target-set')?.addEventListener('click', async () => {
+    if (!targetSeconds) return;
+    try {
+      const result = await appApi.setDailyTarget(targetSeconds);
+      targetSeconds = Math.max(0, Number(result.today_target_seconds || targetSeconds));
+      timerPage.dataset.todayTargetSeconds = String(targetSeconds);
+      setTimeDisplay();
+      setProgressFill();
+      showToast('Daily target updated', 'success');
+    } catch (error) {
+      showToast(error.message || 'Failed to update daily target', 'error');
+    }
+  }, { signal });
+
+  if (rangeInput) {
+    const hasLitepicker = await ensureLitepickerAssets();
+    const startValue = rangeInput.dataset.start || '';
+    const endValue = rangeInput.dataset.end || '';
+
+    if (hasLitepicker && window.Litepicker) {
+      const today = new Date();
+      const startDate = startValue ? new Date(`${startValue}T00:00:00`) : new Date(today);
+      const endDate = endValue ? new Date(`${endValue}T00:00:00`) : new Date(today);
+      if (!startValue) {
+        startDate.setDate(today.getDate() - 6);
       }
-    });
+
+      pickerInstance = new window.Litepicker({
+        element: rangeInput,
+        singleMode: false,
+        startDate,
+        endDate,
+        showTooltip: false,
+        numberOfMonths: 1,
+        numberOfColumns: 1,
+        format: 'YYYY-MM-DD'
+      });
+
+      rangeInput.value = `${pickerInstance.getStartDate().format('YYYY-MM-DD')} → ${pickerInstance.getEndDate().format('YYYY-MM-DD')}`;
+      pickerInstance.on('selected', (date1, date2) => {
+        if (!date1 || !date2) return;
+        navigate('/app/timer', {
+          start: date1.format('YYYY-MM-DD'),
+          end: date2.format('YYYY-MM-DD')
+        });
+      });
+    } else {
+      const fallbackStart = startValue || new Date(Date.now() - (6 * 24 * 60 * 60 * 1000)).toISOString().slice(0, 10);
+      const fallbackEnd = endValue || new Date().toISOString().slice(0, 10);
+      rangeInput.value = `${fallbackStart} → ${fallbackEnd}`;
+      rangeInput.addEventListener('click', () => {
+        const nextStart = window.prompt('Start date (YYYY-MM-DD)', fallbackStart);
+        if (!nextStart) return;
+        const nextEnd = window.prompt('End date (YYYY-MM-DD)', fallbackEnd);
+        if (!nextEnd) return;
+        navigate('/app/timer', { start: nextStart, end: nextEnd });
+      }, { signal });
+    }
   }
 
-  const quickForm = content.querySelector('#timer-quick-task-form');
-  if (quickForm) {
-    quickForm.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      const name = content.querySelector('#timer-task-name').value.trim();
-      const projectId = content.querySelector('#timer-task-project').value || null;
-      const priority = content.querySelector('#timer-task-priority').value || 'medium';
-      if (!name) return;
-
-      try {
-        await appApi.createTask({ name, project_id: projectId, label_ids: [], goal_id: null, priority });
-        showToast('Task created', 'success');
-        await render(container, currentPath, {});
-      } catch (error) {
-        showToast(error.message || 'Failed to create task', 'error');
-      }
-    });
-  }
-
-  content.querySelectorAll('[data-action][data-task-id]').forEach((button) => {
-    button.addEventListener('click', async () => {
-      const taskId = button.dataset.taskId;
-      try {
-        if (button.dataset.action === 'start') await appApi.startTask(taskId);
-        if (button.dataset.action === 'stop') await appApi.stopTask(taskId);
-        showToast('Timer task updated', 'success');
-        await render(container, currentPath, {});
-      } catch (error) {
-        showToast(error.message || 'Failed to update timer task', 'error');
-      }
-    });
+  viewTabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      const targetView = tab.dataset.viewButton;
+      viewTabs.forEach((item) => {
+        item.classList.toggle('is-active', item === tab);
+        item.setAttribute('aria-selected', item === tab ? 'true' : 'false');
+      });
+      panels.forEach((panel) => {
+        panel.classList.toggle('is-active', panel.dataset.viewPanel === targetView);
+      });
+    }, { signal });
   });
+
+  const toggleTaskDetails = (toggleElement) => {
+    const item = toggleElement.closest('.timer-task-item, .timesheet-task');
+    if (!item) return;
+    const isOpen = item.classList.toggle('is-open');
+    toggleElement.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+  };
+
+  content.addEventListener('click', (event) => {
+    const target = event.target instanceof HTMLElement ? event.target : null;
+    if (!target) return;
+    const toggle = target.closest('[data-task-toggle]');
+    if (!toggle) return;
+    if (target.closest('.timer-list-actions') || target.closest('.timesheet-task-actions')) {
+      return;
+    }
+    toggleTaskDetails(toggle);
+  }, { signal });
+
+  content.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    const target = event.target instanceof HTMLElement ? event.target : null;
+    if (!target) return;
+    const toggle = target.closest('[data-task-toggle]');
+    if (!toggle) return;
+    event.preventDefault();
+    toggleTaskDetails(toggle);
+  }, { signal });
+
+  const baseTitle = document.title;
+  const presets = {
+    work: 25 * 60,
+    short: 5 * 60,
+    long: 15 * 60
+  };
+  const storageKey = 'pomodoroState';
+  let cachedTasks = [];
+  let selectedTaskIds = new Set();
+  let audioContext = null;
+
+  const defaultState = {
+    mode: 'work',
+    remaining: presets.work,
+    isRunning: false,
+    completedWork: 0,
+    lastTick: null,
+    taskId: null,
+    taskIds: [],
+    taskNames: [],
+    taskRunning: false
+  };
+
+  const pomodoroDisplay = content.querySelector('#pomodoro-display');
+  const pomodoroMode = content.querySelector('#pomodoro-mode');
+  const pomodoroTask = content.querySelector('#pomodoro-task');
+  const pomodoroMeta = content.querySelector('#pomodoro-meta');
+  const pomodoroRing = content.querySelector('.pomodoro-ring');
+  const pomodoroDots = content.querySelectorAll('[data-session-dot]');
+  const toggleButton = content.querySelector('#pomodoro-toggle');
+  const toggleIcon = content.querySelector('#pomodoro-toggle-icon');
+  const toggleText = content.querySelector('#pomodoro-toggle-text');
+  const resetButton = content.querySelector('#pomodoro-reset');
+  const skipButton = content.querySelector('#pomodoro-skip');
+  const doneButton = content.querySelector('#pomodoro-done');
+  const presetButtons = content.querySelectorAll('[data-pomodoro-mode]');
+
+  const modeLabel = (mode) => {
+    if (mode === 'short') return 'Short Break';
+    if (mode === 'long') return 'Long Break';
+    return 'Focus';
+  };
+
+  const loadState = () => {
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (!raw) return { ...defaultState };
+      return { ...defaultState, ...JSON.parse(raw) };
+    } catch (_error) {
+      return { ...defaultState };
+    }
+  };
+
+  const saveState = (state) => {
+    localStorage.setItem(storageKey, JSON.stringify(state));
+  };
+
+  const normalizeStateTaskIds = (state) => {
+    const ids = Array.isArray(state.taskIds)
+      ? state.taskIds
+      : state.taskId
+        ? [state.taskId]
+        : [];
+    const normalized = [];
+    const seen = new Set();
+    ids.forEach((id) => {
+      const parsed = Number.parseInt(String(id), 10);
+      if (!Number.isFinite(parsed) || parsed <= 0 || seen.has(parsed)) return;
+      seen.add(parsed);
+      normalized.push(parsed);
+    });
+    state.taskIds = normalized;
+    state.taskId = normalized.length ? normalized[0] : null;
+    if (!Array.isArray(state.taskNames)) {
+      state.taskNames = [];
+    }
+  };
+
+  const setStateTasks = (state, tasks) => {
+    const safeTasks = (tasks || []).filter((task) => task && task.id);
+    state.taskIds = safeTasks.map((task) => Number(task.id));
+    state.taskNames = safeTasks.map((task) => task.name || `Task #${task.id}`);
+    state.taskId = state.taskIds.length ? state.taskIds[0] : null;
+    state.taskName = state.taskNames.length ? state.taskNames[0] : null;
+  };
+
+  const updatePageTitle = (state) => {
+    if (!state.isRunning) {
+      document.title = baseTitle;
+      return;
+    }
+    normalizeStateTaskIds(state);
+    const time = formatPomodoroClock(state.remaining);
+    const mode = modeLabel(state.mode);
+    const taskLabel = state.taskIds.length > 1
+      ? ` - ${state.taskIds.length} tasks`
+      : state.taskName
+        ? ` - ${state.taskName}`
+        : '';
+    document.title = `${time} · ${mode}${taskLabel}`;
+  };
+
+  const updatePomodoroUI = (state) => {
+    if (!pomodoroDisplay || !pomodoroMode || !pomodoroMeta) return;
+    normalizeStateTaskIds(state);
+    pomodoroDisplay.textContent = formatPomodoroClock(state.remaining);
+    pomodoroMode.textContent = modeLabel(state.mode);
+    pomodoroMeta.textContent = `Session ${(state.completedWork % 4) + 1} of 4`;
+
+    if (pomodoroTask) {
+      if (!state.taskIds.length) {
+        pomodoroTask.textContent = 'No task selected';
+      } else if (state.taskIds.length === 1) {
+        pomodoroTask.textContent = state.taskName ? `Task: ${state.taskName}` : 'Task selected';
+      } else {
+        const preview = (state.taskNames || []).slice(0, 2).join(', ');
+        const extra = state.taskNames.length > 2 ? ` +${state.taskNames.length - 2}` : '';
+        pomodoroTask.textContent = preview
+          ? `Working simultaneously: ${preview}${extra}`
+          : `Working simultaneously on ${state.taskIds.length} tasks`;
+      }
+    }
+
+    if (pomodoroDots.length) {
+      const completed = state.completedWork % 4;
+      pomodoroDots.forEach((dot, index) => {
+        dot.classList.toggle('is-active', index < completed);
+        dot.classList.toggle('is-current', index === completed);
+      });
+    }
+
+    if (pomodoroRing) {
+      const total = presets[state.mode] || 0;
+      const progressValue = total > 0 ? Math.min(1, Math.max(0, state.remaining / total)) : 0;
+      pomodoroRing.style.setProperty('--pomodoro-progress', `${progressValue * 360}deg`);
+    }
+
+    const requiresTask = state.mode === 'work' && !state.taskIds.length;
+    if (toggleButton) {
+      toggleButton.disabled = requiresTask;
+      if (state.isRunning) {
+        if (toggleIcon) toggleIcon.className = 'bi bi-pause-fill';
+        if (toggleText) toggleText.textContent = 'Pause';
+        toggleButton.classList.remove('btn-primary');
+        toggleButton.classList.add('btn-outline-warning');
+      } else {
+        if (toggleIcon) toggleIcon.className = 'bi bi-play-fill';
+        if (toggleText) toggleText.textContent = requiresTask ? 'Select task' : 'Start';
+        toggleButton.classList.add('btn-primary');
+        toggleButton.classList.remove('btn-outline-warning');
+      }
+    }
+
+    if (doneButton) doneButton.disabled = !state.taskIds.length;
+    if (taskClear) taskClear.disabled = !state.taskIds.length;
+    updatePageTitle(state);
+  };
+
+  const getNextMode = (state) => {
+    if (state.mode === 'work') {
+      const nextWork = state.completedWork + 1;
+      return nextWork % 4 === 0 ? 'long' : 'short';
+    }
+    return 'work';
+  };
+
+  const applyMode = (state, mode) => {
+    const duration = presets[mode];
+    return {
+      ...state,
+      mode,
+      remaining: duration,
+      isRunning: false,
+      lastTick: null,
+      taskRunning: false
+    };
+  };
+
+  const ensureAudioContext = () => {
+    if (!audioContext) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) {
+        audioContext = new AudioCtx();
+      }
+    }
+    return audioContext;
+  };
+
+  const playChime = () => {
+    const context = ensureAudioContext();
+    if (!context) return;
+    const now = context.currentTime;
+    [523.25, 659.25, 783.99].forEach((frequency, index) => {
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      oscillator.type = 'sine';
+      oscillator.frequency.value = frequency;
+      gain.gain.setValueAtTime(0, now + index * 0.18);
+      gain.gain.linearRampToValueAtTime(0.2, now + index * 0.18 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + index * 0.18 + 0.16);
+      oscillator.connect(gain);
+      gain.connect(context.destination);
+      oscillator.start(now + index * 0.18);
+      oscillator.stop(now + index * 0.18 + 0.2);
+    });
+  };
+
+  const notifyPomodoro = (completedMode) => {
+    if (completedMode === 'work') {
+      showToast('Focus complete. Time for a break.', 'success');
+    } else {
+      showToast('Break complete. Time to focus.', 'info');
+    }
+    playChime();
+  };
+
+  const applyElapsed = (state, elapsedSeconds) => {
+    const startingRemaining = state.remaining;
+    let remaining = state.remaining;
+    let mode = state.mode;
+    let completedWork = state.completedWork;
+    let secondsLeft = elapsedSeconds;
+
+    while (secondsLeft > 0) {
+      if (remaining > secondsLeft) {
+        remaining -= secondsLeft;
+        secondsLeft = 0;
+      } else {
+        secondsLeft -= remaining;
+        if (mode === 'work') {
+          completedWork += 1;
+        }
+        notifyPomodoro(mode);
+        mode = mode === 'work' ? (completedWork % 4 === 0 ? 'long' : 'short') : 'work';
+        remaining = presets[mode];
+      }
+    }
+
+    state.remaining = remaining;
+    state.mode = mode;
+    state.completedWork = completedWork;
+    if (elapsedSeconds >= startingRemaining) {
+      state.isRunning = false;
+      state.lastTick = null;
+      state.taskRunning = false;
+    }
+  };
+
+  const startTaskTimer = async (state) => {
+    normalizeStateTaskIds(state);
+    if (!state.taskIds.length || state.taskRunning) return;
+    state.taskRunning = true;
+    saveState(state);
+    try {
+      await appApi.bulkTaskAction(state.taskIds, 'start');
+    } catch (error) {
+      state.taskRunning = false;
+      saveState(state);
+      console.error(error);
+    }
+  };
+
+  const stopTaskTimer = async (state) => {
+    normalizeStateTaskIds(state);
+    if (!state.taskIds.length || !state.taskRunning) return;
+    state.taskRunning = false;
+    saveState(state);
+    try {
+      await appApi.bulkTaskAction(state.taskIds, 'stop');
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const startInterval = (state) => {
+    stopInterval();
+    state.lastTick = Date.now();
+    intervalId = setInterval(() => {
+      const now = Date.now();
+      const elapsed = Math.max(1, Math.floor((now - (state.lastTick || now)) / 1000));
+      state.lastTick = now;
+      state.remaining -= elapsed;
+
+      if (state.remaining <= 0) {
+        if (state.mode === 'work') {
+          stopTaskTimer(state);
+        }
+        notifyPomodoro(state.mode);
+        state.remaining = 0;
+        state.isRunning = false;
+        if (state.mode === 'work') {
+          state.completedWork += 1;
+        }
+        const nextMode = getNextMode(state);
+        const nextState = applyMode(state, nextMode);
+        state.mode = nextState.mode;
+        state.remaining = nextState.remaining;
+        state.lastTick = null;
+        stopInterval();
+
+        if (nextMode !== 'work') {
+          state.isRunning = true;
+          state.lastTick = Date.now();
+          startInterval(state);
+        }
+      }
+
+      saveState(state);
+      updatePomodoroUI(state);
+    }, 1000);
+  };
+
+  const mergeTaskPayload = (payload) => {
+    const merged = [
+      ...((payload && payload.tasks) || []),
+      ...((payload && payload.done_today_tasks) || []),
+      ...((payload && payload.completed_tasks) || [])
+    ];
+    const byId = new Map();
+    merged.forEach((task) => {
+      const taskId = normalizeTaskIdValue(task.id);
+      if (taskId) byId.set(taskId, task);
+    });
+    return Array.from(byId.values()).sort((a, b) => (b.total_seconds || 0) - (a.total_seconds || 0));
+  };
+
+  const filterTasks = (tasks, query) => {
+    const term = String(query || '').toLowerCase().trim();
+    return tasks.filter((task) => {
+      if ((task.status || 'active') === 'completed') return false;
+      const name = String(task.name || '').toLowerCase();
+      const project = String(task.project_name || '').toLowerCase();
+      return !term || name.includes(term) || project.includes(term);
+    });
+  };
+
+  const syncSelectedTaskIds = (tasks) => {
+    const availableIds = new Set(
+      (tasks || [])
+        .filter((task) => (task.status || 'active') !== 'completed')
+        .map((task) => normalizeTaskIdValue(task.id))
+        .filter(Boolean)
+    );
+    selectedTaskIds = new Set(Array.from(selectedTaskIds).filter((id) => availableIds.has(id)));
+  };
+
+  const updateBulkControls = (visibleTasks = []) => {
+    if (timerBulkCount) timerBulkCount.textContent = `${selectedTaskIds.size} selected`;
+    if (timerBulkApply) timerBulkApply.disabled = selectedTaskIds.size === 0;
+    if (timerBulkClear) timerBulkClear.disabled = selectedTaskIds.size === 0;
+  };
+
+  const renderTasks = (tasks, query) => {
+    if (!taskList) return;
+    syncSelectedTaskIds(tasks);
+    const filtered = filterTasks(tasks, query);
+    if (!filtered.length) {
+      taskList.innerHTML = '<div class="timer-empty-state">No tasks found.</div>';
+      updateBulkControls(filtered);
+      return;
+    }
+
+    taskList.innerHTML = filtered.map((task) => {
+      const taskId = normalizeTaskIdValue(task.id);
+      const isSelected = selectedTaskIds.has(taskId);
+      const isCompleted = (task.status || 'active') === 'completed';
+      const project = task.project_name ? ` • ${escapeHtml(task.project_name)}` : '';
+      return `
+        <div class="timer-task-option${isSelected ? ' is-selected' : ''}">
+          <label class="timer-task-check-wrap" aria-label="Select ${escapeHtml(task.name || '')}">
+            <input class="timer-task-check" type="checkbox" data-task-check-id="${taskId}" ${isSelected ? 'checked' : ''} ${isCompleted ? 'disabled' : ''} />
+          </label>
+          <button type="button" class="timer-task-pick${isCompleted ? ' is-completed' : ''}" data-task-id="${taskId}" ${isCompleted ? 'disabled' : ''}>
+            <span>${escapeHtml(task.name || '')}${project}</span>
+            <span class="timer-task-meta">${isCompleted ? 'Completed' : 'Active'} · ${formatDurationClock(task.total_seconds || 0)}</span>
+          </button>
+        </div>
+      `;
+    }).join('');
+
+    updateBulkControls(filtered);
+  };
+
+  const openDropdown = () => {
+    taskDropdown?.classList.add('is-open');
+    taskPicker?.setAttribute('aria-expanded', 'true');
+  };
+
+  const closeDropdown = () => {
+    taskDropdown?.classList.remove('is-open');
+    taskPicker?.setAttribute('aria-expanded', 'false');
+  };
+
+  const state = loadState();
+  normalizeStateTaskIds(state);
+  if (!state.taskNames.length && state.taskName) {
+    state.taskNames = [state.taskName];
+  }
+  state.taskName = state.taskName || null;
+
+  if (state.isRunning && state.lastTick) {
+    const elapsed = Math.floor((Date.now() - state.lastTick) / 1000);
+    if (elapsed > 0) {
+      applyElapsed(state, elapsed);
+    }
+  }
+
+  const startPomodoro = () => {
+    normalizeStateTaskIds(state);
+    if (state.mode === 'work' && !state.taskIds.length) {
+      showToast('Select a task for this Pomodoro.', 'warning');
+      return;
+    }
+    state.isRunning = true;
+    state.lastTick = Date.now();
+    if (state.mode === 'work') {
+      startTaskTimer(state);
+    }
+    saveState(state);
+    updatePomodoroUI(state);
+    startInterval(state);
+  };
+
+  const pausePomodoro = () => {
+    state.isRunning = false;
+    state.lastTick = null;
+    stopTaskTimer(state);
+    saveState(state);
+    updatePomodoroUI(state);
+    stopInterval();
+  };
+
+  if (state.isRunning) {
+    startInterval(state);
+  }
+  updatePomodoroUI(state);
+
+  toggleButton?.addEventListener('click', () => {
+    if (state.isRunning) {
+      pausePomodoro();
+    } else {
+      startPomodoro();
+    }
+  }, { signal });
+
+  resetButton?.addEventListener('click', () => {
+    state.mode = 'work';
+    state.remaining = presets.work;
+    state.isRunning = false;
+    state.completedWork = 0;
+    state.lastTick = null;
+    stopTaskTimer(state);
+    saveState(state);
+    updatePomodoroUI(state);
+    stopInterval();
+  }, { signal });
+
+  skipButton?.addEventListener('click', () => {
+    if (state.mode === 'work') {
+      state.completedWork += 1;
+    }
+    stopTaskTimer(state);
+    const nextMode = getNextMode(state);
+    const nextState = applyMode(state, nextMode);
+    state.mode = nextState.mode;
+    state.remaining = nextState.remaining;
+    state.isRunning = false;
+    state.lastTick = null;
+    saveState(state);
+    updatePomodoroUI(state);
+    stopInterval();
+  }, { signal });
+
+  doneButton?.addEventListener('click', async () => {
+    normalizeStateTaskIds(state);
+    if (!state.taskIds.length) {
+      showToast('Select a task to mark it done today.', 'warning');
+      return;
+    }
+    try {
+      if (state.taskIds.length === 1) {
+        await appApi.setTaskDailyCheck(state.taskIds[0]);
+      } else {
+        await appApi.bulkTaskAction(state.taskIds, 'daily-check');
+      }
+      showToast(`${state.taskIds.length} task(s) checked off for today.`, 'success');
+    } catch (error) {
+      showToast(error.message || 'Failed to mark task done', 'error');
+    }
+  }, { signal });
+
+  presetButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      const mode = button.dataset.pomodoroMode;
+      if (!mode || !presets[mode]) return;
+      stopTaskTimer(state);
+      state.mode = mode;
+      state.remaining = presets[mode];
+      state.isRunning = false;
+      state.lastTick = null;
+      saveState(state);
+      updatePomodoroUI(state);
+      stopInterval();
+    }, { signal });
+  });
+
+  taskClear?.addEventListener('click', () => {
+    if (state.isRunning && state.mode === 'work') {
+      pausePomodoro();
+    }
+    state.taskId = null;
+    state.taskName = null;
+    state.taskIds = [];
+    state.taskNames = [];
+    if (taskPicker) taskPicker.value = '';
+    if (cachedTasks.length) renderTasks(cachedTasks, '');
+    saveState(state);
+    updatePomodoroUI(state);
+  }, { signal });
+
+  const selectTask = (selectedTask) => {
+    if (!selectedTask) return;
+    normalizeStateTaskIds(state);
+    if (state.isRunning) {
+      pausePomodoro();
+    }
+    setStateTasks(state, [selectedTask]);
+    state.taskRunning = Boolean(selectedTask.is_running);
+    if (taskPicker) {
+      taskPicker.value = selectedTask.name || '';
+    }
+    if (state.mode !== 'work' || state.remaining !== presets.work) {
+      state.mode = 'work';
+      state.remaining = presets.work;
+      state.isRunning = false;
+      state.lastTick = null;
+    }
+    renderTasks(cachedTasks, '');
+    closeDropdown();
+    saveState(state);
+    updatePomodoroUI(state);
+  };
+
+  const applyBulkAction = async () => {
+    const taskIds = Array.from(selectedTaskIds);
+    if (!taskIds.length) return;
+    if (timerBulkApply) timerBulkApply.disabled = true;
+    try {
+      const payload = await appApi.bulkTaskAction(taskIds, 'start');
+      cachedTasks = mergeTaskPayload(payload);
+      selectedTaskIds.clear();
+      const selectedTasks = taskIds
+        .map((taskId) => cachedTasks.find((task) => String(task.id) === String(taskId)))
+        .filter(Boolean);
+      if (selectedTasks.length) {
+        setStateTasks(state, selectedTasks);
+        state.taskRunning = true;
+        if (taskPicker) {
+          taskPicker.value = selectedTasks.length === 1 ? (selectedTasks[0].name || '') : '';
+        }
+      }
+      saveState(state);
+      updatePomodoroUI(state);
+      renderTasks(cachedTasks, taskPicker ? taskPicker.value : '');
+      showToast(`Started ${taskIds.length} task timer(s).`, 'success');
+    } catch (error) {
+      showToast(error.message || 'Failed to apply bulk timer action', 'error');
+    } finally {
+      updateBulkControls(filterTasks(cachedTasks, taskPicker ? taskPicker.value : ''));
+    }
+  };
+
+  try {
+    const tasksPayload = await appApi.getTasks();
+    cachedTasks = mergeTaskPayload(tasksPayload);
+    const runningTask = cachedTasks.find(
+      (task) => task.is_running && (task.status || 'active') !== 'completed'
+    );
+    if (runningTask && !state.taskIds.length && !state.taskId) {
+      setStateTasks(state, [runningTask]);
+      state.mode = 'work';
+      state.isRunning = true;
+      state.lastTick = Date.now();
+      state.taskRunning = true;
+      updatePomodoroUI(state);
+      startInterval(state);
+    }
+
+    if (state.taskIds.length || state.taskId) {
+      const preferredIds = state.taskIds.length ? state.taskIds : [state.taskId];
+      const selectedTasks = preferredIds
+        .map((taskId) => cachedTasks.find((task) => String(task.id) === String(taskId)))
+        .filter(Boolean);
+      if (selectedTasks.length) {
+        setStateTasks(state, selectedTasks);
+        state.taskRunning = selectedTasks.some((task) => task.is_running);
+        if (taskPicker) {
+          taskPicker.value = selectedTasks.length === 1 ? (selectedTasks[0].name || '') : '';
+        }
+        updatePomodoroUI(state);
+      } else {
+        state.isRunning = false;
+        state.lastTick = null;
+        state.taskId = null;
+        state.taskName = null;
+        state.taskIds = [];
+        state.taskNames = [];
+        state.taskRunning = false;
+        stopInterval();
+        if (taskPicker) taskPicker.value = '';
+        saveState(state);
+        updatePomodoroUI(state);
+      }
+    }
+    renderTasks(cachedTasks, taskPicker ? taskPicker.value : '');
+  } catch (error) {
+    console.error(error);
+    if (taskList) {
+      taskList.innerHTML = '<div class="timer-empty-state">Failed to load tasks.</div>';
+    }
+  }
+
+  timerQuickTaskForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const name = timerQuickTaskName ? timerQuickTaskName.value.trim() : '';
+    if (!name) return;
+    const submitButton = timerQuickTaskForm.querySelector('button[type="submit"]');
+    if (submitButton) submitButton.disabled = true;
+    setQuickTaskFeedback('');
+
+    try {
+      const selectedLabelId = timerQuickTaskLabel && timerQuickTaskLabel.value ? timerQuickTaskLabel.value : '';
+      const payload = await appApi.createTask({
+        name,
+        project_id: timerQuickTaskProject && timerQuickTaskProject.value ? timerQuickTaskProject.value : null,
+        priority: timerQuickTaskPriority && timerQuickTaskPriority.value ? timerQuickTaskPriority.value : 'medium',
+        label_ids: selectedLabelId ? [selectedLabelId] : [],
+        goal_id: null
+      });
+      cachedTasks = mergeTaskPayload(payload);
+      selectedTaskIds.clear();
+      renderTasks(cachedTasks, taskPicker ? taskPicker.value : '');
+      if (timerQuickTaskName) {
+        timerQuickTaskName.value = '';
+        timerQuickTaskName.focus();
+      }
+      if (timerQuickTaskPriority) timerQuickTaskPriority.value = 'medium';
+      if (timerQuickTaskLabel) timerQuickTaskLabel.value = '';
+      setQuickTaskFeedback('Task added.', 'success');
+    } catch (error) {
+      console.error(error);
+      setQuickTaskFeedback(error.message || 'Saving failed.', 'error');
+    } finally {
+      if (submitButton) submitButton.disabled = false;
+    }
+  }, { signal });
+
+  taskPicker?.addEventListener('focus', openDropdown, { signal });
+  taskPicker?.addEventListener('click', openDropdown, { signal });
+  taskPicker?.addEventListener('input', () => {
+    openDropdown();
+    renderTasks(cachedTasks, taskPicker.value);
+  }, { signal });
+  taskPicker?.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      openDropdown();
+      const firstButton = taskList?.querySelector('.timer-task-pick:not([disabled])');
+      if (firstButton) firstButton.focus();
+    }
+    if (event.key === 'Enter') {
+      const candidates = filterTasks(cachedTasks, taskPicker.value).filter(
+        (task) => (task.status || 'active') !== 'completed'
+      );
+      if (candidates.length) {
+        event.preventDefault();
+        selectTask(candidates[0]);
+      }
+    }
+    if (event.key === 'Escape') {
+      closeDropdown();
+    }
+  }, { signal });
+
+  taskList?.addEventListener('click', (event) => {
+    const target = event.target instanceof HTMLElement ? event.target : null;
+    if (!target) return;
+    const button = target.closest('button.timer-task-pick[data-task-id]');
+    if (!button || button.disabled) return;
+    const selected = cachedTasks.find((task) => String(task.id) === String(button.dataset.taskId));
+    selectTask(selected);
+  }, { signal });
+
+  taskList?.addEventListener('change', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement)) return;
+    if (!target.classList.contains('timer-task-check')) return;
+    const taskId = normalizeTaskIdValue(target.dataset.taskCheckId || target.value);
+    if (!taskId) return;
+    if (target.checked) selectedTaskIds.add(taskId);
+    else selectedTaskIds.delete(taskId);
+    renderTasks(cachedTasks, taskPicker ? taskPicker.value : '');
+  }, { signal });
+
+  timerBulkClear?.addEventListener('click', () => {
+    selectedTaskIds.clear();
+    renderTasks(cachedTasks, taskPicker ? taskPicker.value : '');
+  }, { signal });
+
+  timerBulkApply?.addEventListener('click', () => {
+    applyBulkAction();
+  }, { signal });
+
+  content.addEventListener('click', async (event) => {
+    const target = event.target instanceof HTMLElement ? event.target : null;
+    if (!target) return;
+    const actionButton = target.closest('button[data-action][data-task-id]');
+    if (!actionButton) return;
+    const taskId = actionButton.dataset.taskId;
+    const action = actionButton.dataset.action;
+    if (!taskId || !action) return;
+    actionButton.disabled = true;
+    try {
+      if (action === 'start') await appApi.startTask(taskId);
+      if (action === 'stop') await appApi.stopTask(taskId);
+      if (action === 'complete') await appApi.completeTask(taskId);
+      showToast('Timer task updated', 'success');
+      await render(container, currentPath, {});
+    } catch (error) {
+      showToast(error.message || 'Failed to update timer task', 'error');
+    } finally {
+      actionButton.disabled = false;
+    }
+  }, { signal });
+
+  document.addEventListener('click', (event) => {
+    const target = event.target instanceof HTMLElement ? event.target : null;
+    if (!target) return;
+    if (!target.closest('.timer-select')) {
+      closeDropdown();
+    }
+  }, { signal });
 }
 
 function renderCalendar(content, payload) {
@@ -1584,6 +2862,11 @@ async function renderSection(container, section, currentPath) {
   const content = container.querySelector('#app-shell-content');
   if (!content) return;
 
+  if (section !== 'timer' && typeof timerViewCleanup === 'function') {
+    timerViewCleanup();
+    timerViewCleanup = null;
+  }
+
   renderLoading(content, section);
 
   try {
@@ -1641,7 +2924,13 @@ async function renderSection(container, section, currentPath) {
     }
 
     if (section === 'timer') {
-      const payload = await appApi.getTimerDashboard();
+      const search = new URLSearchParams(window.location.search || '');
+      const start = search.get('start');
+      const end = search.get('end');
+      const params = {};
+      if (start) params.start = start;
+      if (end) params.end = end;
+      const payload = await appApi.getTimerDashboard(params);
       renderTimer(content, payload);
       await bindTimerActions(container, currentPath);
       return;
