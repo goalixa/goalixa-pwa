@@ -5782,36 +5782,215 @@ async function bindReminderActions(container, currentPath, payload) {
   });
 }
 
+const LABEL_PRESET_COLORS = ['#e85d75', '#1f6feb', '#f2a900', '#22c55e', '#a855f7', '#0ea5e9'];
+
+function normalizeLabelColor(value, fallback = '#1f6feb') {
+  const candidate = String(value || '').trim();
+  if (/^#[0-9a-fA-F]{6}$/.test(candidate) || /^#[0-9a-fA-F]{3}$/.test(candidate)) {
+    return candidate;
+  }
+  return fallback;
+}
+
+function normalizeLabelsPayload(payload) {
+  const labels = Array.isArray(payload?.labels) ? payload.labels : [];
+  return labels.map((label, index) => {
+    const color = normalizeLabelColor(label?.color, LABEL_PRESET_COLORS[index % LABEL_PRESET_COLORS.length]);
+    const createdAt = label?.created_at || label?.createdAt || '';
+    return {
+      id: label?.id ?? `label-${index + 1}`,
+      name: String(label?.name || `Label ${index + 1}`),
+      color,
+      created_at: createdAt
+    };
+  });
+}
+
+function buildLabelsDemoPayload() {
+  const now = Date.now();
+  const labels = [
+    { id: 'demo-label-1', name: 'Frontend', color: '#1f6feb', created_at: new Date(now - 1000 * 60 * 3).toISOString() },
+    { id: 'demo-label-2', name: 'BFF', color: '#e85d75', created_at: new Date(now - 1000 * 60 * 9).toISOString() },
+    { id: 'demo-label-3', name: 'Infra', color: '#f2a900', created_at: new Date(now - 1000 * 60 * 15).toISOString() },
+    { id: 'demo-label-4', name: 'UX', color: '#22c55e', created_at: new Date(now - 1000 * 60 * 21).toISOString() },
+    { id: 'demo-label-5', name: 'API', color: '#a855f7', created_at: new Date(now - 1000 * 60 * 27).toISOString() }
+  ];
+  return {
+    labels,
+    __demo: true
+  };
+}
+
+function withLabelsDemoPayload(payload) {
+  const safe = payload && typeof payload === 'object' ? payload : {};
+  const hasLabels = Array.isArray(safe.labels) && safe.labels.length > 0;
+  if (!isLocalhostRuntime() || hasLabels) {
+    return safe;
+  }
+
+  const demo = buildLabelsDemoPayload();
+  return {
+    ...demo,
+    ...safe,
+    labels: hasLabels ? safe.labels : demo.labels,
+    __demo: true
+  };
+}
+
 function renderLabels(content, payload) {
-  const labels = Array.isArray(payload.labels) ? payload.labels : [];
+  const labels = normalizeLabelsPayload(payload);
+  const labelsByNewest = [...labels].sort((a, b) => {
+    const aTime = Date.parse(a.created_at || '') || 0;
+    const bTime = Date.parse(b.created_at || '') || 0;
+    return bTime - aTime;
+  });
+  const newestLabel = labelsByNewest[0] || null;
+  const palettePreview = labelsByNewest.slice(0, 6);
+
+  const demoNote = payload.__demo
+    ? `
+      <div class="goals-demo-note">
+        <i class="bi bi-flask"></i>
+        <span>Demo data is enabled on localhost because API returned no labels yet.</span>
+      </div>
+    `
+    : '';
 
   content.innerHTML = `
-    <div class="app-panel">
-      <div class="app-panel-header">
-        <h3>Labels</h3>
-        <p>Centralized label palette for tasks and projects.</p>
-      </div>
+    <div class="labels-page" data-labels-demo="${payload.__demo ? '1' : '0'}">
+      ${demoNote}
 
-      <form id="label-create-form" class="inline-actions-form">
-        <input id="label-name" type="text" placeholder="Label name" required />
-        <input id="label-color" type="color" value="#1f6feb" />
-        <button class="btn btn-primary" type="submit">Add Label</button>
-      </form>
+      <section class="labels-hero">
+        <article class="label-stat-card">
+          <span class="label-stat-label">Total labels</span>
+          <span class="label-stat-value">${labels.length}</span>
+          <span class="label-stat-meta">Ready to tag</span>
+        </article>
+        <article class="label-stat-card">
+          <span class="label-stat-label">Newest label</span>
+          <span class="label-stat-value">${escapeHtml(newestLabel?.name || 'N/A')}</span>
+          <span class="label-stat-meta">${newestLabel ? 'Just added' : 'Create your first label'}</span>
+        </article>
+        <article class="label-stat-card">
+          <span class="label-stat-label">Palette preview</span>
+          <div class="label-palette">
+            ${palettePreview.length
+      ? palettePreview.map((label) => `<span class="label-swatch" style="background-color: ${escapeHtml(label.color)}" title="${escapeHtml(label.name)}"></span>`).join('')
+      : '<span class="label-palette-empty">Add colors</span>'}
+          </div>
+          <span class="label-stat-meta">Keep tones consistent</span>
+        </article>
+      </section>
 
-      <div class="label-list-lite">
-        ${labels.length === 0 ? '<p class="muted">No labels yet.</p>' : ''}
-        ${labels.map((label) => `
-          <article class="label-row-lite">
-            <span class="label-chip" style="background-color: ${escapeHtml(label.color)}">${escapeHtml(label.name)}</span>
-            <form class="inline-edit-form" data-label-id="${label.id}">
-              <input name="name" type="text" value="${escapeHtml(label.name)}" required />
-              <input name="color" type="color" value="${escapeHtml(label.color)}" />
-              <button class="btn btn-secondary" type="submit">Save</button>
-              <button data-action="delete-label" data-label-id="${label.id}" class="danger" type="button">Delete</button>
-            </form>
-          </article>
-        `).join('')}
-      </div>
+      <section class="app-panel labels-card" id="label-create">
+        <div class="labels-card-header">
+          <div>
+            <p class="goals-label">Create</p>
+            <h3 class="goals-title">New label</h3>
+          </div>
+          <span class="labels-tip">Pick a name, then choose a color for fast scanning.</span>
+        </div>
+
+        <form id="label-create-form" class="label-create-form">
+          <label class="label-field">
+            <span>Label name</span>
+            <input type="text" name="name" placeholder="Design, Admin, Urgent..." required />
+          </label>
+
+          <div class="label-color-group">
+            <span class="label-field-title">Color</span>
+            <div class="label-color-picker" role="radiogroup" aria-label="Label colors">
+              ${LABEL_PRESET_COLORS.slice(0, 5).map((color, index) => `
+                <label class="color-option" for="label-color-${index}">
+                  <input type="radio" id="label-color-${index}" name="color" value="${color}" ${index === 0 ? 'checked' : ''} />
+                  <span class="color-dot" style="background-color: ${color}"></span>
+                </label>
+              `).join('')}
+
+              <label class="color-option color-option-custom" for="label-color-custom-radio">
+                <input type="radio" id="label-color-custom-radio" name="color" value="${LABEL_PRESET_COLORS[5]}" data-custom-radio />
+                <span class="color-dot" style="background-color: ${LABEL_PRESET_COLORS[5]}"></span>
+                <span class="color-custom">
+                  <input type="color" value="${LABEL_PRESET_COLORS[5]}" aria-label="Custom color" data-custom-color />
+                  <span>Custom</span>
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <div class="label-actions">
+            <button class="btn btn-primary btn-sm" type="submit">
+              <i class="bi bi-plus-lg"></i>
+              Add label
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section class="app-panel labels-card" id="label-list">
+        <div class="labels-card-header">
+          <div>
+            <p class="goals-label">Library</p>
+            <h3 class="goals-title">Label list</h3>
+            <span class="labels-count" data-label-count>Showing ${labels.length} label${labels.length === 1 ? '' : 's'}</span>
+          </div>
+          <div class="labels-controls">
+            <div class="labels-search">
+              <i class="bi bi-search"></i>
+              <input type="search" placeholder="Search labels" aria-label="Search labels" data-label-search />
+              <button class="labels-clear" type="button" aria-label="Clear search" data-label-clear hidden>
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+            <div class="labels-sort">
+              <select aria-label="Sort labels" data-label-sort>
+                <option value="newest">Newest first</option>
+                <option value="name-asc">Name A-Z</option>
+                <option value="name-desc">Name Z-A</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        ${labels.length ? `
+          <div class="label-list" data-label-list>
+            ${labelsByNewest.map((label) => `
+              <article class="label-item" data-label-item data-label-id="${escapeHtml(String(label.id))}" data-label-name="${escapeHtml(label.name.toLowerCase())}" data-label-created="${escapeHtml(label.created_at || '')}">
+                <div class="label-item-main">
+                  <div class="label-item-top">
+                    <span class="label-chip" style="background-color: ${escapeHtml(label.color)}">${escapeHtml(label.name)}</span>
+                    <span class="label-hex">${escapeHtml(label.color.toUpperCase())}</span>
+                  </div>
+                  <form class="label-edit-form" data-label-edit-form data-label-id="${escapeHtml(String(label.id))}">
+                    <input name="name" type="text" value="${escapeHtml(label.name)}" required />
+                    <input name="color" type="color" value="${escapeHtml(label.color)}" />
+                    <button class="btn btn-outline-primary btn-sm" type="submit">
+                      <i class="bi bi-check2"></i>
+                      Save
+                    </button>
+                    <button class="btn btn-light btn-sm" type="button" data-action="cancel-label-edit" data-label-id="${escapeHtml(String(label.id))}">
+                      Cancel
+                    </button>
+                  </form>
+                </div>
+                <div class="label-item-actions">
+                  <button class="btn btn-outline-secondary btn-sm" type="button" data-action="edit-label" data-label-id="${escapeHtml(String(label.id))}">
+                    <i class="bi bi-pencil"></i>
+                    Edit
+                  </button>
+                  <button class="btn btn-outline-danger btn-sm danger" type="button" data-action="delete-label" data-label-id="${escapeHtml(String(label.id))}">
+                    <i class="bi bi-trash"></i>
+                    Delete
+                  </button>
+                </div>
+              </article>
+            `).join('')}
+          </div>
+          <p class="muted labels-empty-search" data-label-empty hidden>No labels match your search.</p>
+        ` : `
+          <p class="muted">No labels yet.</p>
+        `}
+      </section>
     </div>
   `;
 }
@@ -5820,12 +5999,34 @@ async function bindLabelActions(container, currentPath) {
   const content = container.querySelector('#app-shell-content');
   if (!content) return;
 
+  const labelsRoot = content.querySelector('.labels-page');
+  const isDemo = labelsRoot?.dataset.labelsDemo === '1';
+  const defaultColor = LABEL_PRESET_COLORS[0];
+
+  const closeAllEditForms = () => {
+    content.querySelectorAll('[data-label-edit-form].is-open').forEach((form) => {
+      form.classList.remove('is-open');
+    });
+  };
+
   const createForm = content.querySelector('#label-create-form');
   if (createForm) {
+    const customRadio = createForm.querySelector('[data-custom-radio]');
+    const customColorInput = createForm.querySelector('[data-custom-color]');
+
+    if (customRadio instanceof HTMLInputElement && customColorInput instanceof HTMLInputElement) {
+      customColorInput.addEventListener('input', () => {
+        customRadio.value = customColorInput.value;
+        customRadio.checked = true;
+      });
+    }
+
     createForm.addEventListener('submit', async (event) => {
       event.preventDefault();
-      const name = content.querySelector('#label-name').value.trim();
-      const color = content.querySelector('#label-color').value;
+      const nameInput = createForm.querySelector('input[name="name"]');
+      const colorInput = createForm.querySelector('input[name="color"]:checked');
+      const name = nameInput instanceof HTMLInputElement ? nameInput.value.trim() : '';
+      const color = normalizeLabelColor(colorInput instanceof HTMLInputElement ? colorInput.value : defaultColor, defaultColor);
       if (!name || !color) return;
 
       try {
@@ -5838,12 +6039,115 @@ async function bindLabelActions(container, currentPath) {
     });
   }
 
-  content.querySelectorAll('.inline-edit-form[data-label-id]').forEach((form) => {
+  const labelList = content.querySelector('[data-label-list]');
+  const searchInput = content.querySelector('[data-label-search]');
+  const sortSelect = content.querySelector('[data-label-sort]');
+  const clearButton = content.querySelector('[data-label-clear]');
+  const labelCount = content.querySelector('[data-label-count]');
+  const emptyResult = content.querySelector('[data-label-empty]');
+
+  const parseCreated = (value) => {
+    const timestamp = Date.parse(value || '');
+    return Number.isNaN(timestamp) ? 0 : timestamp;
+  };
+
+  const applySearchAndSort = () => {
+    if (!labelList) return;
+    const query = searchInput instanceof HTMLInputElement ? searchInput.value.trim().toLowerCase() : '';
+    const sortMode = sortSelect instanceof HTMLSelectElement ? sortSelect.value : 'newest';
+    const items = Array.from(labelList.querySelectorAll('[data-label-item]'));
+
+    items.sort((a, b) => {
+      const aName = String(a.dataset.labelName || '');
+      const bName = String(b.dataset.labelName || '');
+      if (sortMode === 'name-asc') return aName.localeCompare(bName);
+      if (sortMode === 'name-desc') return bName.localeCompare(aName);
+      return parseCreated(b.dataset.labelCreated) - parseCreated(a.dataset.labelCreated);
+    });
+
+    items.forEach((item) => labelList.appendChild(item));
+
+    let visibleCount = 0;
+    items.forEach((item) => {
+      const name = String(item.dataset.labelName || '').toLowerCase();
+      const matches = !query || name.includes(query);
+      item.hidden = !matches;
+      if (matches) visibleCount += 1;
+    });
+
+    if (labelCount) {
+      labelCount.textContent = `Showing ${visibleCount} label${visibleCount === 1 ? '' : 's'}`;
+    }
+    if (clearButton) {
+      clearButton.hidden = !query;
+    }
+    if (emptyResult) {
+      emptyResult.hidden = visibleCount > 0;
+    }
+  };
+
+  if (searchInput instanceof HTMLInputElement) {
+    searchInput.addEventListener('input', applySearchAndSort);
+  }
+  if (sortSelect instanceof HTMLSelectElement) {
+    sortSelect.addEventListener('change', applySearchAndSort);
+  }
+  if (clearButton instanceof HTMLButtonElement && searchInput instanceof HTMLInputElement) {
+    clearButton.addEventListener('click', () => {
+      searchInput.value = '';
+      applySearchAndSort();
+      searchInput.focus();
+    });
+  }
+  applySearchAndSort();
+
+  content.querySelectorAll('[data-action="edit-label"]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const labelId = button.dataset.labelId;
+      if (!labelId) return;
+      const targetForm = Array.from(content.querySelectorAll('[data-label-edit-form]'))
+        .find((form) => form.dataset.labelId === labelId);
+      if (!targetForm) return;
+      const shouldOpen = !targetForm.classList.contains('is-open');
+      closeAllEditForms();
+      if (shouldOpen) {
+        targetForm.classList.add('is-open');
+        const firstInput = targetForm.querySelector('input[name="name"]');
+        if (firstInput instanceof HTMLInputElement) {
+          firstInput.focus();
+          firstInput.select();
+        }
+      }
+    });
+  });
+
+  content.querySelectorAll('[data-action="cancel-label-edit"]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const labelId = button.dataset.labelId;
+      if (!labelId) return;
+      const targetForm = Array.from(content.querySelectorAll('[data-label-edit-form]'))
+        .find((form) => form.dataset.labelId === labelId);
+      if (!targetForm) return;
+      targetForm.classList.remove('is-open');
+    });
+  });
+
+  content.querySelectorAll('[data-label-edit-form]').forEach((form) => {
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
       const labelId = form.dataset.labelId;
-      const name = form.querySelector('input[name="name"]').value.trim();
-      const color = form.querySelector('input[name="color"]').value;
+      if (!labelId) return;
+      if (isDemo && String(labelId).startsWith('demo-')) {
+        showToast('Demo label: connect API data to save changes.', 'info');
+        return;
+      }
+
+      const nameInput = form.querySelector('input[name="name"]');
+      const colorInput = form.querySelector('input[name="color"]');
+      const name = nameInput instanceof HTMLInputElement ? nameInput.value.trim() : '';
+      const color = normalizeLabelColor(colorInput instanceof HTMLInputElement ? colorInput.value : '#1f6feb');
+      if (!name || !color) return;
+
       try {
         await appApi.updateLabel(labelId, name, color);
         showToast('Label updated', 'success');
@@ -5856,14 +6160,26 @@ async function bindLabelActions(container, currentPath) {
 
   content.querySelectorAll('[data-action="delete-label"]').forEach((button) => {
     button.addEventListener('click', async () => {
+      const labelId = button.dataset.labelId;
+      if (!labelId) return;
+      if (isDemo && String(labelId).startsWith('demo-')) {
+        showToast('Demo label: connect API data to delete this item.', 'info');
+        return;
+      }
+
       try {
-        await appApi.deleteLabel(button.dataset.labelId);
+        await appApi.deleteLabel(labelId);
         showToast('Label deleted', 'success');
         await render(container, currentPath, {});
       } catch (error) {
         showToast(error.message || 'Failed to delete label', 'error');
       }
     });
+  });
+
+  content.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    closeAllEditForms();
   });
 }
 
@@ -6167,7 +6483,14 @@ async function renderSection(container, section, currentPath) {
     }
 
     if (section === 'labels') {
-      const payload = await appApi.getLabels();
+      let payload;
+      try {
+        payload = await appApi.getLabels();
+      } catch (error) {
+        if (!isLocalhostRuntime()) throw error;
+        payload = {};
+      }
+      payload = withLabelsDemoPayload(payload);
       renderLabels(content, payload);
       await bindLabelActions(container, currentPath);
       return;
