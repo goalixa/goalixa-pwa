@@ -11,6 +11,20 @@
 
   <title>Goalixa PWA</title>
 
+  <script>
+    (() => {
+      try {
+        const storedTheme = localStorage.getItem('goalixa-theme');
+        const isDark = storedTheme
+          ? storedTheme === 'dark'
+          : window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+      } catch (error) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+
   <!-- PWA Manifest -->
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="apple-touch-icon" href="/icons/icon-192.png" />

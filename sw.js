@@ -3,7 +3,7 @@
  * Handles caching for auth and app views
  */
 
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const CACHE_PREFIX = 'goalixa-pwa';
 
 // Cache names for different strategies
@@ -22,11 +22,13 @@ const CORE_ASSETS = [
   '/manifest.webmanifest',
   '/css/styles.css',
   '/js/router.js',
+  '/js/theme.js',
   '/js/api.js',
   '/js/auth.js',
   '/js/utils.js',
   '/js/views/auth-view.js',
-  '/js/views/app-view.js'
+  '/js/views/app-view.js',
+  '/js/views/app/tasks-view.js'
 ];
 
 // Asset URLs for icons and external resources

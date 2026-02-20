@@ -5,6 +5,7 @@
 
 import { isAuthenticated, initAuth } from './auth.js';
 import { eventBus } from './utils.js';
+import { initTheme } from './theme.js';
 
 // Route configuration
 const routes = {
@@ -46,6 +47,8 @@ const viewModules = {
 // Current route state
 let currentRoute = null;
 let currentParams = {};
+
+initTheme();
 
 /**
  * Load a view module and cache it.

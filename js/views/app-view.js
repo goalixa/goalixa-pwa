@@ -7,6 +7,7 @@ import { appApi } from '../api.js';
 import { getCurrentUser, logout } from '../auth.js';
 import { showToast } from '../utils.js';
 import { navigate } from '../router.js';
+import { getTheme, toggleTheme } from '../theme.js';
 import { bindTasksSection, clearTasksView, renderTasksSection } from './app/tasks-view.js';
 
 const NAV_ITEMS = [
@@ -106,6 +107,16 @@ function getNavMarkup(activeSection) {
   }).join('');
 }
 
+function setThemeToggleState(button) {
+  if (!button) return;
+  const isDark = getTheme() === 'dark';
+  button.innerHTML = `
+    <i class="fas ${isDark ? 'fa-sun' : 'fa-moon'}"></i>
+    <span>${isDark ? 'Light' : 'Dark'}</span>
+  `;
+  button.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+}
+
 function renderShell(container, section) {
   const user = getCurrentUser();
   const email = user && user.email ? user.email : 'Guest';
@@ -122,6 +133,7 @@ function renderShell(container, section) {
         </div>
         <div class="app-user-actions">
           <span class="app-user-email">${escapeHtml(email)}</span>
+          <button class="btn btn-light app-theme-toggle" data-action="toggle-theme" type="button"></button>
           <button class="btn btn-primary" data-action="logout" type="button">Logout</button>
         </div>
       </header>
@@ -146,6 +158,15 @@ function renderShell(container, section) {
     logoutButton.addEventListener('click', async () => {
       await logout();
       navigate('/login');
+    });
+  }
+
+  const themeButton = container.querySelector('[data-action="toggle-theme"]');
+  if (themeButton) {
+    setThemeToggleState(themeButton);
+    themeButton.addEventListener('click', () => {
+      toggleTheme();
+      setThemeToggleState(themeButton);
     });
   }
 
@@ -599,51 +620,266 @@ function renderOverview(content, overview, tasksPayload, goalsPayload, reportsPa
   bindOverviewCharts(content, summary);
 }
 
-function renderProjects(content, projects) {
-  const projectList = Array.isArray(projects.projects) ? projects.projects : [];
+function normalizeProjectLabels(labels) {
+  if (!Array.isArray(labels)) return [];
+  return labels
+    .map((label) => {
+      if (typeof label === 'string') {
+        return { id: '', name: label, color: '#64748b' };
+      }
+      return {
+        id: label?.id || '',
+        name: label?.name || '',
+        color: label?.color || '#64748b'
+      };
+    })
+    .filter((label) => label.name);
+}
+
+function buildProjectsDashboardData(payload) {
+  const projects = Array.isArray(payload?.projects?.projects) ? payload.projects.projects : [];
+  const labels = Array.isArray(payload?.labels?.labels) ? payload.labels.labels : [];
+  const tasksPayload = payload?.tasks || {};
+  const report = payload?.reports || {};
+  const allTasks = [
+    ...(Array.isArray(tasksPayload.tasks) ? tasksPayload.tasks : []),
+    ...(Array.isArray(tasksPayload.done_today_tasks) ? tasksPayload.done_today_tasks : []),
+    ...(Array.isArray(tasksPayload.completed_tasks) ? tasksPayload.completed_tasks : [])
+  ];
+
+  const activeTaskCount = allTasks.filter((task) => String(task?.status || 'active').toLowerCase() !== 'completed').length;
+  const focusByName = new Map();
+  (Array.isArray(report.distribution) ? report.distribution : []).forEach((row) => {
+    const name = String(row?.name || row?.project || row?.label || '').trim();
+    if (!name) return;
+    const seconds = Math.max(0, Number(row?.total_seconds || row?.seconds || 0));
+    focusByName.set(name.toLowerCase(), seconds);
+  });
+
+  const tasksByProjectName = new Map();
+  allTasks.forEach((task) => {
+    const projectName = String(task?.project_name || '').trim();
+    if (!projectName) return;
+    const key = projectName.toLowerCase();
+    const prev = tasksByProjectName.get(key) || { total: 0, active: 0 };
+    prev.total += 1;
+    if (String(task?.status || 'active').toLowerCase() !== 'completed') {
+      prev.active += 1;
+    }
+    tasksByProjectName.set(key, prev);
+  });
+
+  const rows = projects.map((project) => {
+    const name = String(project?.name || 'Untitled');
+    const key = name.toLowerCase();
+    const taskStats = tasksByProjectName.get(key) || { total: 0, active: 0 };
+    const projectLabels = normalizeProjectLabels(project?.labels);
+    return {
+      id: project?.id,
+      name,
+      labels: projectLabels,
+      labelsCount: projectLabels.length,
+      tasksCount: taskStats.total,
+      activeTasksCount: taskStats.active,
+      focusSeconds: Math.max(0, Number(focusByName.get(key) || 0))
+    };
+  });
+
+  const focusTotal = Math.max(
+    0,
+    Number(report.total_seconds || rows.reduce((acc, row) => acc + row.focusSeconds, 0))
+  );
+
+  return {
+    rows,
+    labels: normalizeProjectLabels(labels),
+    stats: {
+      totalProjects: rows.length,
+      activeTaskCount,
+      totalFocusSeconds: focusTotal,
+      labelCount: labels.length
+    }
+  };
+}
+
+function sortProjectRows(rows, mode) {
+  const safe = Array.isArray(rows) ? rows.slice() : [];
+  return safe.sort((left, right) => {
+    if (mode === 'name-asc') {
+      return String(left.name || '').localeCompare(String(right.name || ''));
+    }
+    if (mode === 'name-desc') {
+      return String(right.name || '').localeCompare(String(left.name || ''));
+    }
+    if (mode === 'tasks-desc') {
+      return Number(right.activeTasksCount || 0) - Number(left.activeTasksCount || 0);
+    }
+    return Number(right.focusSeconds || 0) - Number(left.focusSeconds || 0);
+  });
+}
+
+function projectLabelChips(labels) {
+  const safeLabels = normalizeProjectLabels(labels);
+  if (!safeLabels.length) {
+    return '<span class="project-label-empty">No labels</span>';
+  }
+  return safeLabels.map((label) => `
+    <span class="project-label-chip">
+      <span class="project-label-dot" style="background-color: ${escapeHtml(label.color)};"></span>
+      ${escapeHtml(label.name)}
+    </span>
+  `).join('');
+}
+
+function projectRowMarkup(project) {
+  return `
+    <article class="project-row" data-project-id="${project.id}">
+      <div class="project-row-top">
+        <div class="project-row-head">
+          <h4>${escapeHtml(project.name)}</h4>
+          <span class="task-state ${project.activeTasksCount > 0 ? 'running' : 'idle'}">${project.activeTasksCount} active</span>
+        </div>
+        <div class="project-row-metrics">
+          <span>${project.tasksCount} tasks</span>
+          <span>${project.labelsCount} labels</span>
+          <span>${formatDuration(project.focusSeconds)}</span>
+        </div>
+      </div>
+      <div class="project-row-bottom">
+        <div class="project-label-list">
+          ${projectLabelChips(project.labels)}
+        </div>
+        <div class="project-row-actions">
+          <button class="btn btn-outline-secondary btn-sm" data-action="project-open-tasks" data-project-id="${project.id}" type="button">Tasks</button>
+          <button class="btn btn-outline-danger btn-sm danger" data-action="delete-project" data-project-id="${project.id}" type="button">Delete</button>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function renderProjectList(rows, query, mode) {
+  const term = String(query || '').trim().toLowerCase();
+  const filtered = sortProjectRows(rows, mode).filter((project) => {
+    if (!term) return true;
+    const inName = String(project.name || '').toLowerCase().includes(term);
+    const inLabels = project.labels.some((label) => String(label.name || '').toLowerCase().includes(term));
+    return inName || inLabels;
+  });
+
+  if (!filtered.length) {
+    return '<p class="muted">No matching projects.</p>';
+  }
+  return filtered.map((project) => projectRowMarkup(project)).join('');
+}
+
+function renderProjects(content, payload) {
+  const data = buildProjectsDashboardData(payload);
+  const rows = sortProjectRows(data.rows, 'focus-desc');
 
   content.innerHTML = `
-    <div class="app-panel">
-      <div class="app-panel-header">
-        <h3>Projects</h3>
-        <p>Manage projects and connected tags.</p>
-      </div>
+    <div class="projects-page">
+      <section class="projects-hero">
+        <article class="project-stat-card">
+          <span class="project-stat-label">Total projects</span>
+          <span class="project-stat-value">${data.stats.totalProjects}</span>
+          <span class="project-stat-meta">Active workstreams</span>
+        </article>
+        <article class="project-stat-card">
+          <span class="project-stat-label">Open tasks</span>
+          <span class="project-stat-value">${data.stats.activeTaskCount}</span>
+          <span class="project-stat-meta">Across all projects</span>
+        </article>
+        <article class="project-stat-card">
+          <span class="project-stat-label">Focus logged</span>
+          <span class="project-stat-value">${formatDuration(data.stats.totalFocusSeconds)}</span>
+          <span class="project-stat-meta">For selected report window</span>
+        </article>
+        <article class="project-stat-card">
+          <span class="project-stat-label">Labels in use</span>
+          <span class="project-stat-value">${data.stats.labelCount}</span>
+          <span class="project-stat-meta">Available tags</span>
+        </article>
+      </section>
 
-      <form class="project-create-form" id="project-create-form">
-        <input type="text" id="project-name" placeholder="Project name" required />
-        <button class="btn btn-primary" type="submit">Create Project</button>
-      </form>
+      <section class="app-panel projects-card">
+        <div class="projects-card-header">
+          <div>
+            <p class="goals-label">Create</p>
+            <h3 class="goals-title">New project</h3>
+          </div>
+        </div>
+        <form class="project-form" id="project-create-form">
+          <input type="text" id="project-name" placeholder="Project name" required />
+          <select id="project-labels" multiple ${data.labels.length ? '' : 'disabled'}>
+            ${data.labels.map((label) => `
+              <option value="${label.id}">${escapeHtml(label.name)}</option>
+            `).join('')}
+          </select>
+          <button class="btn btn-primary" type="submit">Create</button>
+        </form>
+      </section>
 
-      <div class="project-list">
-        ${projectList.length === 0 ? '<p class="muted">No projects yet.</p>' : ''}
-        ${projectList.map((project) => `
-          <article class="project-item">
-            <div>
-              <h5>${escapeHtml(project.name)}</h5>
-              <p>${Array.isArray(project.labels) ? project.labels.length : 0} labels</p>
-            </div>
-            <button class="danger" data-action="delete-project" data-project-id="${project.id}" type="button">Delete</button>
-          </article>
-        `).join('')}
-      </div>
+      <section class="app-panel projects-card">
+        <div class="projects-card-header">
+          <div>
+            <p class="goals-label">Workspace</p>
+            <h3 class="goals-title">Project list</h3>
+          </div>
+        </div>
+
+        <div class="projects-toolbar">
+          <input id="project-search" type="search" placeholder="Search projects or labels..." />
+          <select id="project-sort">
+            <option value="focus-desc" selected>Most focus time</option>
+            <option value="tasks-desc">Most active tasks</option>
+            <option value="name-asc">Name (A-Z)</option>
+            <option value="name-desc">Name (Z-A)</option>
+          </select>
+        </div>
+
+        <div class="project-list-lite" id="project-list-lite">
+          ${rows.length ? rows.map((project) => projectRowMarkup(project)).join('') : '<p class="muted">No projects yet.</p>'}
+        </div>
+      </section>
     </div>
   `;
 }
 
-async function bindProjectActions(container, currentPath) {
+async function bindProjectActions(container, currentPath, initialPayload) {
   const content = container.querySelector('#app-shell-content');
   if (!content) return;
+
+  const data = buildProjectsDashboardData(initialPayload);
+  const projectList = content.querySelector('#project-list-lite');
+  const searchInput = content.querySelector('#project-search');
+  const sortInput = content.querySelector('#project-sort');
+
+  const repaintProjectList = () => {
+    if (!projectList) return;
+    const query = searchInput ? searchInput.value : '';
+    const mode = sortInput ? sortInput.value : 'focus-desc';
+    projectList.innerHTML = renderProjectList(data.rows, query, mode);
+  };
+
+  searchInput?.addEventListener('input', repaintProjectList);
+  sortInput?.addEventListener('change', repaintProjectList);
 
   const form = content.querySelector('#project-create-form');
   if (form) {
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
       const nameInput = content.querySelector('#project-name');
-      const name = nameInput.value.trim();
+      const labelsInput = content.querySelector('#project-labels');
+      const name = nameInput ? nameInput.value.trim() : '';
       if (!name) return;
 
+      const labelIds = labelsInput instanceof HTMLSelectElement
+        ? Array.from(labelsInput.selectedOptions).map((option) => option.value).filter(Boolean)
+        : [];
+
       try {
-        await appApi.createProject(name);
+        await appApi.createProject(name, labelIds);
         showToast('Project created', 'success');
         await render(container, currentPath, {});
       } catch (error) {
@@ -652,16 +888,37 @@ async function bindProjectActions(container, currentPath) {
     });
   }
 
-  content.querySelectorAll('[data-action="delete-project"]').forEach((button) => {
-    button.addEventListener('click', async () => {
-      try {
-        await appApi.deleteProject(button.dataset.projectId);
-        showToast('Project deleted', 'success');
-        await render(container, currentPath, {});
-      } catch (error) {
-        showToast(error.message || 'Failed to delete project', 'error');
-      }
-    });
+  content.addEventListener('click', async (event) => {
+    const target = event.target instanceof HTMLElement ? event.target : null;
+    if (!target) return;
+
+    const actionButton = target.closest('button[data-action][data-project-id]');
+    if (!actionButton) return;
+    const action = actionButton.dataset.action;
+    const projectId = actionButton.dataset.projectId;
+    if (!action || !projectId) return;
+
+    if (action === 'project-open-tasks') {
+      navigate('/app/tasks');
+      return;
+    }
+
+    if (action !== 'delete-project') return;
+
+    if (!window.confirm('Delete this project?')) {
+      return;
+    }
+
+    actionButton.disabled = true;
+    try {
+      await appApi.deleteProject(projectId);
+      showToast('Project deleted', 'success');
+      await render(container, currentPath, {});
+    } catch (error) {
+      showToast(error.message || 'Failed to delete project', 'error');
+    } finally {
+      actionButton.disabled = false;
+    }
   });
 }
 
@@ -3037,9 +3294,19 @@ async function renderSection(container, section, currentPath) {
     }
 
     if (section === 'projects') {
-      const projects = await appApi.getProjects();
-      renderProjects(content, projects);
-      await bindProjectActions(container, currentPath);
+      const range = lastSevenDaysRange();
+      const [projects, labels, tasks, reports] = await Promise.all([
+        appApi.getProjects(),
+        appApi.getLabels().catch(() => ({ labels: [] })),
+        appApi.getTasks().catch(() => ({ tasks: [], done_today_tasks: [], completed_tasks: [] })),
+        appApi.getReportsSummary({ start: range.start, end: range.end, group: 'projects' }).catch(() => ({
+          distribution: [],
+          total_seconds: 0
+        }))
+      ]);
+      const payload = { projects, labels, tasks, reports };
+      renderProjects(content, payload);
+      await bindProjectActions(container, currentPath, payload);
       return;
     }
 
