@@ -102,8 +102,10 @@ function getNavMarkup(activeSection) {
     const active = item.key === activeSection ? 'active' : '';
     return `
       <button class="app-nav-btn ${active}" data-route="/app/${item.key}" type="button">
-        <i class="fas ${item.icon}"></i>
-        <span>${item.label}</span>
+        <span class="app-nav-icon" aria-hidden="true">
+          <i class="fas ${item.icon}"></i>
+        </span>
+        <span class="app-nav-text">${item.label}</span>
       </button>
     `;
   }).join('');
@@ -126,12 +128,10 @@ function renderShell(container, section) {
   container.innerHTML = `
     <div class="app-shell">
       <header class="app-shell-header">
-        <div class="app-brand">
-          <i class="fas fa-bullseye"></i>
-          <div>
-            <h2>Goalixa PWA</h2>
-            <p>Unified frontend workspace</p>
-          </div>
+        <div class="app-brand" aria-label="Goalixa">
+          <span class="app-brand-mark" aria-hidden="true">
+            <i class="fas fa-bullseye"></i>
+          </span>
         </div>
         <div class="app-user-actions">
           <span class="app-user-email">${escapeHtml(email)}</span>
@@ -142,6 +142,9 @@ function renderShell(container, section) {
 
       <div class="app-shell-main">
         <aside class="app-shell-nav">
+          <div class="app-nav-head">
+            <span>Navigation</span>
+          </div>
           ${getNavMarkup(section)}
         </aside>
         <section class="app-shell-content" id="app-shell-content"></section>
