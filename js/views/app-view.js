@@ -29,6 +29,7 @@ const NAV_ITEMS = [
 
 let timerViewCleanup = null;
 let overviewViewCleanup = null;
+let reportsViewCleanup = null;
 
 function resolveSection(path) {
   const subPath = path.replace('/app', '') || '/overview';
@@ -206,6 +207,13 @@ function clearOverviewView() {
   if (typeof overviewViewCleanup === 'function') {
     overviewViewCleanup();
     overviewViewCleanup = null;
+  }
+}
+
+function clearReportsView() {
+  if (typeof reportsViewCleanup === 'function') {
+    reportsViewCleanup();
+    reportsViewCleanup = null;
   }
 }
 
@@ -922,42 +930,372 @@ async function bindProjectActions(container, currentPath, initialPayload) {
   });
 }
 
-function renderReports(content, report, range) {
-  const distribution = Array.isArray(report.distribution) ? report.distribution.slice(0, 8) : [];
+function normalizeReportSummary(summary) {
+  const safe = Array.isArray(summary) ? summary : [];
+  return safe.slice(0, 14).map((item, index) => {
+    const seconds = Math.max(0, Number(item?.seconds || 0));
+    const rawLabel = item?.label || item?.date || item?.day;
+    return {
+      seconds,
+      label: compactOverviewLabel(rawLabel, `D${index + 1}`),
+      fullLabel: String(rawLabel || `Day ${index + 1}`)
+    };
+  });
+}
 
-  content.innerHTML = `
-    <div class="app-panel">
-      <div class="app-panel-header">
-        <h3>Reports</h3>
-        <p>Summary for ${escapeHtml(range.start)} to ${escapeHtml(range.end)}.</p>
-      </div>
+function normalizeReportDistribution(distribution) {
+  const safe = Array.isArray(distribution) ? distribution : [];
+  return safe
+    .map((row, index) => ({
+      name: String(row?.name || row?.project || row?.label || row?.task || '-'),
+      seconds: Math.max(0, Number(row?.total_seconds || row?.seconds || 0)),
+      color: `hsl(${(index * 47) % 360}, 78%, 45%)`
+    }))
+    .filter((row) => row.seconds > 0);
+}
 
-      <div class="stats-grid reports">
-        <article class="stat-card"><h4>Total Time</h4><p>${formatDuration(report.total_seconds)}</p></article>
-        <article class="stat-card"><h4>Avg Daily</h4><p>${Number(report.avg_daily_hours || 0).toFixed(2)}h</p></article>
-        <article class="stat-card"><h4>Active Projects</h4><p>${Number(report.active_projects || 0)}</p></article>
-      </div>
+function renderReportsTrendSvg(summaryRows, mode = 'line') {
+  if (!summaryRows.length) {
+    return '<p class="muted">No activity yet.</p>';
+  }
 
-      <div class="report-table-wrap">
-        <h4>Top Distribution</h4>
-        ${distribution.length === 0 ? '<p class="muted">No report data for this period.</p>' : ''}
-        <table class="report-table">
-          <thead>
-            <tr><th>Name</th><th>Seconds</th><th>Duration</th></tr>
-          </thead>
-          <tbody>
-            ${distribution.map((row) => `
-              <tr>
-                <td>${escapeHtml(row.name || row.label || row.project || row.task || '-')}</td>
-                <td>${Number(row.total_seconds || row.seconds || 0)}</td>
-                <td>${formatDuration(row.total_seconds || row.seconds || 0)}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
+  const width = 780;
+  const height = 230;
+  const padLeft = 40;
+  const padRight = 16;
+  const padTop = 14;
+  const padBottom = 34;
+  const chartWidth = width - padLeft - padRight;
+  const chartHeight = height - padTop - padBottom;
+  const yMax = Math.max(1, ...summaryRows.map((point) => point.seconds));
+  const baseY = padTop + chartHeight;
+  const points = summaryRows.map((point, index) => {
+    const ratioX = summaryRows.length > 1 ? index / (summaryRows.length - 1) : 0.5;
+    return {
+      ...point,
+      x: padLeft + (chartWidth * ratioX),
+      y: baseY - ((point.seconds / yMax) * chartHeight)
+    };
+  });
+
+  const gridMarkup = Array.from({ length: 5 }, (_, rowIndex) => {
+    const ratio = rowIndex / 4;
+    const y = padTop + (chartHeight * ratio);
+    const value = yMax * (1 - ratio);
+    return `
+      <line class="reports-grid-line" x1="${padLeft}" y1="${y}" x2="${width - padRight}" y2="${y}"></line>
+      <text class="reports-grid-text" x="${padLeft - 8}" y="${y + 4}" text-anchor="end">${formatDurationAxis(value)}</text>
+    `;
+  }).join('');
+
+  const xLabelsMarkup = points.map((point) => `
+    <text class="reports-axis-label" x="${point.x}" y="${height - 10}" text-anchor="middle">${escapeHtml(point.label)}</text>
+  `).join('');
+
+  let seriesMarkup = '';
+  if (mode === 'bar') {
+    const barWidth = Math.max(12, Math.min(30, (chartWidth / points.length) * 0.58));
+    seriesMarkup = points.map((point, index) => {
+      const x = point.x - (barWidth / 2);
+      const barHeight = Math.max(2, baseY - point.y);
+      return `
+        <rect class="reports-bar" x="${x}" y="${baseY - barHeight}" width="${barWidth}" height="${barHeight}">
+          <title>${escapeHtml(summaryRows[index].fullLabel)}: ${formatDuration(point.seconds)}</title>
+        </rect>
+      `;
+    }).join('');
+  } else {
+    const linePath = points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ');
+    const areaPath = `${linePath} L ${points[points.length - 1].x} ${baseY} L ${points[0].x} ${baseY} Z`;
+    const dots = points.map((point, index) => `
+      <circle class="reports-dot" cx="${point.x}" cy="${point.y}" r="4">
+        <title>${escapeHtml(summaryRows[index].fullLabel)}: ${formatDuration(point.seconds)}</title>
+      </circle>
+    `).join('');
+    seriesMarkup = `
+      <path class="reports-area" d="${areaPath}"></path>
+      <path class="reports-line" d="${linePath}"></path>
+      ${dots}
+    `;
+  }
+
+  return `
+    <svg class="reports-trend-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="Reports trend chart">
+      ${gridMarkup}
+      ${seriesMarkup}
+      ${xLabelsMarkup}
+    </svg>
+  `;
+}
+
+function renderReportsDonut(rows, totalSeconds) {
+  if (!rows.length) {
+    return '<p class="muted">No distribution data.</p>';
+  }
+
+  const total = Math.max(
+    0,
+    Number(totalSeconds || rows.reduce((acc, row) => acc + Number(row.seconds || 0), 0))
+  );
+  if (!total) {
+    return '<p class="muted">No distribution data.</p>';
+  }
+
+  let cursor = 0;
+  const gradientStops = rows.map((row, index) => {
+    const start = cursor;
+    const ratio = (row.seconds / total) * 100;
+    cursor += ratio;
+    const end = index === rows.length - 1 ? 100 : cursor;
+    return `${row.color} ${start.toFixed(2)}% ${end.toFixed(2)}%`;
+  });
+
+  return `
+    <div class="reports-donut-wrap">
+      <div class="reports-donut-graph" style="background: conic-gradient(${gradientStops.join(', ')});">
+        <div class="reports-donut-inner">${formatDuration(total)}</div>
       </div>
     </div>
   `;
+}
+
+function renderReportsDistributionList(rows) {
+  if (!rows.length) {
+    return '<p class="muted">No distribution data.</p>';
+  }
+  return rows.slice(0, 6).map((row) => `
+    <li class="overview-list-item">
+      <span class="overview-list-title">
+        <span class="overview-dot" style="--dot-color: ${row.color};"></span>
+        ${escapeHtml(row.name)}
+      </span>
+      <span class="overview-list-meta">${formatDuration(row.seconds)}</span>
+    </li>
+  `).join('');
+}
+
+function renderReportsDistributionTable(rows) {
+  if (!rows.length) {
+    return '<p class="muted">No report data for this period.</p>';
+  }
+
+  return `
+    <table class="report-table">
+      <thead>
+        <tr><th>Name</th><th>Seconds</th><th>Duration</th></tr>
+      </thead>
+      <tbody>
+        ${rows.slice(0, 12).map((row) => `
+          <tr>
+            <td>${escapeHtml(row.name)}</td>
+            <td>${row.seconds}</td>
+            <td>${formatDuration(row.seconds)}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function paintReportsView(content, state) {
+  const summaryRows = normalizeReportSummary(state.report?.summary);
+  const distributionRows = normalizeReportDistribution(state.report?.distribution);
+  const totalFromSummary = summaryRows.reduce((acc, row) => acc + row.seconds, 0);
+  const totalSeconds = Math.max(0, Number(state.report?.total_seconds || totalFromSummary));
+  const avgDailySeconds = summaryRows.length
+    ? Math.round(totalSeconds / summaryRows.length)
+    : 0;
+  const topCategory = distributionRows[0] || null;
+  const busiestDay = summaryRows.length
+    ? summaryRows.slice().sort((left, right) => right.seconds - left.seconds)[0]
+    : null;
+
+  const trendHost = content.querySelector('[data-reports-trend]');
+  const donutHost = content.querySelector('[data-reports-donut]');
+  const listHost = content.querySelector('[data-reports-list]');
+  const tableHost = content.querySelector('[data-reports-table]');
+
+  if (trendHost) {
+    trendHost.innerHTML = renderReportsTrendSvg(summaryRows, state.mode);
+  }
+  if (donutHost) {
+    donutHost.innerHTML = renderReportsDonut(distributionRows, totalSeconds);
+  }
+  if (listHost) {
+    listHost.innerHTML = renderReportsDistributionList(distributionRows);
+  }
+  if (tableHost) {
+    tableHost.innerHTML = renderReportsDistributionTable(distributionRows);
+  }
+
+  const totalEl = content.querySelector('#reports-total-focus');
+  if (totalEl) totalEl.textContent = formatDuration(totalSeconds);
+  const avgEl = content.querySelector('#reports-avg-daily');
+  if (avgEl) avgEl.textContent = formatDuration(avgDailySeconds);
+  const categoriesEl = content.querySelector('#reports-categories');
+  if (categoriesEl) categoriesEl.textContent = String(distributionRows.length);
+  const topEl = content.querySelector('#reports-top');
+  if (topEl) topEl.textContent = topCategory ? topCategory.name : '-';
+  const busiestEl = content.querySelector('#reports-busiest-day');
+  if (busiestEl) busiestEl.textContent = busiestDay ? `${busiestDay.fullLabel} (${formatDuration(busiestDay.seconds)})` : '-';
+  const topCategoryEl = content.querySelector('#reports-top-category');
+  if (topCategoryEl) topCategoryEl.textContent = topCategory ? `${topCategory.name} (${formatDuration(topCategory.seconds)})` : '-';
+}
+
+function renderReports(content, report, range) {
+  content.innerHTML = `
+    <div class="reports-page">
+      <section class="reports-metrics">
+        <article class="project-stat-card">
+          <span class="project-stat-label">Total focus</span>
+          <span class="project-stat-value" id="reports-total-focus">0m</span>
+          <span class="project-stat-meta">For selected range</span>
+        </article>
+        <article class="project-stat-card">
+          <span class="project-stat-label">Average daily</span>
+          <span class="project-stat-value" id="reports-avg-daily">0m</span>
+          <span class="project-stat-meta">Based on summary points</span>
+        </article>
+        <article class="project-stat-card">
+          <span class="project-stat-label">Categories</span>
+          <span class="project-stat-value" id="reports-categories">0</span>
+          <span class="project-stat-meta">Tracked entries</span>
+        </article>
+        <article class="project-stat-card">
+          <span class="project-stat-label">Top category</span>
+          <span class="project-stat-value" id="reports-top">-</span>
+          <span class="project-stat-meta">${escapeHtml(range.start)} - ${escapeHtml(range.end)}</span>
+        </article>
+      </section>
+
+      <section class="reports-duo">
+        <article class="app-panel reports-chart-card">
+          <div class="overview-card-header">
+            <div>
+              <p class="goals-label">Summary</p>
+              <h3 class="goals-title">Time overview</h3>
+            </div>
+            <div class="mode-switch">
+              <button class="mode-button" type="button" data-reports-mode="bar">Bar</button>
+              <button class="mode-button is-active" type="button" data-reports-mode="line">Line</button>
+            </div>
+          </div>
+          <div class="reports-trend-host" data-reports-trend></div>
+        </article>
+
+        <article class="app-panel reports-distribution-card">
+          <div class="overview-card-header">
+            <div>
+              <p class="goals-label">Distribution</p>
+              <h3 class="goals-title">Breakdown</h3>
+            </div>
+            <select id="reports-group-select">
+              <option value="projects" selected>Projects</option>
+              <option value="labels">Labels</option>
+              <option value="tasks">Tasks</option>
+            </select>
+          </div>
+          <div data-reports-donut></div>
+          <ul class="overview-list reports-distribution-list" data-reports-list></ul>
+        </article>
+      </section>
+
+      <section class="reports-insights-grid">
+        <article class="app-panel reports-insight-card">
+          <h3>Busiest day</h3>
+          <p class="reports-insight-text" id="reports-busiest-day">-</p>
+        </article>
+        <article class="app-panel reports-insight-card">
+          <h3>Top category details</h3>
+          <p class="reports-insight-text" id="reports-top-category">-</p>
+        </article>
+      </section>
+
+      <section class="app-panel report-table-wrap">
+        <div class="app-panel-header">
+          <h3>Top distribution</h3>
+          <p>Grouped totals for current filter.</p>
+        </div>
+        <div data-reports-table></div>
+      </section>
+    </div>
+  `;
+
+  paintReportsView(content, {
+    report,
+    mode: 'line'
+  });
+}
+
+async function bindReportsActions(container, range, initialReport) {
+  clearReportsView();
+
+  const content = container.querySelector('#app-shell-content');
+  if (!content) return;
+  const root = content.querySelector('.reports-page');
+  if (!root) return;
+
+  const abortController = new AbortController();
+  const { signal } = abortController;
+  let requestToken = 0;
+  const state = {
+    mode: 'line',
+    group: 'projects',
+    report: initialReport || { summary: [], distribution: [], total_seconds: 0 }
+  };
+
+  const modeButtons = content.querySelectorAll('[data-reports-mode]');
+  const groupSelect = content.querySelector('#reports-group-select');
+
+  const repaint = () => {
+    paintReportsView(content, state);
+  };
+
+  modeButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      const nextMode = button.dataset.reportsMode;
+      if (!nextMode || (nextMode !== 'line' && nextMode !== 'bar')) return;
+      state.mode = nextMode;
+      modeButtons.forEach((candidate) => {
+        candidate.classList.toggle('is-active', candidate === button);
+      });
+      repaint();
+    }, { signal });
+  });
+
+  if (groupSelect) {
+    groupSelect.addEventListener('change', async () => {
+      const requestedGroup = groupSelect.value || 'projects';
+      const previousGroup = state.group;
+      const token = ++requestToken;
+      state.group = requestedGroup;
+      groupSelect.disabled = true;
+      try {
+        const report = await appApi.getReportsSummary({
+          start: range.start,
+          end: range.end,
+          group: requestedGroup
+        });
+        if (signal.aborted || token !== requestToken) return;
+        state.report = report;
+        repaint();
+      } catch (error) {
+        if (!signal.aborted) {
+          showToast(error.message || 'Failed to load grouped report', 'error');
+          state.group = previousGroup;
+          groupSelect.value = previousGroup;
+        }
+      } finally {
+        if (!signal.aborted) {
+          groupSelect.disabled = false;
+        }
+      }
+    }, { signal });
+  }
+
+  reportsViewCleanup = () => {
+    abortController.abort();
+  };
 }
 
 function normalizeTaskIdValue(value) {
@@ -3241,6 +3579,10 @@ async function renderSection(container, section, currentPath) {
     clearOverviewView();
   }
 
+  if (section !== 'reports') {
+    clearReportsView();
+  }
+
   if (section !== 'tasks') {
     clearTasksView();
   }
@@ -3314,6 +3656,7 @@ async function renderSection(container, section, currentPath) {
       const range = lastSevenDaysRange();
       const report = await appApi.getReportsSummary({ start: range.start, end: range.end, group: 'projects' });
       renderReports(content, report, range);
+      await bindReportsActions(container, range, report);
       return;
     }
 
