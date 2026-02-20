@@ -533,65 +533,92 @@ a:hover {
 }
 
 [data-theme="dark"] .app-shell {
-  background: #0f172a;
+  background: linear-gradient(180deg, #0a0e17 0%, #0d1118 100%);
 }
 
+/* Sidebar (Navigation) - Glassmorphism */
 [data-theme="dark"] .app-shell-header,
 [data-theme="dark"] .app-shell-nav,
 [data-theme="dark"] .app-panel {
-  background: #111b2e;
-  border: 1px solid #273246;
-  box-shadow: none;
+  background: rgba(14, 17, 22, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
+              inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 [data-theme="dark"] .app-panel-header p {
   color: #9eb0ca;
 }
 
+/* Brand Mark - Enhanced Glow */
 [data-theme="dark"] .app-brand-mark {
   background: linear-gradient(135deg, #5a8dff 0%, #7aa8ff 100%);
   color: #0c1630;
-  box-shadow: 0 8px 16px rgba(2, 6, 23, 0.35);
+  box-shadow: 0 8px 16px rgba(90, 141, 255, 0.35),
+              0 0 0 1px rgba(90, 141, 255, 0.1);
 }
 
+/* User Email - Glass Effect */
 [data-theme="dark"] .app-user-email {
-  background: #16253f;
-  border-color: #2a3f64;
+  background: rgba(22, 37, 63, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(42, 63, 100, 0.5);
   color: #d6e3ff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
+/* Navigation Section Headers */
 [data-theme="dark"] .app-nav-head span {
   color: #8fa4c7;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
+/* Navigation Buttons - Enhanced */
 [data-theme="dark"] .app-nav-btn {
   background: transparent;
   border-color: transparent;
   color: #b8c8e2;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 [data-theme="dark"] .app-nav-icon {
-  background: #162137;
-  border-color: #2a3650;
+  background: rgba(22, 33, 55, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid rgba(42, 54, 80, 0.5);
   color: #9eb3d6;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 [data-theme="dark"] .app-nav-btn:hover {
-  border-color: rgba(139, 179, 255, 0.28);
-  background: rgba(139, 179, 255, 0.08);
+  border-color: rgba(139, 179, 255, 0.35);
+  background: rgba(139, 179, 255, 0.12);
   color: #dce8ff;
+  box-shadow: 0 4px 12px rgba(139, 179, 255, 0.15);
+}
+
+[data-theme="dark"] .app-nav-btn:hover .app-nav-icon {
+  background: rgba(139, 179, 255, 0.2);
+  border-color: rgba(139, 179, 255, 0.4);
+  color: #8bb3ff;
 }
 
 [data-theme="dark"] .app-nav-btn.active {
-  background: linear-gradient(135deg, rgba(90, 141, 255, 0.22), rgba(90, 141, 255, 0.12));
-  border-color: rgba(90, 141, 255, 0.38);
-  color: #dce8ff;
+  background: linear-gradient(135deg, rgba(90, 141, 255, 0.25), rgba(90, 141, 255, 0.15));
+  border-color: rgba(90, 141, 255, 0.45);
+  color: #ffffff;
+  box-shadow: 0 4px 16px rgba(90, 141, 255, 0.25),
+              inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 [data-theme="dark"] .app-nav-btn.active .app-nav-icon {
-  background: #5a8dff;
+  background: linear-gradient(135deg, #5a8dff, #7aa8ff);
   border-color: #5a8dff;
   color: #0c1630;
+  box-shadow: 0 2px 8px rgba(90, 141, 255, 0.4);
 }
 
 .app-shell .btn {
@@ -4420,6 +4447,166 @@ footer {
   padding: 16px;
 }
 
+/* ============================================
+   TIMER PAGE DARK MODE OVERRIDES
+   ============================================ */
+
+/* Timer Range Card Dark Mode */
+[data-theme="dark"] .timer-range-card {
+  background: linear-gradient(180deg, #1a2744 0%, #141f38 100%);
+  border-color: #2a3650;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+}
+
+/* Timer View Toggle Dark Mode */
+[data-theme="dark"] .timer-view-toggle {
+  background: rgba(22, 33, 55, 0.9);
+  border-color: #2a3650;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .timer-view-tab {
+  color: #a8b3c7;
+}
+
+[data-theme="dark"] .timer-view-tab:hover {
+  color: #d5e1f6;
+  background: rgba(139, 179, 255, 0.1);
+}
+
+/* Pomodoro Card Dark Mode */
+[data-theme="dark"] .pomodoro-card {
+  background: linear-gradient(135deg, #1a2744 0%, #1e2d4d 55%, #242d42 100%);
+  border-color: #2a3650;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* Pomodoro Ring Dark Mode */
+[data-theme="dark"] .pomodoro-ring {
+  background: radial-gradient(circle at top, #1a2744 0%, #141f38 60%, #0f1829 100%);
+  border-color: rgba(139, 179, 255, 0.25);
+}
+
+[data-theme="dark"] .pomodoro-ring::before {
+  --pomodoro-ring-fill: rgba(139, 179, 255, 0.85);
+  --pomodoro-ring-track: rgba(139, 179, 255, 0.15);
+}
+
+/* Focus Progress Bar Dark Mode */
+[data-theme="dark"] .focus-progress-bar {
+  background: rgba(42, 54, 80, 0.6);
+  border-color: #2a3650;
+}
+
+/* Focus Segment Dark Mode */
+[data-theme="dark"] .focus-segment {
+  background: rgba(42, 54, 80, 0.5);
+  border-color: transparent;
+  color: #a8b3c7;
+}
+
+[data-theme="dark"] .focus-segment:hover {
+  background: rgba(139, 179, 255, 0.15);
+  border-color: rgba(139, 179, 255, 0.3);
+}
+
+[data-theme="dark"] .focus-segment.is-active {
+  background: rgba(139, 179, 255, 0.2);
+  border-color: rgba(139, 179, 255, 0.4);
+  color: #8bb3ff;
+}
+
+/* Pomodoro Dots Dark Mode */
+[data-theme="dark"] .pomodoro-dots span {
+  background: rgba(139, 179, 255, 0.18);
+}
+
+[data-theme="dark"] .pomodoro-dots span.is-active {
+  background: var(--timer-accent-strong);
+  box-shadow: 0 0 8px rgba(139, 179, 255, 0.5);
+}
+
+[data-theme="dark"] .pomodoro-dots span.is-current {
+  background: var(--timer-accent-soft);
+  box-shadow: 0 0 0 2px rgba(139, 179, 255, 0.35);
+}
+
+/* Timer Input Dark Mode Improvements */
+[data-theme="dark"] .timer-select input[type="text"]:focus {
+  border-color: rgba(139, 179, 255, 0.5);
+  box-shadow: 0 0 0 3px rgba(139, 179, 255, 0.1);
+}
+
+[data-theme="dark"] .timer-clear:hover {
+  background: rgba(139, 179, 255, 0.15);
+  color: #8bb3ff;
+}
+
+/* Timer Dropdown Dark Mode */
+[data-theme="dark"] .timer-dropdown {
+  background: #1a2744;
+  border-color: #2a3650;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .timer-task-option.is-selected {
+  background: rgba(139, 179, 255, 0.12);
+  border-color: rgba(139, 179, 255, 0.35);
+}
+
+/* Calendar Input Dark Mode */
+[data-theme="dark"] .calendar-input {
+  background: #1a2744;
+  border-color: #2a3650;
+}
+
+[data-theme="dark"] .calendar-input:hover {
+  border-color: rgba(139, 179, 255, 0.4);
+}
+
+/* Pomodoro Buttons Dark Mode Enhancement */
+[data-theme="dark"] .pomodoro-controls .btn.btn-primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border-color: #3b82f6;
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);
+}
+
+[data-theme="dark"] .pomodoro-controls .btn.btn-primary:hover {
+  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+  transform: translateY(-1px);
+}
+
+/* Timer Task Create Form Dark Mode */
+[data-theme="dark"] .timer-task-create-card .timer-quick-task-form input:focus,
+[data-theme="dark"] .timer-task-create-card .timer-quick-task-form select:focus {
+  border-color: rgba(139, 179, 255, 0.5);
+  box-shadow: 0 0 0 3px rgba(139, 179, 255, 0.1);
+}
+
+/* Timer Summary Dark Mode */
+[data-theme="dark"] .timer-summary-value {
+  color: #e2e8f0;
+}
+
+/* Pomodoro Mode Text Dark Mode */
+[data-theme="dark"] .pomodoro-mode {
+  color: #f1f5f9;
+}
+
+/* Quick Task Feedback Dark Mode */
+[data-theme="dark"] .timer-quick-task-feedback.is-success {
+  color: #86efac;
+}
+
+[data-theme="dark"] .timer-quick-task-feedback.is-error {
+  color: #fca5a5;
+}
+
+/* ============================================
+   END TIMER PAGE DARK MODE OVERRIDES
+   ============================================ */
+
 .calendar-lite-page {
   display: grid;
   gap: 12px;
@@ -6940,10 +7127,22 @@ footer {
   color: var(--muted);
   padding: 2px;
   cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
 }
 
 .labels-page .labels-clear:hover {
   color: var(--text);
+  background: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="dark"] .labels-page .labels-clear {
+  color: #64748b;
+}
+
+[data-theme="dark"] .labels-page .labels-clear:hover {
+  color: #8bb3ff;
+  background: rgba(139, 179, 255, 0.15);
 }
 
 .labels-page .labels-sort select {
@@ -8559,4 +8758,325 @@ footer {
   .account-form-lite.compact {
     grid-template-columns: 1fr;
   }
+}
+
+/* ============================================
+   FOOTER DARK MODE IMPROVEMENTS
+   ============================================ */
+
+/* Footer - Glassmorphism */
+[data-theme="dark"] .app-footer {
+  background: linear-gradient(135deg, rgba(90, 141, 255, 0.06) 0%, rgba(240, 183, 74, 0.04) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  border-radius: 16px;
+}
+
+[data-theme="dark"] .app-footer-inner {
+  padding: 24px;
+}
+
+/* Footer Logo - Enhanced */
+[data-theme="dark"] .app-footer-logo {
+  background: linear-gradient(135deg, #5a8dff 0%, #7aa8ff 100%);
+  color: #0c1630;
+  box-shadow: 0 6px 14px rgba(90, 141, 255, 0.3);
+}
+
+/* Footer Title */
+[data-theme="dark"] .app-footer-title {
+  color: #f1f5f9;
+}
+
+/* Footer Copy */
+[data-theme="dark"] .app-footer-copy {
+  color: #94a3b8;
+}
+
+/* Footer Labels */
+[data-theme="dark"] .app-footer-label {
+  color: #64748b;
+}
+
+/* Footer Navigation Links */
+[data-theme="dark"] .app-footer-nav a {
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .app-footer-nav a:hover {
+  color: #5a8dff;
+  text-shadow: 0 0 20px rgba(90, 141, 255, 0.4);
+  transform: translateX(4px);
+}
+
+/* ============================================
+   BUTTON DARK MODE STANDARDIZATION
+   ============================================ */
+
+/* Toast Close Button */
+[data-theme="dark"] .toast-close {
+  color: #64748b;
+}
+
+[data-theme="dark"] .toast-close:hover {
+  color: #e2e8f0;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+}
+
+/* Toast Update Button */
+[data-theme="dark"] .toast-update-btn {
+  background: rgba(90, 141, 255, 0.15);
+  border: 1px solid rgba(90, 141, 255, 0.3);
+  color: #8bb3ff;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .toast-update-btn:hover {
+  background: rgba(90, 141, 255, 0.25);
+  border-color: rgba(90, 141, 255, 0.5);
+  color: #b8c8ff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(90, 141, 255, 0.2);
+}
+
+/* Sidebar Footer Toggle */
+[data-theme="dark"] .app-nav-footer-toggle {
+  background: rgba(22, 33, 55, 0.6);
+  border: 1px solid rgba(42, 54, 80, 0.5);
+  color: #b8c8e2;
+}
+
+[data-theme="dark"] .app-nav-footer-toggle:hover {
+  background: rgba(90, 141, 255, 0.15);
+  border-color: rgba(90, 141, 255, 0.35);
+  color: #dce8ff;
+}
+
+/* Password Toggle Button */
+[data-theme="dark"] .password-toggle {
+  color: #64748b;
+}
+
+[data-theme="dark"] .password-toggle:hover {
+  color: #8bb3ff;
+  background: rgba(139, 179, 255, 0.1);
+  border-radius: 6px;
+}
+
+/* Auth Button */
+[data-theme="dark"] .auth-view.auth-ui .auth-button {
+  background: linear-gradient(135deg, #0d9488 0%, #ea580c 100%);
+  box-shadow: 0 16px 30px rgba(13, 148, 136, 0.25);
+}
+
+[data-theme="dark"] .auth-view.auth-ui .auth-button:hover {
+  background: linear-gradient(135deg, #0f766e 0%, #f97316 100%);
+  box-shadow: 0 18px 35px rgba(13, 148, 136, 0.35);
+}
+
+[data-theme="dark"] .auth-view.auth-ui .auth-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Social Button */
+[data-theme="dark"] .auth-view.auth-ui .social-button {
+  background: rgba(22, 33, 55, 0.6);
+  border: 1px solid rgba(42, 54, 80, 0.5);
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .auth-view.auth-ui .social-button:hover {
+  background: rgba(13, 148, 136, 0.15);
+  border-color: rgba(13, 148, 136, 0.4);
+  color: #5eead4;
+}
+
+[data-theme="dark"] .auth-view.auth-ui .social-button.google {
+  background: rgba(22, 33, 55, 0.6);
+  border: 1px solid rgba(42, 54, 80, 0.5);
+}
+
+[data-theme="dark"] .auth-view.auth-ui .social-button.google:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+}
+
+/* Social Divider */
+[data-theme="dark"] .auth-view.auth-ui .social-divider {
+  color: #64748b;
+}
+
+[data-theme="dark"] .auth-view.auth-ui .social-divider::before,
+[data-theme="dark"] .auth-view.auth-ui .social-divider::after {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Auth Footer */
+[data-theme="dark"] .auth-view.auth-ui .auth-footer {
+  color: #64748b;
+}
+
+[data-theme="dark"] .auth-view.auth-ui .auth-footer a {
+  color: #8bb3ff;
+}
+
+[data-theme="dark"] .auth-view.auth-ui .auth-footer a:hover {
+  color: #b8c8ff;
+}
+
+/* Auth Box */
+[data-theme="dark"] .auth-box {
+  background: rgba(22, 33, 55, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+/* Auth Header */
+[data-theme="dark"] .auth-header h1 {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .auth-header p {
+  color: #94a3b8;
+}
+
+/* Auth Logo */
+[data-theme="dark"] .auth-logo {
+  background: linear-gradient(135deg, #5a8dff 0%, #7aa8ff 100%);
+  box-shadow: 0 8px 20px rgba(90, 141, 255, 0.35);
+}
+
+/* Form Group Label */
+[data-theme="dark"] .form-group label {
+  color: #cbd5e1;
+}
+
+/* Form Input */
+[data-theme="dark"] .form-group input {
+  background: rgba(14, 17, 22, 0.6);
+  border-color: rgba(42, 54, 80, 0.5);
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .form-group input:focus {
+  border-color: #5a8dff;
+  box-shadow: 0 0 0 3px rgba(90, 141, 255, 0.15);
+}
+
+[data-theme="dark"] .form-group input::placeholder {
+  color: #64748b;
+}
+
+/* Checkbox Label */
+[data-theme="dark"] .checkbox-label {
+  color: #94a3b8;
+}
+
+/* Forgot Link */
+[data-theme="dark"] .forgot-link {
+  color: #8bb3ff;
+}
+
+[data-theme="dark"] .forgot-link:hover {
+  color: #b8c8ff;
+}
+
+/* Error Message */
+[data-theme="dark"] .error-message {
+  color: #fca5a5;
+}
+
+/* Labels Clear Button */
+[data-theme="dark"] .labels-page .labels-clear {
+  color: #64748b;
+}
+
+[data-theme="dark"] .labels-page .labels-clear:hover {
+  color: #8bb3ff;
+  background: rgba(139, 179, 255, 0.15);
+}
+
+/* ============================================
+   MODE BUTTON DARK MODE IMPROVEMENTS
+   ============================================ */
+
+[data-theme="dark"] .mode-switch {
+  background: rgba(22, 33, 55, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-color: rgba(42, 54, 80, 0.5);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .mode-button {
+  color: #b7c7df;
+  transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .mode-button:hover {
+  background: rgba(90, 141, 255, 0.15);
+  color: #dce8ff;
+}
+
+[data-theme="dark"] .mode-button.is-active {
+  background: linear-gradient(135deg, #5a8dff, #7aa8ff);
+  color: #091224;
+  box-shadow: 0 2px 8px rgba(90, 141, 255, 0.3);
+}
+
+/* ============================================
+   PLANNER TOGGLE BUTTON DARK MODE
+   ============================================ */
+
+[data-theme="dark"] .planner-page .planner-toggle-btn {
+  background: rgba(22, 33, 55, 0.6);
+  border: 1px solid rgba(42, 54, 80, 0.5);
+  color: #b8c8e2;
+}
+
+[data-theme="dark"] .planner-page .planner-toggle-btn:hover {
+  background: rgba(90, 141, 255, 0.15);
+  border-color: rgba(90, 141, 255, 0.35);
+  color: #dce8ff;
+}
+
+[data-theme="dark"] .planner-page .planner-toggle-btn.is-active {
+  background: linear-gradient(135deg, rgba(90, 141, 255, 0.25), rgba(90, 141, 255, 0.15));
+  border-color: rgba(90, 141, 255, 0.45);
+  color: #ffffff;
+}
+
+/* ============================================
+   AUTH BACKGROUND DARK MODE
+   ============================================ */
+
+[data-theme="dark"] .auth-background {
+  background: linear-gradient(135deg, #0b1323 0%, #111d33 100%);
+}
+
+/* ============================================
+   OFFLINE PAGE BUTTON DARK MODE
+   ============================================ */
+
+[data-theme="dark"] .offline-view .btn {
+  background: rgba(90, 141, 255, 0.15);
+  border: 1px solid rgba(90, 141, 255, 0.3);
+  color: #8bb3ff;
+}
+
+[data-theme="dark"] .offline-view .btn:hover {
+  background: rgba(90, 141, 255, 0.25);
+  border-color: rgba(90, 141, 255, 0.5);
+  color: #b8c8ff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(90, 141, 255, 0.2);
 }
