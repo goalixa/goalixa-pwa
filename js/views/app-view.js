@@ -7,6 +7,7 @@ import { appApi } from '../api.js';
 import { getCurrentUser, logout } from '../auth.js';
 import { showToast } from '../utils.js';
 import { navigate } from '../router.js';
+import { bindTasksSection, clearTasksView, renderTasksSection } from './app/tasks-view.js';
 
 const NAV_ITEMS = [
   { key: 'overview', label: 'Overview', icon: 'fa-chart-line' },
@@ -26,7 +27,7 @@ const NAV_ITEMS = [
 ];
 
 let timerViewCleanup = null;
-let tasksViewCleanup = null;
+let overviewViewCleanup = null;
 
 function resolveSection(path) {
   const subPath = path.replace('/app', '') || '/overview';
@@ -180,6 +181,225 @@ function lastSevenDaysRange() {
   };
 }
 
+function clearOverviewView() {
+  if (typeof overviewViewCleanup === 'function') {
+    overviewViewCleanup();
+    overviewViewCleanup = null;
+  }
+}
+
+function formatDurationAxis(seconds) {
+  const safe = Math.max(0, Math.floor(Number(seconds || 0)));
+  const hours = Math.floor(safe / 3600);
+  if (hours > 0) {
+    return `${hours}h`;
+  }
+  const minutes = Math.floor((safe % 3600) / 60);
+  return `${minutes}m`;
+}
+
+function compactOverviewLabel(label, fallback) {
+  const value = String(label || '').trim();
+  if (!value) {
+    return fallback;
+  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return value.slice(5);
+  }
+  return value.length > 8 ? value.slice(0, 8) : value;
+}
+
+function normalizeOverviewSummary(summary) {
+  const safe = Array.isArray(summary) ? summary : [];
+  return safe.slice(0, 7).map((item, index) => {
+    const seconds = Math.max(0, Number(item?.seconds || 0));
+    const rawLabel = item?.label || item?.date || item?.day;
+    return {
+      seconds,
+      label: compactOverviewLabel(rawLabel, `D${index + 1}`),
+      fullLabel: String(rawLabel || `Day ${index + 1}`)
+    };
+  });
+}
+
+function renderOverviewTrendSvg(summary, mode = 'line') {
+  const series = normalizeOverviewSummary(summary);
+  if (!series.length) {
+    return '<p class="muted">No activity yet.</p>';
+  }
+
+  const width = 760;
+  const height = 220;
+  const padLeft = 40;
+  const padRight = 16;
+  const padTop = 14;
+  const padBottom = 34;
+  const chartWidth = width - padLeft - padRight;
+  const chartHeight = height - padTop - padBottom;
+  const yMax = Math.max(1, ...series.map((point) => point.seconds));
+  const baseY = padTop + chartHeight;
+
+  const points = series.map((point, index) => {
+    const ratioX = series.length > 1 ? index / (series.length - 1) : 0.5;
+    const x = padLeft + (chartWidth * ratioX);
+    const y = baseY - ((point.seconds / yMax) * chartHeight);
+    return { ...point, x, y };
+  });
+
+  const gridRows = 4;
+  const gridMarkup = Array.from({ length: gridRows + 1 }, (_, rowIndex) => {
+    const ratio = rowIndex / gridRows;
+    const y = padTop + (chartHeight * ratio);
+    const value = yMax * (1 - ratio);
+    return `
+      <line class="trend-grid-line" x1="${padLeft}" y1="${y}" x2="${width - padRight}" y2="${y}"></line>
+      <text class="trend-grid-text" x="${padLeft - 8}" y="${y + 4}" text-anchor="end">${formatDurationAxis(value)}</text>
+    `;
+  }).join('');
+
+  const xLabelsMarkup = points.map((point) => `
+    <text class="trend-axis-label" x="${point.x}" y="${height - 10}" text-anchor="middle">${escapeHtml(point.label)}</text>
+  `).join('');
+
+  let seriesMarkup = '';
+  if (mode === 'bar') {
+    const barWidth = Math.max(14, Math.min(42, (chartWidth / points.length) * 0.56));
+    seriesMarkup = points.map((point, index) => {
+      const x = point.x - (barWidth / 2);
+      const barHeight = Math.max(2, baseY - point.y);
+      return `
+        <rect class="trend-bar" x="${x}" y="${baseY - barHeight}" width="${barWidth}" height="${barHeight}">
+          <title>${escapeHtml(series[index].fullLabel)}: ${formatDuration(point.seconds)}</title>
+        </rect>
+      `;
+    }).join('');
+  } else {
+    const linePath = points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ');
+    const areaPath = `${linePath} L ${points[points.length - 1].x} ${baseY} L ${points[0].x} ${baseY} Z`;
+    const dotMarkup = points.map((point, index) => `
+      <circle class="trend-dot" cx="${point.x}" cy="${point.y}" r="4">
+        <title>${escapeHtml(series[index].fullLabel)}: ${formatDuration(point.seconds)}</title>
+      </circle>
+    `).join('');
+    seriesMarkup = `
+      <path class="trend-area" d="${areaPath}"></path>
+      <path class="trend-line" d="${linePath}"></path>
+      ${dotMarkup}
+    `;
+  }
+
+  return `
+    <svg class="overview-trend-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="Focus trend chart">
+      ${gridMarkup}
+      ${seriesMarkup}
+      ${xLabelsMarkup}
+    </svg>
+  `;
+}
+
+function getProjectDistributionRows(distribution) {
+  const safe = Array.isArray(distribution) ? distribution : [];
+  return safe
+    .map((row, index) => ({
+      name: String(row.name || row.project || row.label || '-'),
+      seconds: Math.max(0, Number(row.total_seconds || row.seconds || 0)),
+      color: `hsl(${(index * 47) % 360}, 78%, 45%)`
+    }))
+    .filter((row) => row.seconds > 0);
+}
+
+function renderProjectDonut(distribution) {
+  const rows = getProjectDistributionRows(distribution);
+  const total = rows.reduce((acc, row) => acc + row.seconds, 0);
+  if (!rows.length || total <= 0) {
+    return '<p class="muted">No tracked time yet.</p>';
+  }
+
+  let cursor = 0;
+  const gradientStops = rows.map((row, index) => {
+    const start = cursor;
+    const ratio = (row.seconds / total) * 100;
+    cursor += ratio;
+    const end = index === rows.length - 1 ? 100 : cursor;
+    return `${row.color} ${start.toFixed(2)}% ${end.toFixed(2)}%`;
+  });
+
+  return `
+    <div class="overview-donut-wrap">
+      <div class="overview-donut-graph" style="background: conic-gradient(${gradientStops.join(', ')});">
+        <div class="overview-donut-inner">${formatDuration(total)}</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderHabitStreakChart(habits) {
+  const safe = Array.isArray(habits) ? habits : [];
+  const ranked = safe
+    .slice()
+    .sort((left, right) => Number(right.streak || 0) - Number(left.streak || 0))
+    .slice(0, 6);
+
+  if (!ranked.length) {
+    return '<p class="muted">No habits yet.</p>';
+  }
+
+  const maxStreak = Math.max(1, ...ranked.map((habit) => Number(habit.streak || 0)));
+  return `
+    <div class="overview-streak-chart" aria-label="Habit streak chart">
+      ${ranked.map((habit) => {
+        const streak = Math.max(0, Number(habit.streak || 0));
+        const width = Math.min(100, (streak / maxStreak) * 100);
+        return `
+          <div class="overview-streak-row">
+            <span class="overview-streak-label">${escapeHtml(habit.name || 'Habit')}</span>
+            <div class="overview-streak-track">
+              <span class="overview-streak-fill" style="width: ${width.toFixed(2)}%;"></span>
+            </div>
+            <span class="overview-streak-value">${streak}d</span>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+function bindOverviewCharts(content, summary) {
+  clearOverviewView();
+
+  const trendHost = content.querySelector('[data-overview-trend-canvas]');
+  const modeButtons = content.querySelectorAll('[data-overview-mode]');
+  if (!trendHost) {
+    return;
+  }
+
+  const abortController = new AbortController();
+  const { signal } = abortController;
+  let mode = 'line';
+
+  const paintTrend = () => {
+    trendHost.innerHTML = renderOverviewTrendSvg(summary, mode);
+  };
+
+  paintTrend();
+
+  modeButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      const requestedMode = button.dataset.overviewMode;
+      if (!requestedMode || (requestedMode !== 'line' && requestedMode !== 'bar')) return;
+      mode = requestedMode;
+      modeButtons.forEach((candidate) => {
+        candidate.classList.toggle('is-active', candidate === button);
+      });
+      paintTrend();
+    }, { signal });
+  });
+
+  overviewViewCleanup = () => {
+    abortController.abort();
+  };
+}
+
 function renderOverview(content, overview, tasksPayload, goalsPayload, reportsPayload, habitsPayload, range) {
   const recentTasks = Array.isArray(tasksPayload.tasks) ? tasksPayload.tasks.slice(0, 6) : [];
   const goals = Array.isArray(goalsPayload.goals) ? goalsPayload.goals : [];
@@ -194,6 +414,8 @@ function renderOverview(content, overview, tasksPayload, goalsPayload, reportsPa
 
   const summary = Array.isArray(reportsPayload.summary) ? reportsPayload.summary : [];
   const distribution = Array.isArray(reportsPayload.distribution) ? reportsPayload.distribution.slice(0, 5) : [];
+  const projectRows = getProjectDistributionRows(distribution);
+  const topProjectRows = projectRows.slice(0, 4);
   const habits = Array.isArray(habitsPayload.habits) ? habitsPayload.habits : [];
   const activeDays = summary.filter((item) => Number(item.seconds || 0) > 0).length;
   const averageDailySeconds = summary.length > 0
@@ -208,7 +430,19 @@ function renderOverview(content, overview, tasksPayload, goalsPayload, reportsPa
             <h3>Time Summary</h3>
             <p class="overview-subtitle">Last 7 days of focus tracking.</p>
           </div>
-          <span class="task-state running">${escapeHtml(range.start)} → ${escapeHtml(range.end)}</span>
+          <div class="overview-chart-toolbar">
+            <span class="task-state running">${escapeHtml(range.start)} → ${escapeHtml(range.end)}</span>
+            <div class="mode-switch">
+              <button class="mode-button" type="button" data-overview-mode="bar">Bar</button>
+              <button class="mode-button is-active" type="button" data-overview-mode="line">Line</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="overview-trend-panel">
+          <div class="overview-trend-canvas" data-overview-trend-canvas>
+            ${renderOverviewTrendSvg(summary, 'line')}
+          </div>
         </div>
 
         <div class="overview-time-metrics">
@@ -298,15 +532,16 @@ function renderOverview(content, overview, tasksPayload, goalsPayload, reportsPa
               <h3 class="goals-title">Focus by project</h3>
             </div>
           </div>
+          ${projectRows.length === 0 ? '<p class="muted">No tracked time yet.</p>' : ''}
+          ${projectRows.length ? renderProjectDonut(projectRows) : ''}
           <ul class="overview-list">
-            ${distribution.length === 0 ? '<p class="muted">No tracked time yet.</p>' : ''}
-            ${distribution.map((row, index) => `
+            ${topProjectRows.map((row) => `
               <li class="overview-list-item">
                 <span class="overview-list-title">
-                  <span class="overview-dot" style="--dot-color: hsl(${(index * 47) % 360}, 78%, 45%);"></span>
-                  ${escapeHtml(row.name || row.project || row.label || '-')}
+                  <span class="overview-dot" style="--dot-color: ${row.color};"></span>
+                  ${escapeHtml(row.name)}
                 </span>
-                <span class="overview-list-meta">${formatDuration(row.total_seconds || row.seconds || 0)}</span>
+                <span class="overview-list-meta">${formatDuration(row.seconds)}</span>
               </li>
             `).join('')}
           </ul>
@@ -319,6 +554,7 @@ function renderOverview(content, overview, tasksPayload, goalsPayload, reportsPa
               <h3 class="goals-title">Completion momentum</h3>
             </div>
           </div>
+          ${renderHabitStreakChart(habits)}
           <div class="overview-time-metrics">
             <div class="overview-metric">
               <span class="overview-metric-label">Completed today</span>
@@ -359,464 +595,8 @@ function renderOverview(content, overview, tasksPayload, goalsPayload, reportsPa
       </section>
     </div>
   `;
-}
 
-function normalizeTaskCollections(payload) {
-  return {
-    tasks: Array.isArray(payload?.tasks) ? payload.tasks : [],
-    doneTodayTasks: Array.isArray(payload?.done_today_tasks) ? payload.done_today_tasks : [],
-    completedTasks: Array.isArray(payload?.completed_tasks) ? payload.completed_tasks : []
-  };
-}
-
-function formatTaskPriorityLabel(priority) {
-  const value = String(priority || 'medium').toLowerCase();
-  return value.charAt(0).toUpperCase() + value.slice(1);
-}
-
-function taskPriorityRank(priority) {
-  const value = String(priority || 'medium').toLowerCase();
-  if (value === 'high') return 3;
-  if (value === 'low') return 1;
-  return 2;
-}
-
-function sortTasksByMode(tasks, mode) {
-  const safe = Array.isArray(tasks) ? tasks.slice() : [];
-  return safe.sort((left, right) => {
-    if (mode === 'priority-desc') {
-      return taskPriorityRank(right.priority) - taskPriorityRank(left.priority);
-    }
-    if (mode === 'priority-asc') {
-      return taskPriorityRank(left.priority) - taskPriorityRank(right.priority);
-    }
-    if (mode === 'name-asc') {
-      return String(left.name || '').localeCompare(String(right.name || ''));
-    }
-    if (mode === 'name-desc') {
-      return String(right.name || '').localeCompare(String(left.name || ''));
-    }
-    if (mode === 'oldest') {
-      return Number(left.id || 0) - Number(right.id || 0);
-    }
-    return Number(right.id || 0) - Number(left.id || 0);
-  });
-}
-
-function normalizeTaskLabels(labels) {
-  if (!Array.isArray(labels)) return [];
-  return labels
-    .map((label) => {
-      if (typeof label === 'string') {
-        return { name: label, color: '#64748b' };
-      }
-      return {
-        name: label?.name || label?.label || '',
-        color: label?.color || '#64748b'
-      };
-    })
-    .filter((label) => label.name);
-}
-
-function taskTooltip(task, labels) {
-  const details = [
-    task.name || 'Task',
-    task.project_name || 'Unassigned',
-    task.goal_name || 'No goal'
-  ];
-  if (labels.length) {
-    details.push(labels.map((label) => label.name).join(', '));
-  }
-  return details.join(' · ');
-}
-
-function taskLabelsMarkup(labels) {
-  if (!labels.length) {
-    return '<span class="meta-pill meta-label-empty"><i class="bi bi-tag"></i>No labels</span>';
-  }
-  return `
-    <div class="task-labels" aria-label="Labels">
-      ${labels.map((label) => `<span class="meta-pill meta-label"><i class="bi bi-tag"></i>${escapeHtml(label.name)}</span>`).join('')}
-    </div>
-  `;
-}
-
-function taskActionsMarkup(task, group) {
-  const taskId = Number(task.id);
-  if (group === 'completed') {
-    return `
-      <button class="btn btn-outline-secondary btn-sm menu-item" type="button" data-task-action="reopen" data-task-id="${taskId}">
-        <i class="bi bi-arrow-counterclockwise"></i>
-        Reopen
-      </button>
-      <button class="btn btn-outline-danger btn-sm menu-item danger" type="button" data-task-action="delete" data-task-id="${taskId}">
-        <i class="bi bi-trash"></i>
-        Delete task
-      </button>
-    `;
-  }
-
-  const startStopAction = task.is_running ? 'stop' : 'start';
-  const startStopIcon = task.is_running ? 'pause-fill' : 'play-fill';
-  const startStopClass = task.is_running ? 'btn-outline-warning' : 'btn-outline-primary';
-  const dailyCheckAction = group === 'active'
-    ? `
-      <button class="btn btn-outline-success btn-sm menu-item" type="button" aria-label="Done today" data-task-action="daily-check" data-task-id="${taskId}">
-        <i class="bi bi-check2-circle"></i>
-      </button>
-    `
-    : '';
-
-  return `
-    ${dailyCheckAction}
-    <button class="btn ${startStopClass} btn-sm menu-item" type="button" data-task-action="${startStopAction}" data-task-id="${taskId}">
-      <i class="bi bi-${startStopIcon}"></i>
-    </button>
-    <button class="btn btn-outline-success btn-sm menu-item complete-btn" type="button" aria-label="Complete" title="Complete task" data-task-action="complete" data-task-id="${taskId}">
-      <i class="bi bi-check-lg"></i>
-    </button>
-    <button class="btn btn-outline-danger btn-sm menu-item danger" type="button" aria-label="Delete task" data-task-action="delete" data-task-id="${taskId}">
-      <i class="bi bi-trash"></i>
-    </button>
-  `;
-}
-
-function taskItemMarkup(task, group) {
-  const labels = normalizeTaskLabels(task.labels);
-  const priority = String(task.priority || 'medium').toLowerCase();
-  const doneCount = Number(task.daily_checks || 0);
-  const taskTime = group === 'completed'
-    ? formatDurationClock(task.total_seconds || 0)
-    : formatDurationClock(task.today_seconds || 0);
-
-  return `
-    <li class="task-item${group === 'done' ? ' is-done-today' : ''}${group === 'completed' ? ' is-completed' : ''}" data-priority="${priority}">
-      <div class="task-content">
-        <div class="task-header">
-          <div class="task-title-row">
-            <span class="task-title" title="${escapeHtml(taskTooltip(task, labels))}">${escapeHtml(task.name || '')}</span>
-            <span class="priority-badge priority-${priority}">${formatTaskPriorityLabel(priority)}</span>
-          </div>
-          <span class="task-time"${group === 'completed' ? '' : ` data-task-id="${Number(task.id)}"`}>${taskTime}</span>
-        </div>
-        <div class="task-meta-row">
-          <span class="meta-pill meta-goal"><i class="bi bi-bullseye"></i>${escapeHtml(task.goal_name || 'No goal')}</span>
-          <span class="meta-pill meta-project"><i class="bi bi-folder2-open"></i>${escapeHtml(task.project_name || 'Unassigned')}</span>
-          <span class="task-done-count" title="Times marked done"><i class="bi bi-check2-circle"></i>${doneCount}</span>
-          ${taskLabelsMarkup(labels)}
-        </div>
-      </div>
-      <div class="task-actions">
-        ${taskActionsMarkup(task, group)}
-      </div>
-    </li>
-  `;
-}
-
-function taskColumnMarkup(title, tasks, group) {
-  if (!tasks.length) {
-    if (group === 'done') {
-      return `<h3>${title}</h3><p class="empty">No tasks done today.</p>`;
-    }
-    if (group === 'completed') {
-      return '<p class="empty">No completed tasks yet.</p>';
-    }
-    return `<h3>${title}</h3><p class="empty">No tasks yet.</p>`;
-  }
-  const items = tasks.map((task) => taskItemMarkup(task, group)).join('');
-  if (group === 'completed') {
-    return `<ul class="task-list task-board-list">${items}</ul>`;
-  }
-  return `<h3>${title}</h3><ul class="task-list task-board-list">${items}</ul>`;
-}
-
-function renderTasks(content, payload, projects, goals, labelsPayload) {
-  const projectOptions = Array.isArray(projects?.projects) ? projects.projects : [];
-  const goalOptions = Array.isArray(goals?.goals) ? goals.goals : [];
-  const labels = Array.isArray(labelsPayload?.labels) ? labelsPayload.labels : [];
-  const tasks = normalizeTaskCollections(payload);
-
-  content.innerHTML = `
-    <div class="tasks-page">
-      <section class="app-panel tasks-create-card">
-        <form class="task-form" id="task-form-pwa">
-          <input type="text" id="task-name" name="name" placeholder="Task name" required />
-          <select id="task-project" name="project_id" ${projectOptions.length ? 'required' : 'disabled'}>
-            <option value="" disabled ${projectOptions.length ? '' : 'selected'}>Select project</option>
-            ${projectOptions.map((project, index) => `<option value="${project.id}" ${index === 0 ? 'selected' : ''}>${escapeHtml(project.name)}</option>`).join('')}
-          </select>
-          <select id="task-goal" name="goal_id">
-            <option value="" selected>Select goal (optional)</option>
-            ${goalOptions.map((goal) => `<option value="${goal.id}">${escapeHtml(goal.name)}</option>`).join('')}
-          </select>
-          <select id="task-priority" name="priority">
-            <option value="low">Low Priority</option>
-            <option value="medium" selected>Medium Priority</option>
-            <option value="high">High Priority</option>
-          </select>
-
-          <div class="label-picker-wrap">
-            <button class="btn btn-light btn-sm label-toggle icon-button" id="create-label-toggle" type="button" aria-label="Labels">
-              <i class="bi bi-tags"></i>
-            </button>
-            <div class="label-picker" id="create-label-picker">
-              <div class="label-picker-header">
-                <span class="label-picker-title">Task tags</span>
-                <span class="label-picker-hint">Pick any</span>
-              </div>
-              <div class="label-options">
-                ${labels.length
-                  ? labels.map((label) => `
-                    <label class="label-option" for="create-task-label-${label.id}">
-                      <input id="create-task-label-${label.id}" type="checkbox" name="label_ids" value="${label.id}" />
-                      <span class="label-pill">
-                        <span class="label-swatch" style="background-color: ${escapeHtml(label.color || '#64748b')}"></span>
-                        <span class="label-name">${escapeHtml(label.name || '')}</span>
-                      </span>
-                    </label>
-                  `).join('')
-                  : '<p class="label-empty">No tags yet.</p>'}
-              </div>
-            </div>
-          </div>
-
-          <button class="btn btn-primary btn-sm" type="submit">
-            <i class="bi bi-plus-lg"></i>
-            Add
-          </button>
-        </form>
-      </section>
-
-      <section class="app-panel tasks-board-card">
-        <div class="section-header">
-          <h2>Tasks</h2>
-          <div class="task-controls">
-            <select id="task-sort" data-task-sort>
-              <option value="priority-desc">Priority (High to Low)</option>
-              <option value="priority-asc">Priority (Low to High)</option>
-              <option value="newest" selected>Newest First</option>
-              <option value="oldest">Oldest First</option>
-              <option value="name-asc">Name (A-Z)</option>
-              <option value="name-desc">Name (Z-A)</option>
-            </select>
-          </div>
-        </div>
-        <div class="task-columns">
-          <div id="task-list" class="task-column">${taskColumnMarkup('In progress', tasks.tasks, 'active')}</div>
-          <div id="done-today-list" class="task-column">${taskColumnMarkup('Done today', tasks.doneTodayTasks, 'done')}</div>
-        </div>
-      </section>
-
-      <section class="app-panel tasks-completed-card">
-        <h2>Completed</h2>
-        <div id="completed-task-list">
-          ${taskColumnMarkup('Completed', tasks.completedTasks, 'completed')}
-        </div>
-      </section>
-    </div>
-  `;
-}
-
-async function bindTaskActions(container, currentPath, initialPayload = {}) {
-  if (typeof tasksViewCleanup === 'function') {
-    tasksViewCleanup();
-    tasksViewCleanup = null;
-  }
-
-  const content = container.querySelector('#app-shell-content');
-  if (!content) return;
-
-  const root = content.querySelector('.tasks-page');
-  if (!root) return;
-
-  const abortController = new AbortController();
-  const { signal } = abortController;
-  let liveTimerId = null;
-
-  const stopLiveTimer = () => {
-    if (liveTimerId) {
-      clearInterval(liveTimerId);
-      liveTimerId = null;
-    }
-  };
-
-  tasksViewCleanup = () => {
-    stopLiveTimer();
-    abortController.abort();
-  };
-
-  let tasksPayload = normalizeTaskCollections(initialPayload);
-  let currentSort = 'newest';
-  let taskTimeState = new Map();
-
-  const taskListContainer = content.querySelector('#task-list');
-  const doneTodayContainer = content.querySelector('#done-today-list');
-  const completedContainer = content.querySelector('#completed-task-list');
-  const taskSort = content.querySelector('#task-sort');
-
-  const refreshTaskTimeState = (tasks) => {
-    taskTimeState = new Map(
-      tasks.map((task) => [
-        String(task.id),
-        {
-          todaySeconds: Number(task.today_seconds || 0),
-          isRunning: Boolean(task.is_running)
-        }
-      ])
-    );
-  };
-
-  const updateTaskTimeDisplay = (taskId, seconds) => {
-    const el = content.querySelector(`.task-time[data-task-id="${taskId}"]`);
-    if (el) {
-      el.textContent = formatDurationClock(seconds);
-    }
-  };
-
-  const paintTaskBoards = () => {
-    const sortedActive = sortTasksByMode(tasksPayload.tasks, currentSort);
-    const sortedDoneToday = sortTasksByMode(tasksPayload.doneTodayTasks, currentSort);
-    const sortedCompleted = sortTasksByMode(tasksPayload.completedTasks, currentSort);
-
-    if (taskListContainer) {
-      taskListContainer.innerHTML = taskColumnMarkup('In progress', sortedActive, 'active');
-    }
-    if (doneTodayContainer) {
-      doneTodayContainer.innerHTML = taskColumnMarkup('Done today', sortedDoneToday, 'done');
-    }
-    if (completedContainer) {
-      completedContainer.innerHTML = taskColumnMarkup('Completed', sortedCompleted, 'completed');
-    }
-
-    refreshTaskTimeState(sortedActive.concat(sortedDoneToday));
-  };
-
-  paintTaskBoards();
-
-  liveTimerId = setInterval(() => {
-    for (const [taskId, state] of taskTimeState.entries()) {
-      if (!state.isRunning) continue;
-      state.todaySeconds = Math.min(86400, state.todaySeconds + 1);
-      updateTaskTimeDisplay(taskId, state.todaySeconds);
-    }
-  }, 1000);
-
-  if (taskSort) {
-    taskSort.addEventListener('change', () => {
-      currentSort = taskSort.value || 'newest';
-      paintTaskBoards();
-    }, { signal });
-  }
-
-  const createLabelToggle = content.querySelector('#create-label-toggle');
-  const createLabelPicker = content.querySelector('#create-label-picker');
-  if (createLabelToggle && createLabelPicker) {
-    createLabelToggle.addEventListener('click', () => {
-      createLabelPicker.classList.toggle('is-open');
-    }, { signal });
-
-    createLabelPicker.addEventListener('change', (event) => {
-      const target = event.target;
-      if (!(target instanceof HTMLInputElement)) return;
-      if (target.matches('input[type="checkbox"]')) {
-        setTimeout(() => {
-          createLabelPicker.classList.remove('is-open');
-        }, 150);
-      }
-    }, { signal });
-
-    document.addEventListener('click', (event) => {
-      const target = event.target instanceof HTMLElement ? event.target : null;
-      if (!target) return;
-      if (!target.closest('.label-picker-wrap')) {
-        createLabelPicker.classList.remove('is-open');
-      }
-    }, { signal });
-  }
-
-  const createForm = content.querySelector('#task-form-pwa');
-  if (createForm) {
-    createForm.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      const nameInput = content.querySelector('#task-name');
-      const projectInput = content.querySelector('#task-project');
-      const goalInput = content.querySelector('#task-goal');
-      const priorityInput = content.querySelector('#task-priority');
-      const name = (nameInput?.value || '').trim();
-      const projectId = projectInput?.value || '';
-      const goalId = goalInput?.value || '';
-      const priority = priorityInput?.value || 'medium';
-      const labelIds = Array.from(createForm.querySelectorAll('input[name="label_ids"]:checked'))
-        .map((input) => input.value)
-        .filter(Boolean);
-
-      if (!name) return;
-      if (!projectId) {
-        showToast('Select a project first', 'warning');
-        return;
-      }
-
-      try {
-        const response = await appApi.createTask({
-          name,
-          project_id: projectId,
-          label_ids: labelIds,
-          goal_id: goalId || null,
-          priority
-        });
-        tasksPayload = normalizeTaskCollections(response);
-        paintTaskBoards();
-        if (nameInput) {
-          nameInput.value = '';
-          nameInput.focus();
-        }
-        if (goalInput) goalInput.value = '';
-        if (priorityInput) priorityInput.value = 'medium';
-        createForm.querySelectorAll('input[name="label_ids"]:checked').forEach((input) => {
-          input.checked = false;
-        });
-        if (createLabelPicker) createLabelPicker.classList.remove('is-open');
-        showToast('Task created', 'success');
-      } catch (error) {
-        showToast(error.message || 'Failed to create task', 'error');
-      }
-    }, { signal });
-  }
-
-  content.addEventListener('click', async (event) => {
-    const target = event.target instanceof HTMLElement ? event.target : null;
-    if (!target) return;
-    const actionButton = target.closest('button[data-task-action][data-task-id]');
-    if (!actionButton) return;
-
-    const action = actionButton.dataset.taskAction;
-    const taskId = actionButton.dataset.taskId;
-    if (!action || !taskId) return;
-
-    if (action === 'delete' && !window.confirm('Delete this task?')) {
-      return;
-    }
-
-    actionButton.disabled = true;
-    try {
-      let response;
-      if (action === 'start') response = await appApi.startTask(taskId);
-      if (action === 'stop') response = await appApi.stopTask(taskId);
-      if (action === 'daily-check') response = await appApi.setTaskDailyCheck(taskId);
-      if (action === 'complete') response = await appApi.completeTask(taskId);
-      if (action === 'reopen') response = await appApi.reopenTask(taskId);
-      if (action === 'delete') response = await appApi.deleteTask(taskId);
-      if (response) {
-        tasksPayload = normalizeTaskCollections(response);
-        paintTaskBoards();
-      }
-      showToast('Task updated', 'success');
-    } catch (error) {
-      showToast(error.message || 'Failed to update task', 'error');
-    } finally {
-      actionButton.disabled = false;
-    }
-  }, { signal });
+  bindOverviewCharts(content, summary);
 }
 
 function renderProjects(content, projects) {
@@ -3200,9 +2980,12 @@ async function renderSection(container, section, currentPath) {
   const content = container.querySelector('#app-shell-content');
   if (!content) return;
 
-  if (section !== 'tasks' && typeof tasksViewCleanup === 'function') {
-    tasksViewCleanup();
-    tasksViewCleanup = null;
+  if (section !== 'overview') {
+    clearOverviewView();
+  }
+
+  if (section !== 'tasks') {
+    clearTasksView();
   }
 
   if (section !== 'timer' && typeof timerViewCleanup === 'function') {
@@ -3248,8 +3031,8 @@ async function renderSection(container, section, currentPath) {
         appApi.getGoals().catch(() => ({ goals: [] })),
         appApi.getLabels().catch(() => ({ labels: [] }))
       ]);
-      renderTasks(content, tasks, projects, goals, labels);
-      await bindTaskActions(container, currentPath, tasks);
+      renderTasksSection(content, tasks, projects, goals, labels);
+      await bindTasksSection(container, tasks);
       return;
     }
 

@@ -907,6 +907,179 @@ a:hover {
   background: var(--dot-color);
 }
 
+.overview-chart-toolbar {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.mode-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid #dbe4f3;
+  border-radius: 999px;
+  padding: 3px;
+  background: #f8fbff;
+}
+
+.mode-button {
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #4d5c76;
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.mode-button:hover {
+  background: #e6efff;
+}
+
+.mode-button.is-active {
+  background: #1f6feb;
+  color: #ffffff;
+}
+
+.overview-trend-panel {
+  margin-top: 12px;
+  border: 1px solid #e4e9f3;
+  border-radius: 12px;
+  padding: 6px;
+  background: #ffffff;
+}
+
+.overview-trend-canvas {
+  min-height: 190px;
+}
+
+.overview-trend-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.trend-grid-line {
+  stroke: #e5ecf8;
+  stroke-width: 1;
+}
+
+.trend-grid-text {
+  fill: #8190a8;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.trend-axis-label {
+  fill: #677893;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.trend-line {
+  fill: none;
+  stroke: #1f6feb;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.trend-area {
+  fill: rgba(31, 111, 235, 0.16);
+}
+
+.trend-dot {
+  fill: #1f6feb;
+  stroke: #ffffff;
+  stroke-width: 2;
+}
+
+.trend-bar {
+  fill: #1f6feb;
+  opacity: 0.9;
+}
+
+.trend-bar:hover {
+  opacity: 1;
+}
+
+.overview-donut-wrap {
+  margin: 2px 0 8px;
+  display: flex;
+  justify-content: center;
+}
+
+.overview-donut-graph {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.overview-donut-inner {
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  background: #ffffff;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  color: #243553;
+  font-size: 0.86rem;
+  font-weight: 800;
+  box-shadow: inset 0 0 0 1px #e4e9f3;
+  padding: 10px;
+}
+
+.overview-streak-chart {
+  margin-bottom: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.overview-streak-row {
+  display: grid;
+  grid-template-columns: minmax(96px, 1fr) 2fr auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.overview-streak-label {
+  font-size: 0.82rem;
+  color: #394b69;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.overview-streak-track {
+  height: 8px;
+  border-radius: 999px;
+  background: #e4ebf8;
+  overflow: hidden;
+}
+
+.overview-streak-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #1f6feb 0%, #53a8ff 100%);
+}
+
+.overview-streak-value {
+  font-size: 0.78rem;
+  color: #52627d;
+  font-weight: 700;
+  min-width: 28px;
+  text-align: right;
+}
+
 /* ============================================
    AUTH VIEW STYLES
    ============================================ */
@@ -5039,6 +5212,30 @@ footer {
   .overview-card-header {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .overview-chart-toolbar {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .overview-donut-graph {
+    width: 160px;
+    height: 160px;
+  }
+
+  .overview-donut-inner {
+    width: 98px;
+    height: 98px;
+  }
+
+  .overview-streak-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .overview-streak-value {
+    text-align: left;
   }
 
   .inline-actions-form {
