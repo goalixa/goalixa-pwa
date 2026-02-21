@@ -1,0 +1,30 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: goalixa-pwa-staging
+
+resources:
+  - ../../namespace.yaml
+  - ../../configmap.yaml
+  - ../../deployment.yaml
+  - ../../service.yaml
+  - ../../ingress.yaml
+  - ../../hpa.yaml
+  - ../../poddisruptionbudget.yaml
+
+namePrefix: staging-
+
+images:
+  - name: ghcr.io/goalixa/pwa
+    newTag: latest
+
+patches:
+  - path: deployment-replicas.yaml
+  - path: ingress-staging.yaml
+
+commonLabels:
+  app.kubernetes.io/name: pwa
+  app.kubernetes.io/component: frontend
+  app.kubernetes.io/part-of: goalixa
+  app.kubernetes.io/managed-by: kustomize
+  app.kubernetes.io/env: staging

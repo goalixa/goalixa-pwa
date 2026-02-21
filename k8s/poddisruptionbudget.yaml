@@ -1,0 +1,10 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: pwa-pdb
+  namespace: goalixa-pwa
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: pwa

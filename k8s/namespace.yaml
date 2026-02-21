@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: goalixa-pwa
+  labels:
+    name: goalixa-pwa
+    app: goalixa
+    tier: frontend

@@ -1,0 +1,58 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pwa-nginx-config
+  namespace: goalixa-pwa
+data:
+  default.conf: |
+    server {
+        listen       8080;
+        server_name  localhost;
+
+        # Allow access to the service worker
+        location = /sw.js {
+            root   /usr/share/nginx/html;
+            add_header Cache-Control 'no-cache, no-store, must-revalidate';
+            add_header Pragma 'no-cache';
+            add_header Expires '0';
+        }
+
+        # Allow access to the manifest
+        location = /manifest.webmanifest {
+            root   /usr/share/nginx/html;
+            add_header Content-Type application/manifest+json;
+        }
+
+        # Serve static files directly
+        location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|webapp|json)$ {
+            root   /usr/share/nginx/html;
+            expires 1y;
+            add_header Cache-Control 'public, immutable';
+        }
+
+        # SPA fallback - all other routes serve index.html
+        location / {
+            root   /usr/share/nginx/html;
+            index  index.html;
+            try_files $uri $uri/ /index.html;
+
+            # Security headers
+            add_header X-Frame-Options 'SAMEORIGIN' always;
+            add_header X-Content-Type-Options 'nosniff' always;
+            add_header X-XSS-Protection '1; mode=block' always;
+            # Disable service worker caching for HTML
+            add_header Cache-Control 'no-cache, no-store, must-revalidate' always;
+        }
+
+        # Offline page
+        location = /offline.html {
+            root   /usr/share/nginx/html;
+        }
+
+        # Health check endpoint
+        location /health {
+            access_log off;
+            return 200 'healthy';
+            add_header Content-Type text/plain;
+        }
+    }
