@@ -22,3 +22,12 @@ commonLabels:
   app.kubernetes.io/component: frontend
   app.kubernetes.io/part-of: goalixa
   app.kubernetes.io/managed-by: kustomize
+
+# Don't add labels to Deployment selectors
+labels:
+  - pairs:
+      app.kubernetes.io/name: pwa
+      app.kubernetes.io/component: frontend
+      app.kubernetes.io/part-of: goalixa
+      app.kubernetes.io/managed-by: kustomize
+    includeTemplates: false
