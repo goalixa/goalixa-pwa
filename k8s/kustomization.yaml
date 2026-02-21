@@ -15,4 +15,5 @@ resources:
 
 images:
   - name: ghcr.io/goalixa/pwa
+    newName: harbor.goalixa.com/goalixa/pwa
     newTag: latest  # Change this to specific commit SHA for each deployment
