@@ -50,8 +50,7 @@ function getAuthHTML(mode) {
           <div class="glass-container">
             <div class="auth-header">
               <div class="brand">
-                <span class="brand-dot"></span>
-                <span>Goalixa Auth</span>
+                <img class="brand-logo" src="/icons/goalixa-logo.png" alt="Goalixa" />
               </div>
               <h1>${getTitle(mode)}</h1>
               ${getSubtitle(mode) ? `<p>${getSubtitle(mode)}</p>` : ''}

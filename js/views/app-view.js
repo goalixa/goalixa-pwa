@@ -129,9 +129,7 @@ function renderShell(container, section) {
     <div class="app-shell">
       <header class="app-shell-header">
         <div class="app-brand" aria-label="Goalixa">
-          <span class="app-brand-mark" aria-hidden="true">
-            <i class="fas fa-bullseye"></i>
-          </span>
+          <img class="app-brand-logo" src="/icons/goalixa-logo.png" alt="Goalixa" />
         </div>
         <div class="app-user-actions">
           <span class="app-user-email">${escapeHtml(email)}</span>
