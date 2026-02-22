@@ -5,7 +5,7 @@
 
 function getRuntimeApiBase() {
   if (typeof window === 'undefined') {
-    return 'https://api.goalixa.com';
+    return 'https://pwa.goalixa.com/bff';
   }
 
   if (typeof window.__GOALIXA_API_BASE__ === 'string') {
@@ -19,7 +19,14 @@ function getRuntimeApiBase() {
     host === '::1';
 
   // Local development should not call production endpoints.
-  return isLocal ? '' : 'https://api.goalixa.com';
+  // For pwa.goalixa.com (staging), use /bff path
+  // For app.goalixa.com (production), will need to be updated later
+  if (isLocal) {
+    return '';
+  }
+
+  // Use relative path with /bff prefix for same-domain requests
+  return window.location.origin + '/bff';
 }
 
 const API_CONFIG = {
