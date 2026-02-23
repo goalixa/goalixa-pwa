@@ -1,3 +1,5 @@
+---
+# PWA Ingress - Production
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -8,7 +10,7 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-    - host: pwa.goalixa.com
+    - host: app.goalixa.com  # Production domain
       http:
         paths:
           - path: /
