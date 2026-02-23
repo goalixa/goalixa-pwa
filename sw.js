@@ -3,7 +3,7 @@
  * Handles caching for auth and app views
  */
 
-const CACHE_VERSION = 'v4';
+const CACHE_VERSION = 'v5';
 const CACHE_PREFIX = 'goalixa-pwa';
 
 // Cache names for different strategies
@@ -47,8 +47,8 @@ const ASSET_URLS = [
 
 // API base URLs - use network first
 const API_PATTERNS = [
-  /\/api\//,
-  /https:\/\/api\.goalixa\.com/
+  /\/bff\//,
+  /https:\/\/app\.goalixa\.com\/bff\//
 ];
 
 // Install event - cache core assets
