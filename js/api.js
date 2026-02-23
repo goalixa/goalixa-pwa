@@ -5,7 +5,7 @@
 
 function getRuntimeApiBase() {
   if (typeof window === 'undefined') {
-    return 'https://pwa.goalixa.com/bff';
+    return 'https://app.goalixa.com/bff';
   }
 
   if (typeof window.__GOALIXA_API_BASE__ === 'string') {
