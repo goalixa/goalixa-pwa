@@ -318,7 +318,7 @@ export const appApi = {
   async getTimerDashboard(params = {}) {
     const queryString = new URLSearchParams(params).toString();
     const suffix = queryString ? `?${queryString}` : '';
-    return apiRequest(buildUrl(`/app/timer/dashboard${suffix}`));
+    return apiRequest(buildUrl(`/aggregate/timer-dashboard${suffix}`));
   },
 
   async getCalendarBoard() {
