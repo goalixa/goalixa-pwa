@@ -97,8 +97,19 @@ export async function initAuth() {
 
   try {
     // Always verify with server (auth uses HttpOnly cookies)
-    const result = await authApi.getCurrentUser();
-    const user = result && result.user ? result.user : result;
+    // Skip token refresh for initial auth check to avoid long delays
+    const result = await fetch(window.location.origin + '/bff/auth/me', {
+      credentials: 'include',
+      headers: { 'Accept': 'application/json' }
+    });
+
+    if (result.status === 401) {
+      // Not authenticated - don't trigger token refresh
+      throw new Error('Not authenticated');
+    }
+
+    const data = await result.json();
+    const user = data && data.user ? data.user : data;
 
     if (user && user.id) {
       authState.isAuthenticated = true;
@@ -113,7 +124,10 @@ export async function initAuth() {
       authState.token = null;
     }
   } catch (error) {
-    console.error('Auth initialization failed:', error);
+    // Expected for unauthenticated users - don't log as error
+    if (error.message !== 'Not authenticated') {
+      console.error('Auth initialization failed:', error);
+    }
     // Offline fallback (best-effort)
     const storedAuth = storage.get('auth');
     if (!navigator.onLine && storedAuth && storedAuth.user) {
