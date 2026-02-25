@@ -16,4 +16,4 @@ resources:
 images:
   - name: ghcr.io/goalixa/pwa
     newName: harbor.goalixa.com/goalixa-pwa/pwa
-    newTag: latest  # Auto-updated by CI/CD to commit SHA on each push
+    newTag: sha-96b4bae
