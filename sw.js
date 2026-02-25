@@ -3,7 +3,7 @@
  * Handles caching for auth and app views
  */
 
-const CACHE_VERSION = 'v5';
+const CACHE_VERSION = 'v6';
 const CACHE_PREFIX = 'goalixa-pwa';
 
 // Cache names for different strategies
