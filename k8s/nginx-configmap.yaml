@@ -24,7 +24,14 @@ data:
         }
 
         # Serve static files directly
-        location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|webapp|json)$ {
+        location ~* \.(js|css)$ {
+            root   /usr/share/nginx/html;
+            expires 1h;
+            add_header Cache-Control 'public, must-revalidate';
+        }
+
+        # Images and fonts can be cached longer
+        location ~* \.(png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|webapp|json)$ {
             root   /usr/share/nginx/html;
             expires 1y;
             add_header Cache-Control 'public, immutable';
