@@ -253,6 +253,17 @@ function compactOverviewLabel(label, fallback) {
   return value.length > 8 ? value.slice(0, 8) : value;
 }
 
+function getProjectDistributionRows(distribution) {
+  const safe = Array.isArray(distribution) ? distribution : [];
+  return safe
+    .map((row, index) => ({
+      name: String(row.name || row.project || row.label || '-'),
+      seconds: Math.max(0, Number(row.total_seconds || row.seconds || 0)),
+      color: `hsl(${(index * 47) % 360}, 78%, 45%)`
+    }))
+    .filter((row) => row.seconds > 0);
+}
+
 function normalizeOverviewSummary(summary) {
   const safe = Array.isArray(summary) ? summary : [];
   return safe.slice(0, 7).map((item, index) => {
@@ -266,180 +277,83 @@ function normalizeOverviewSummary(summary) {
   });
 }
 
-function renderOverviewTrendSvg(summary, mode = 'line') {
-  const series = normalizeOverviewSummary(summary);
-  if (!series.length) {
-    return '<p class="muted">No activity yet.</p>';
-  }
-
-  const width = 760;
-  const height = 220;
-  const padLeft = 40;
-  const padRight = 16;
-  const padTop = 14;
-  const padBottom = 34;
-  const chartWidth = width - padLeft - padRight;
-  const chartHeight = height - padTop - padBottom;
-  const yMax = Math.max(1, ...series.map((point) => point.seconds));
-  const baseY = padTop + chartHeight;
-
-  const points = series.map((point, index) => {
-    const ratioX = series.length > 1 ? index / (series.length - 1) : 0.5;
-    const x = padLeft + (chartWidth * ratioX);
-    const y = baseY - ((point.seconds / yMax) * chartHeight);
-    return { ...point, x, y };
-  });
-
-  const gridRows = 4;
-  const gridMarkup = Array.from({ length: gridRows + 1 }, (_, rowIndex) => {
-    const ratio = rowIndex / gridRows;
-    const y = padTop + (chartHeight * ratio);
-    const value = yMax * (1 - ratio);
-    return `
-      <line class="trend-grid-line" x1="${padLeft}" y1="${y}" x2="${width - padRight}" y2="${y}"></line>
-      <text class="trend-grid-text" x="${padLeft - 8}" y="${y + 4}" text-anchor="end">${formatDurationAxis(value)}</text>
-    `;
-  }).join('');
-
-  const xLabelsMarkup = points.map((point) => `
-    <text class="trend-axis-label" x="${point.x}" y="${height - 10}" text-anchor="middle">${escapeHtml(point.label)}</text>
-  `).join('');
-
-  let seriesMarkup = '';
-  if (mode === 'bar') {
-    const barWidth = Math.max(14, Math.min(42, (chartWidth / points.length) * 0.56));
-    seriesMarkup = points.map((point, index) => {
-      const x = point.x - (barWidth / 2);
-      const barHeight = Math.max(2, baseY - point.y);
-      return `
-        <rect class="trend-bar" x="${x}" y="${baseY - barHeight}" width="${barWidth}" height="${barHeight}">
-          <title>${escapeHtml(series[index].fullLabel)}: ${formatDuration(point.seconds)}</title>
-        </rect>
-      `;
-    }).join('');
-  } else {
-    const linePath = points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ');
-    const areaPath = `${linePath} L ${points[points.length - 1].x} ${baseY} L ${points[0].x} ${baseY} Z`;
-    const dotMarkup = points.map((point, index) => `
-      <circle class="trend-dot" cx="${point.x}" cy="${point.y}" r="4">
-        <title>${escapeHtml(series[index].fullLabel)}: ${formatDuration(point.seconds)}</title>
-      </circle>
-    `).join('');
-    seriesMarkup = `
-      <path class="trend-area" d="${areaPath}"></path>
-      <path class="trend-line" d="${linePath}"></path>
-      ${dotMarkup}
-    `;
-  }
-
-  return `
-    <svg class="overview-trend-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="Focus trend chart">
-      ${gridMarkup}
-      ${seriesMarkup}
-      ${xLabelsMarkup}
-    </svg>
-  `;
-}
-
-function getProjectDistributionRows(distribution) {
-  const safe = Array.isArray(distribution) ? distribution : [];
-  return safe
-    .map((row, index) => ({
-      name: String(row.name || row.project || row.label || '-'),
-      seconds: Math.max(0, Number(row.total_seconds || row.seconds || 0)),
-      color: `hsl(${(index * 47) % 360}, 78%, 45%)`
-    }))
-    .filter((row) => row.seconds > 0);
-}
-
-function renderProjectDonut(distribution) {
-  const rows = getProjectDistributionRows(distribution);
-  const total = rows.reduce((acc, row) => acc + row.seconds, 0);
-  if (!rows.length || total <= 0) {
-    return '<p class="muted">No tracked time yet.</p>';
-  }
-
-  let cursor = 0;
-  const gradientStops = rows.map((row, index) => {
-    const start = cursor;
-    const ratio = (row.seconds / total) * 100;
-    cursor += ratio;
-    const end = index === rows.length - 1 ? 100 : cursor;
-    return `${row.color} ${start.toFixed(2)}% ${end.toFixed(2)}%`;
-  });
-
-  return `
-    <div class="overview-donut-wrap">
-      <div class="overview-donut-graph" style="background: conic-gradient(${gradientStops.join(', ')});">
-        <div class="overview-donut-inner">${formatDuration(total)}</div>
-      </div>
-    </div>
-  `;
-}
-
-function renderHabitStreakChart(habits) {
-  const safe = Array.isArray(habits) ? habits : [];
-  const ranked = safe
-    .slice()
-    .sort((left, right) => Number(right.streak || 0) - Number(left.streak || 0))
-    .slice(0, 6);
-
-  if (!ranked.length) {
-    return '<p class="muted">No habits yet.</p>';
-  }
-
-  const maxStreak = Math.max(1, ...ranked.map((habit) => Number(habit.streak || 0)));
-  return `
-    <div class="overview-streak-chart" aria-label="Habit streak chart">
-      ${ranked.map((habit) => {
-        const streak = Math.max(0, Number(habit.streak || 0));
-        const width = Math.min(100, (streak / maxStreak) * 100);
-        return `
-          <div class="overview-streak-row">
-            <span class="overview-streak-label">${escapeHtml(habit.name || 'Habit')}</span>
-            <div class="overview-streak-track">
-              <span class="overview-streak-fill" style="width: ${width.toFixed(2)}%;"></span>
-            </div>
-            <span class="overview-streak-value">${streak}d</span>
-          </div>
-        `;
-      }).join('')}
-    </div>
-  `;
-}
-
-function bindOverviewCharts(content, summary) {
+function bindOverviewCharts(content, summary, distribution, habits) {
   clearOverviewView();
 
   const trendHost = content.querySelector('[data-overview-trend-canvas]');
+  const donutHost = content.querySelector('[data-overview-donut]');
+  const habitHost = content.querySelector('[data-habit-streak-chart]');
   const modeButtons = content.querySelectorAll('[data-overview-mode]');
+
   if (!trendHost) {
     return;
   }
 
   const abortController = new AbortController();
   const { signal } = abortController;
-  let mode = 'line';
 
-  const paintTrend = () => {
-    trendHost.innerHTML = renderOverviewTrendSvg(summary, mode);
-  };
+  // Normalize summary data for ApexCharts
+  const normalizedSummary = Array.isArray(summary) ? summary.map((item, index) => ({
+    label: compactOverviewLabel(item?.label || item?.date || item?.day, `D${index + 1}`),
+    seconds: Number(item.seconds || 0),
+    fullLabel: String(item?.label || item?.date || item?.day || `Day ${index + 1}`)
+  })) : [];
 
-  paintTrend();
+  // Initialize trend chart
+  if (window.GoalixaCharts && normalizedSummary.length > 0) {
+    window.GoalixaCharts.createOverviewTrendChart('[data-overview-trend-canvas]', normalizedSummary, 'line');
+  }
+
+  // Initialize donut chart
+  if (window.GoalixaCharts && donutHost && distribution) {
+    const normalizedDistribution = Array.isArray(distribution) ? distribution.map((row, index) => ({
+      name: String(row.name || row.project || row.label || '-'),
+      seconds: Math.max(0, Number(row.total_seconds || row.seconds || 0))
+    })).filter(row => row.seconds > 0) : [];
+
+    window.GoalixaCharts.createDistributionDonut('[data-overview-donut]', normalizedDistribution);
+  }
+
+  // Initialize habit streak chart
+  if (window.GoalixaCharts && habitHost && habits && habits.length > 0) {
+    const habitsWithStreaks = habits
+      .map(habit => ({
+        name: habit.name || 'Habit',
+        streak: Number(habit.streak || habit.current_streak || 0)
+      }))
+      .filter(habit => habit.streak > 0);
+
+    if (habitsWithStreaks.length > 0) {
+      window.GoalixaCharts.createHabitStreakChart('[data-habit-streak-chart]', habitsWithStreaks);
+    }
+  }
+
+  // Handle mode switching
+  let currentMode = 'line';
 
   modeButtons.forEach((button) => {
     button.addEventListener('click', () => {
       const requestedMode = button.dataset.overviewMode;
       if (!requestedMode || (requestedMode !== 'line' && requestedMode !== 'bar')) return;
-      mode = requestedMode;
+
+      currentMode = requestedMode;
       modeButtons.forEach((candidate) => {
         candidate.classList.toggle('is-active', candidate === button);
       });
-      paintTrend();
+
+      // Recreate chart with new mode
+      if (window.GoalixaCharts) {
+        window.GoalixaCharts.createOverviewTrendChart('[data-overview-trend-canvas]', normalizedSummary, currentMode);
+      }
     }, { signal });
   });
 
   overviewViewCleanup = () => {
+    if (window.GoalixaCharts) {
+      window.GoalixaCharts.destroyChart('[data-overview-trend-canvas]');
+      window.GoalixaCharts.destroyChart('[data-overview-donut]');
+      window.GoalixaCharts.destroyChart('[data-habit-streak-chart]');
+    }
     abortController.abort();
   };
 }
@@ -484,9 +398,7 @@ function renderOverview(content, overview, tasksPayload, goalsPayload, reportsPa
         </div>
 
         <div class="overview-trend-panel">
-          <div class="overview-trend-canvas" data-overview-trend-canvas>
-            ${renderOverviewTrendSvg(summary, 'line')}
-          </div>
+          <div class="overview-trend-canvas" data-overview-trend-canvas></div>
         </div>
 
         <div class="overview-time-metrics">
@@ -577,7 +489,7 @@ function renderOverview(content, overview, tasksPayload, goalsPayload, reportsPa
             </div>
           </div>
           ${projectRows.length === 0 ? '<p class="muted">No tracked time yet.</p>' : ''}
-          ${projectRows.length ? renderProjectDonut(projectRows) : ''}
+          ${projectRows.length ? '<div class="overview-donut-wrap" data-overview-donut></div>' : ''}
           <ul class="overview-list">
             ${topProjectRows.map((row) => `
               <li class="overview-list-item">
@@ -598,7 +510,7 @@ function renderOverview(content, overview, tasksPayload, goalsPayload, reportsPa
               <h3 class="goals-title">Completion momentum</h3>
             </div>
           </div>
-          ${renderHabitStreakChart(habits)}
+          ${habits.length > 0 ? '<div class="habit-streak-chart" data-habit-streak-chart></div>' : '<p class="muted">No habits yet.</p>'}
           <div class="overview-time-metrics">
             <div class="overview-metric">
               <span class="overview-metric-label">Completed today</span>
@@ -640,7 +552,7 @@ function renderOverview(content, overview, tasksPayload, goalsPayload, reportsPa
     </div>
   `;
 
-  bindOverviewCharts(content, summary);
+  bindOverviewCharts(content, summary, distribution, habits);
 }
 
 function normalizeProjectLabels(labels) {
@@ -969,111 +881,6 @@ function normalizeReportDistribution(distribution) {
     .filter((row) => row.seconds > 0);
 }
 
-function renderReportsTrendSvg(summaryRows, mode = 'line') {
-  if (!summaryRows.length) {
-    return '<p class="muted">No activity yet.</p>';
-  }
-
-  const width = 780;
-  const height = 230;
-  const padLeft = 40;
-  const padRight = 16;
-  const padTop = 14;
-  const padBottom = 34;
-  const chartWidth = width - padLeft - padRight;
-  const chartHeight = height - padTop - padBottom;
-  const yMax = Math.max(1, ...summaryRows.map((point) => point.seconds));
-  const baseY = padTop + chartHeight;
-  const points = summaryRows.map((point, index) => {
-    const ratioX = summaryRows.length > 1 ? index / (summaryRows.length - 1) : 0.5;
-    return {
-      ...point,
-      x: padLeft + (chartWidth * ratioX),
-      y: baseY - ((point.seconds / yMax) * chartHeight)
-    };
-  });
-
-  const gridMarkup = Array.from({ length: 5 }, (_, rowIndex) => {
-    const ratio = rowIndex / 4;
-    const y = padTop + (chartHeight * ratio);
-    const value = yMax * (1 - ratio);
-    return `
-      <line class="reports-grid-line" x1="${padLeft}" y1="${y}" x2="${width - padRight}" y2="${y}"></line>
-      <text class="reports-grid-text" x="${padLeft - 8}" y="${y + 4}" text-anchor="end">${formatDurationAxis(value)}</text>
-    `;
-  }).join('');
-
-  const xLabelsMarkup = points.map((point) => `
-    <text class="reports-axis-label" x="${point.x}" y="${height - 10}" text-anchor="middle">${escapeHtml(point.label)}</text>
-  `).join('');
-
-  let seriesMarkup = '';
-  if (mode === 'bar') {
-    const barWidth = Math.max(12, Math.min(30, (chartWidth / points.length) * 0.58));
-    seriesMarkup = points.map((point, index) => {
-      const x = point.x - (barWidth / 2);
-      const barHeight = Math.max(2, baseY - point.y);
-      return `
-        <rect class="reports-bar" x="${x}" y="${baseY - barHeight}" width="${barWidth}" height="${barHeight}">
-          <title>${escapeHtml(summaryRows[index].fullLabel)}: ${formatDuration(point.seconds)}</title>
-        </rect>
-      `;
-    }).join('');
-  } else {
-    const linePath = points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ');
-    const areaPath = `${linePath} L ${points[points.length - 1].x} ${baseY} L ${points[0].x} ${baseY} Z`;
-    const dots = points.map((point, index) => `
-      <circle class="reports-dot" cx="${point.x}" cy="${point.y}" r="4">
-        <title>${escapeHtml(summaryRows[index].fullLabel)}: ${formatDuration(point.seconds)}</title>
-      </circle>
-    `).join('');
-    seriesMarkup = `
-      <path class="reports-area" d="${areaPath}"></path>
-      <path class="reports-line" d="${linePath}"></path>
-      ${dots}
-    `;
-  }
-
-  return `
-    <svg class="reports-trend-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="Reports trend chart">
-      ${gridMarkup}
-      ${seriesMarkup}
-      ${xLabelsMarkup}
-    </svg>
-  `;
-}
-
-function renderReportsDonut(rows, totalSeconds) {
-  if (!rows.length) {
-    return '<p class="muted">No distribution data.</p>';
-  }
-
-  const total = Math.max(
-    0,
-    Number(totalSeconds || rows.reduce((acc, row) => acc + Number(row.seconds || 0), 0))
-  );
-  if (!total) {
-    return '<p class="muted">No distribution data.</p>';
-  }
-
-  let cursor = 0;
-  const gradientStops = rows.map((row, index) => {
-    const start = cursor;
-    const ratio = (row.seconds / total) * 100;
-    cursor += ratio;
-    const end = index === rows.length - 1 ? 100 : cursor;
-    return `${row.color} ${start.toFixed(2)}% ${end.toFixed(2)}%`;
-  });
-
-  return `
-    <div class="reports-donut-wrap">
-      <div class="reports-donut-graph" style="background: conic-gradient(${gradientStops.join(', ')});">
-        <div class="reports-donut-inner">${formatDuration(total)}</div>
-      </div>
-    </div>
-  `;
-}
-
 function renderReportsDistributionList(rows) {
   if (!rows.length) {
     return '<p class="muted">No distribution data.</p>';
@@ -1130,12 +937,16 @@ function paintReportsView(content, state) {
   const listHost = content.querySelector('[data-reports-list]');
   const tableHost = content.querySelector('[data-reports-table]');
 
-  if (trendHost) {
-    trendHost.innerHTML = renderReportsTrendSvg(summaryRows, state.mode);
+  // Use ApexCharts for trend chart
+  if (trendHost && window.GoalixaCharts) {
+    window.GoalixaCharts.createReportsTrendChart('[data-reports-trend]', summaryRows, state.mode);
   }
-  if (donutHost) {
-    donutHost.innerHTML = renderReportsDonut(distributionRows, totalSeconds);
+
+  // Use ApexCharts for donut chart
+  if (donutHost && window.GoalixaCharts) {
+    window.GoalixaCharts.createDistributionDonut('[data-reports-donut]', distributionRows, totalSeconds);
   }
+
   if (listHost) {
     listHost.innerHTML = renderReportsDistributionList(distributionRows);
   }
@@ -1309,6 +1120,10 @@ async function bindReportsActions(container, range, initialReport) {
   }
 
   reportsViewCleanup = () => {
+    if (window.GoalixaCharts) {
+      window.GoalixaCharts.destroyChart('[data-reports-trend]');
+      window.GoalixaCharts.destroyChart('[data-reports-donut]');
+    }
     abortController.abort();
   };
 }
@@ -3158,35 +2973,6 @@ function resolveGoalLabel(goal, labels) {
   };
 }
 
-function renderGoalMomentumChart(goals) {
-  const rows = (Array.isArray(goals) ? goals : [])
-    .slice()
-    .sort((left, right) => normalizeGoalPercent(right.progress) - normalizeGoalPercent(left.progress))
-    .slice(0, 6)
-    .map((goal) => ({
-      name: String(goal.name || 'Untitled goal'),
-      progress: normalizeGoalPercent(goal.progress)
-    }));
-
-  if (!rows.length) {
-    return '<p class="muted">No goal momentum yet.</p>';
-  }
-
-  return `
-    <div class="goal-momentum-chart">
-      ${rows.map((row) => `
-        <div class="goal-momentum-row">
-          <span class="goal-momentum-name">${escapeHtml(row.name)}</span>
-          <div class="goal-momentum-track">
-            <span class="goal-momentum-fill" style="width: ${row.progress}%;"></span>
-          </div>
-          <span class="goal-momentum-value">${row.progress}%</span>
-        </div>
-      `).join('')}
-    </div>
-  `;
-}
-
 function renderGoalCards(goals, labels, viewMode = 'overview') {
   const safeGoals = Array.isArray(goals) ? goals : [];
   const subgoalLimit = viewMode === 'long-term' ? 8 : 4;
@@ -3378,7 +3164,7 @@ function renderGoals(content, payload, viewMode = 'overview') {
           </div>
           <div class="goals-overview-grid">
             <div class="goals-overview-chart">
-              ${renderGoalMomentumChart(goals)}
+              <div data-goal-momentum-chart></div>
             </div>
             <div class="goals-summary">
               <article class="goal-stat-card">
@@ -3521,9 +3307,16 @@ function renderGoals(content, payload, viewMode = 'overview') {
   `;
 }
 
-async function bindGoalActions(container, currentPath) {
+async function bindGoalActions(container, currentPath, payload) {
   const content = container.querySelector('#app-shell-content');
   if (!content) return;
+
+  // Initialize goal momentum chart
+  const goals = Array.isArray(payload?.goals) ? payload.goals : [];
+  const chartHost = content.querySelector('[data-goal-momentum-chart]');
+  if (chartHost && window.GoalixaCharts && goals.length > 0) {
+    window.GoalixaCharts.createGoalMomentumChart('[data-goal-momentum-chart]', goals);
+  }
 
   content.querySelectorAll('[data-route]').forEach((item) => {
     item.addEventListener('click', (event) => {
@@ -4179,49 +3972,6 @@ function normalizeHabitMeta(habit) {
   return parts.length ? parts.join(' • ') : 'No schedule';
 }
 
-function normalizeHabitSeries(habitSeries, habits) {
-  const labels = Array.isArray(habitSeries?.labels) ? habitSeries.labels.map((item) => String(item)) : [];
-  const values = Array.isArray(habitSeries?.values) ? habitSeries.values.map((item) => Number(item || 0)) : [];
-  if (labels.length && labels.length === values.length) {
-    return { labels: labels.slice(-14), values: values.slice(-14) };
-  }
-
-  const doneCount = Array.isArray(habits) ? habits.filter((habit) => Boolean(habit.done)).length : 0;
-  const totalCount = Array.isArray(habits) ? habits.length : 0;
-  const baseValue = Math.max(0, Math.min(7, doneCount || Math.ceil(totalCount * 0.5)));
-  return {
-    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-    values: [baseValue - 1, baseValue, baseValue, baseValue + 1, baseValue, baseValue - 1, baseValue]
-      .map((value) => Math.max(0, value))
-  };
-}
-
-function renderHabitSeriesChart(habitSeries, habits) {
-  const series = normalizeHabitSeries(habitSeries, habits);
-  const maxValue = Math.max(1, ...series.values);
-  if (!series.labels.length) {
-    return '<p class="muted">No completion data yet.</p>';
-  }
-
-  return `
-    <div class="habit-series-chart" aria-label="Habit completion over time">
-      ${series.labels.map((label, index) => {
-        const value = Math.max(0, Number(series.values[index] || 0));
-        const height = Math.max(6, Math.round((value / maxValue) * 100));
-        return `
-          <div class="habit-series-col">
-            <div class="habit-series-track">
-              <span class="habit-series-bar" style="height: ${height}%;"></span>
-            </div>
-            <span class="habit-series-value">${value}</span>
-            <span class="habit-series-label">${escapeHtml(label)}</span>
-          </div>
-        `;
-      }).join('')}
-    </div>
-  `;
-}
-
 function renderGoalNameOptions(goals, selectedValue = '') {
   const safeGoals = Array.isArray(goals) ? goals : [];
   return `
@@ -4428,7 +4178,7 @@ function renderHabits(content, payload) {
           </div>
           <span class="habit-chart-note">Last 14 days</span>
         </div>
-        ${renderHabitSeriesChart(payload.habit_series, habits)}
+        <div data-habit-series-chart></div>
       </section>
     </div>
   `;
@@ -4437,6 +4187,14 @@ function renderHabits(content, payload) {
 async function bindHabitActions(container, currentPath, payload) {
   const content = container.querySelector('#app-shell-content');
   if (!content) return;
+
+  // Initialize habit series chart
+  const habitSeries = payload?.habit_series;
+  const habits = Array.isArray(payload?.habits) ? payload.habits : [];
+  const chartHost = content.querySelector('[data-habit-series-chart]');
+  if (chartHost && window.GoalixaCharts && habitSeries) {
+    window.GoalixaCharts.createHabitSeriesChart('[data-habit-series-chart]', habitSeries, habits);
+  }
 
   const habitsRoot = content.querySelector('.habits-page');
   const today = habitsRoot?.dataset.habitsToday || payload.today || new Date().toISOString().slice(0, 10);
@@ -6678,7 +6436,7 @@ async function renderSection(container, section, currentPath) {
       }
       payload = withGoalsDemoPayload(payload);
       renderGoals(content, payload, section === 'long-term-goals' ? 'long-term' : 'overview');
-      await bindGoalActions(container, currentPath);
+      await bindGoalActions(container, currentPath, payload);
       return;
     }
 

@@ -26,6 +26,7 @@ const CORE_ASSETS = [
   '/js/api.js',
   '/js/auth.js',
   '/js/utils.js',
+  '/js/charts.js',
   '/js/views/auth-view.js',
   '/js/views/app-view.js',
   '/js/views/app/tasks-view.js'
@@ -41,6 +42,7 @@ const ASSET_URLS = [
   '/icons/icon-192.png',
   '/icons/icon-384.png',
   '/icons/icon-512.png',
+  '/vendor/apexcharts/apexcharts.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
   'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Montserrat:wght@800;900&display=swap'
 ];
