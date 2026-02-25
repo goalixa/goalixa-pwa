@@ -1,3 +1,5 @@
+// Build: 810bf5d3307db6a97981696a526636f3a7b3af0d (2026-02-25T11:24:21Z)
+
 /**
  * Unified PWA Service Worker for Goalixa
  * Handles caching for auth and app views
