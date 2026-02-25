@@ -56,10 +56,10 @@ jobs:
 
       - name: Update Kustomize image tag
         run: |
-          # Get the short SHA
-          SHORT_SHA="${{ github.sha }}"
+          # Get the short SHA with sha- prefix to match Docker metadata action format
+          IMAGE_TAG="sha-${GITHUB_SHA:0:7}"
           # Update the kustomization file with the new image tag
-          sed -i.bak "s/newTag: .*/newTag: ${SHORT_SHA}/" k8s/kustomization.yaml
+          sed -i.bak "s/newTag: .*/newTag: ${IMAGE_TAG}/" k8s/kustomization.yaml
           rm -f k8s/kustomization.yaml.bak
           # Show the change
           echo "Updated k8s/kustomization.yaml:"
@@ -67,8 +67,9 @@ jobs:
 
       - name: Commit and push Kustomize change
         run: |
+          IMAGE_TAG="sha-${GITHUB_SHA:0:7}"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add k8s/kustomization.yaml
-          git commit -m "chore: update image tag to ${{ github.sha }}"
+          git commit -m "chore: update image tag to ${IMAGE_TAG}"
           git push
