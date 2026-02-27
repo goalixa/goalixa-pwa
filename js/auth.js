@@ -21,6 +21,11 @@ let refreshAttempts = 0;
 const MAX_REFRESH_ATTEMPTS = 3;
 const REFRESH_BACKOFF_MS = [1000, 2000, 5000]; // Exponential backoff
 
+// Track consecutive 401s after successful refresh to detect token issues
+let consecutive401AfterRefresh = 0;
+const MAX_401_AFTER_REFRESH = 2; // Allow 1 retry before giving up
+let lastSuccessfulRefreshTime = 0;
+
 // Proactive refresh timer
 let proactiveRefreshTimer = null;
 const PROACTIVE_REFRESH_INTERVAL = 13 * 60 * 1000; // 13 minutes (refresh before 15min expiry)
@@ -351,6 +356,31 @@ function notifyListeners() {
 }
 
 /**
+ * Report a 401 that occurred after a successful refresh
+ * Used to detect cases where refresh succeeds but tokens are still invalid
+ */
+export function report401AfterRefresh() {
+  const timeSinceRefresh = Date.now() - lastSuccessfulRefreshTime;
+
+  // Only count if the 401 happened within 5 seconds of a successful refresh
+  if (timeSinceRefresh < 5000 && lastSuccessfulRefreshTime > 0) {
+    consecutive401AfterRefresh++;
+    console.warn(`401 occurred ${timeSinceRefresh}ms after successful refresh (count: ${consecutive401AfterRefresh}/${MAX_401_AFTER_REFRESH})`);
+
+    if (consecutive401AfterRefresh >= MAX_401_AFTER_REFRESH) {
+      console.error('Too many 401s after successful refresh. Token may be invalid. Logging out...');
+      logout();
+      return false; // Indicates auth is invalid
+    }
+  } else {
+    // Reset counter if enough time has passed since last refresh
+    consecutive401AfterRefresh = 0;
+  }
+
+  return true; // Auth may still be valid
+}
+
+/**
  * Refresh auth token with retry logic
  */
 export async function refreshToken() {
@@ -374,6 +404,7 @@ export async function refreshToken() {
       if (response.success || response.access_token) {
         // Reset attempts on success
         refreshAttempts = 0;
+        lastSuccessfulRefreshTime = Date.now();
 
         authMonitor.logEvent('auth:refresh', { success: true });
         eventBus.emit('auth:refresh', { success: true });

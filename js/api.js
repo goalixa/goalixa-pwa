@@ -36,6 +36,10 @@ const API_CONFIG = {
 let isRefreshing = false;
 let refreshSubscribers = [];
 
+// Track failed retries to prevent infinite loops
+const failedRefreshUrls = new Map(); // url -> timestamp of last failure
+const FAILED_RETRY_COOLDOWN = 60000; // 1 minute cooldown after failed retry
+
 function buildUrl(path) {
   if (!API_CONFIG.api) {
     return path;
@@ -83,7 +87,7 @@ async function apiRequest(url, options = {}) {
     const contentType = response.headers.get('content-type');
     if (!contentType || !contentType.includes('application/json')) {
       if (!response.ok) {
-        if (response.status === 401) {
+        if (response.status === 401 && !url.includes('/auth/refresh')) {
           return handle401Error(url, options);
         }
         const nonJsonError = new Error(`HTTP ${response.status}`);
@@ -96,7 +100,8 @@ async function apiRequest(url, options = {}) {
     const data = await response.json();
 
     if (!response.ok) {
-      if (response.status === 401) {
+      // Don't trigger refresh loop for the refresh endpoint itself
+      if (response.status === 401 && !url.includes('/auth/refresh')) {
         return handle401Error(url, options);
       }
       const error = new Error(data.message || data.error || `HTTP ${response.status}`);
@@ -133,7 +138,17 @@ async function apiRequestWithFallback(urls, options = {}) {
 }
 
 async function handle401Error(originalUrl, originalOptions) {
+  // Check if this URL is in cooldown (previously failed after refresh)
+  const lastFailure = failedRefreshUrls.get(originalUrl);
+  if (lastFailure && Date.now() - lastFailure < FAILED_RETRY_COOLDOWN) {
+    console.warn(`[Auth] URL ${originalUrl} is in cooldown after failed refresh retry`);
+    const error = new Error('Authentication failed. Please refresh the page.');
+    error.status = 401;
+    throw error;
+  }
+
   if (isRefreshing) {
+    console.log(`[Auth] Refresh already in progress, queuing request for ${originalUrl}`);
     return new Promise((resolve, reject) => {
       subscribeToRefresh(async () => {
         try {
@@ -147,17 +162,50 @@ async function handle401Error(originalUrl, originalOptions) {
   }
 
   isRefreshing = true;
+  console.log(`[Auth] Starting token refresh for 401 at ${originalUrl}`);
 
   try {
-    const { refreshToken } = await import('./auth.js');
+    const { refreshToken, report401AfterRefresh } = await import('./auth.js');
     const refreshResult = await refreshToken();
 
     if (refreshResult.success) {
       onRefreshed();
-      return apiRequest(originalUrl, originalOptions);
+      console.log(`[Auth] Token refreshed successfully, retrying ${originalUrl}`);
+
+      // Add a small delay to ensure cookies are properly set
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      try {
+        const result = await apiRequest(originalUrl, originalOptions);
+
+        // Clear the cooldown if the retry succeeded
+        failedRefreshUrls.delete(originalUrl);
+        console.log(`[Auth] Retry succeeded for ${originalUrl}`);
+
+        return result;
+      } catch (retryError) {
+        // If the retry fails with 401, add this URL to cooldown
+        // and report it to auth module for tracking
+        if (retryError.status === 401) {
+          console.error(`[Auth] Retry after refresh still returned 401 for ${originalUrl}. Adding to cooldown.`);
+          failedRefreshUrls.set(originalUrl, Date.now());
+
+          // Report this to the auth module - if too many occur, it will logout
+          const authStillValid = report401AfterRefresh();
+          if (!authStillValid) {
+            // User was logged out due to too many failed retries
+            console.error('[Auth] Too many 401s after refresh, logging out');
+            const logoutError = new Error('Session expired. Please login again.');
+            logoutError.status = 401;
+            throw logoutError;
+          }
+        }
+        throw retryError;
+      }
     }
 
     onRefreshed();
+    console.error('[Auth] Token refresh failed:', refreshResult.error);
     throw new Error(refreshResult.error || 'Session expired');
   } catch (error) {
     onRefreshed();
