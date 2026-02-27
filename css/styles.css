@@ -1558,6 +1558,89 @@ a:hover {
   justify-content: flex-end;
 }
 
+/* Date Filter Styling */
+.overview-date-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #f8fbff 0%, #f1f5ff 100%);
+  border: 1px solid #d5e1f7;
+  border-radius: 999px;
+}
+
+.overview-date-filter input[type="date"] {
+  border: 1px solid #d8e0f0;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.82rem;
+  background: #ffffff;
+  color: #2a3a59;
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.overview-date-filter input[type="date"]:hover {
+  border-color: #c5d5ef;
+}
+
+.overview-date-filter input[type="date"]:focus {
+  outline: none;
+  border-color: #1f6feb;
+  box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.1);
+}
+
+.overview-date-filter input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+.overview-date-filter input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+.overview-date-separator {
+  color: #94a3b8;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.overview-date-filter .btn {
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* Date Range Display */
+.overview-date-range-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: linear-gradient(135deg, #f0f4ff 0%, #e8efff 100%);
+  border-radius: 999px;
+  border: 1px solid #d5e1f7;
+  margin-top: 10px;
+  align-self: flex-start;
+}
+
+.overview-range-label {
+  font-size: 0.8rem;
+  color: #63718b;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.overview-range-dates {
+  font-size: 0.88rem;
+  color: #1f2a44;
+  font-weight: 600;
+}
+
 .mode-switch {
   display: inline-flex;
   align-items: center;
@@ -1602,6 +1685,45 @@ a:hover {
 
 [data-theme="dark"] .overview-time-card {
   background: linear-gradient(180deg, #101a2e 0%, #101727 100%);
+}
+
+/* Dark Mode Date Filter */
+[data-theme="dark"] .overview-date-filter {
+  background: linear-gradient(135deg, rgba(26, 38, 57, 0.6) 0%, rgba(21, 30, 43, 0.5) 100%);
+  border: 1px solid rgba(42, 54, 80, 0.6);
+}
+
+[data-theme="dark"] .overview-date-filter input[type="date"] {
+  background: rgba(26, 38, 57, 0.8);
+  border: 1px solid rgba(42, 54, 80, 0.6);
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .overview-date-filter input[type="date"]:hover {
+  border-color: rgba(90, 141, 255, 0.4);
+}
+
+[data-theme="dark"] .overview-date-filter input[type="date"]:focus {
+  border-color: #5a8dff;
+  box-shadow: 0 0 0 3px rgba(90, 141, 255, 0.15);
+}
+
+[data-theme="dark"] .overview-date-separator {
+  color: #64748b;
+}
+
+/* Dark Mode Date Range Display */
+[data-theme="dark"] .overview-date-range-display {
+  background: linear-gradient(135deg, rgba(26, 38, 57, 0.5) 0%, rgba(21, 30, 43, 0.4) 100%);
+  border: 1px solid rgba(42, 54, 80, 0.5);
+}
+
+[data-theme="dark"] .overview-range-label {
+  color: #64748b;
+}
+
+[data-theme="dark"] .overview-range-dates {
+  color: #f1f5f9;
 }
 
 [data-theme="dark"] .overview-subtitle,
@@ -9561,6 +9683,31 @@ footer {
     justify-content: space-between;
   }
 
+  .overview-date-filter {
+    width: 100%;
+    flex-wrap: wrap;
+    padding: 8px 10px;
+  }
+
+  .overview-date-filter input[type="date"] {
+    flex: 1;
+    min-width: 130px;
+  }
+
+  .overview-date-separator {
+    display: none;
+  }
+
+  .overview-date-filter .btn {
+    flex: 1;
+    min-width: 60px;
+  }
+
+  .overview-date-range-display {
+    width: 100%;
+    justify-content: center;
+  }
+
   .overview-subtitle {
     font-size: 0.85rem;
   }
@@ -9657,6 +9804,35 @@ footer {
 
   .overview-trend-canvas {
     min-height: 120px;
+  }
+
+  .overview-date-filter {
+    padding: 6px 8px;
+    gap: 6px;
+  }
+
+  .overview-date-filter input[type="date"] {
+    font-size: 0.78rem;
+    padding: 5px 8px;
+    min-width: 110px;
+  }
+
+  .overview-date-filter .btn {
+    font-size: 0.78rem;
+    padding: 5px 10px;
+  }
+
+  .overview-date-range-display {
+    padding: 6px 10px;
+    font-size: 0.85rem;
+  }
+
+  .overview-range-label {
+    font-size: 0.75rem;
+  }
+
+  .overview-range-dates {
+    font-size: 0.82rem;
   }
 
   .mode-switch {

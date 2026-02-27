@@ -90,6 +90,26 @@ function formatDateTime(value) {
   return parsed.toLocaleString();
 }
 
+function formatDateShort(dateStr) {
+  if (!dateStr) return '-';
+  const parsed = new Date(dateStr);
+  if (Number.isNaN(parsed.getTime())) return '-';
+  return parsed.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function formatDateRange(startStr, endStr) {
+  if (!startStr || !endStr) return '-';
+  const start = new Date(startStr);
+  const end = new Date(endStr);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return '-';
+
+  const options = { month: 'short', day: 'numeric' };
+  const startFormatted = start.toLocaleDateString('en-US', options);
+  const endFormatted = end.toLocaleDateString('en-US', options);
+
+  return `${startFormatted} - ${endFormatted}`;
+}
+
 function badgeForGoalStatus(status) {
   const value = (status || 'active').toLowerCase();
   if (value === 'completed' || value === 'archived') return 'success';
@@ -453,6 +473,34 @@ function bindOverviewCharts(content, summary, distribution, habits) {
     }, { signal });
   });
 
+  // Handle date filter
+  const dateStartInput = content.querySelector('#overview-date-start');
+  const dateEndInput = content.querySelector('#overview-date-end');
+  const dateApplyButton = content.querySelector('#overview-date-apply');
+  const rangeDisplay = content.querySelector('.overview-range-dates');
+
+  if (dateApplyButton && dateStartInput && dateEndInput && rangeDisplay) {
+    dateApplyButton.addEventListener('click', () => {
+      const newStart = dateStartInput.value;
+      const newEnd = dateEndInput.value;
+
+      if (newStart && newEnd && newStart <= newEnd) {
+        // Update the display
+        rangeDisplay.textContent = formatDateRange(newStart, newEnd);
+
+        // Trigger a page reload with new date range
+        const currentUrl = new URL(window.location);
+        currentUrl.searchParams.set('start', newStart);
+        currentUrl.searchParams.set('end', newEnd);
+
+        // Reload the page with new date range
+        window.location.href = currentUrl.toString();
+      } else {
+        showToast('Invalid date range. Please ensure start date is before end date.', 'error');
+      }
+    }, { signal });
+  }
+
   overviewViewCleanup = () => {
     if (window.GoalixaCharts) {
       window.GoalixaCharts.destroyChart('[data-overview-trend-canvas]');
@@ -494,12 +542,22 @@ function renderOverview(content, overview, tasksPayload, goalsPayload, reportsPa
             <p class="overview-subtitle">Last 7 days of focus tracking.</p>
           </div>
           <div class="overview-chart-toolbar">
-            <span class="task-state running">${escapeHtml(range.start)} → ${escapeHtml(range.end)}</span>
+            <div class="overview-date-filter">
+              <input type="date" id="overview-date-start" value="${escapeHtml(range.start)}" min="2020-01-01" max="2030-12-31" />
+              <span class="overview-date-separator">→</span>
+              <input type="date" id="overview-date-end" value="${escapeHtml(range.end)}" min="2020-01-01" max="2030-12-31" />
+              <button class="btn btn-sm btn-primary" id="overview-date-apply" type="button">Apply</button>
+            </div>
             <div class="mode-switch">
               <button class="mode-button" type="button" data-overview-mode="bar">Bar</button>
               <button class="mode-button is-active" type="button" data-overview-mode="line">Line</button>
             </div>
           </div>
+        </div>
+
+        <div class="overview-date-range-display">
+          <span class="overview-range-label">Selected range:</span>
+          <span class="overview-range-dates">${escapeHtml(formatDateRange(range.start, range.end))}</span>
         </div>
 
         <div class="overview-trend-panel">
