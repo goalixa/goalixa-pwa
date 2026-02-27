@@ -21,8 +21,8 @@ COPY manifest.webmanifest /usr/share/nginx/html/
 
 # Copy and inject build hash into service worker
 COPY sw.js /tmp/sw.js
-RUN sed -i "s/__BUILD_HASH__/${BUILD_HASH}/g" /tmp/sw.js && \
-    sed -i "s/__BUILD_TIME__/${BUILD_TIME}/g" /tmp/sw.js && \
+RUN sed -i "s|__BUILD_HASH__|${BUILD_HASH}|g" /tmp/sw.js && \
+    sed -i "s|__BUILD_TIME__|${BUILD_TIME}|g" /tmp/sw.js && \
     cp /tmp/sw.js /usr/share/nginx/html/sw.js
 
 EXPOSE 8080
