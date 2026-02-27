@@ -25,7 +25,7 @@ spec:
         prometheus.io/scrape: "false"
     spec:
       imagePullSecrets:
-        - name: ghcr-pull
+        - name: harbor-pull
       securityContext:
         runAsNonRoot: true
         runAsUser: 1001
