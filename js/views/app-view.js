@@ -1001,6 +1001,7 @@ async function bindProjectActions(container, currentPath, initialPayload) {
       return;
     }
 
+    
     if (action !== 'delete-project') return;
 
     if (!window.confirm('Delete this project?')) {
