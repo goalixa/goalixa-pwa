@@ -1,11 +1,12 @@
 {
-  "name": "Goalixa",
+  "name": "Goalixa - Goals, Tasks & Projects",
   "short_name": "Goalixa",
   "description": "Goals, plans, projects, and tasks in one app.",
   "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
-  "orientation": "portrait-primary",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
   "icons": [
@@ -59,6 +60,20 @@
     }
   ],
   "categories": ["productivity", "business"],
+  "screenshots": [
+    {
+      "src": "screenshots/mobile-wide.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "screenshots/desktop-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ],
   "shortcuts": [
     {
       "name": "Timer",
@@ -73,6 +88,27 @@
       "description": "View your tasks",
       "url": "/#/app?source=pwa",
       "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "New Task",
+      "short_name": "New Task",
+      "description": "Create a new task",
+      "url": "/#/app/tasks/new?source=pwa",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Goals",
+      "short_name": "Goals",
+      "description": "View your goals",
+      "url": "/#/app/goals?source=pwa",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
     }
-  ]
+  ],
+  "prefer_related_applications": false,
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "launch_handler": {
+    "client_mode": ["navigate-existing", "auto"]
+  }
 }

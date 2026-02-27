@@ -111,6 +111,13 @@ function getNavMarkup(activeSection) {
   }).join('');
 }
 
+// Close mobile menu function (for use in navigation)
+function closeMobileMenuOnClick(container) {
+  if (container && container._closeMobileMenu) {
+    container._closeMobileMenu();
+  }
+}
+
 function setThemeToggleState(button) {
   if (!button) return;
   const isDark = getTheme() === 'dark';
@@ -128,6 +135,9 @@ function renderShell(container, section) {
   container.innerHTML = `
     <div class="app-shell">
       <header class="app-shell-header">
+        <button class="mobile-menu-toggle" data-action="toggle-menu" type="button" aria-label="Toggle menu">
+          <i class="fas fa-bars"></i>
+        </button>
         <div class="app-brand" aria-label="Goalixa">
           <img class="app-brand-logo" src="/icons/goalixa-logo.png" alt="Goalixa" />
         </div>
@@ -138,10 +148,15 @@ function renderShell(container, section) {
         </div>
       </header>
 
+      <div class="mobile-nav-overlay" data-action="close-menu"></div>
+
       <div class="app-shell-main">
         <aside class="app-shell-nav">
           <div class="app-nav-head">
             <span>Navigation</span>
+            <button class="mobile-nav-close" data-action="close-menu" type="button" aria-label="Close menu">
+              <i class="fas fa-times"></i>
+            </button>
           </div>
           ${getNavMarkup(section)}
         </aside>
@@ -153,6 +168,7 @@ function renderShell(container, section) {
   container.querySelectorAll('.app-nav-btn').forEach((button) => {
     button.addEventListener('click', () => {
       navigate(button.dataset.route);
+      closeMobileMenu(container);
     });
   });
 
@@ -173,6 +189,95 @@ function renderShell(container, section) {
     });
   }
 
+  // Mobile menu toggle functionality
+  const menuToggle = container.querySelector('[data-action="toggle-menu"]');
+  const closeButtons = container.querySelectorAll('[data-action="close-menu"]');
+  const nav = container.querySelector('.app-shell-nav');
+  const overlay = container.querySelector('.mobile-nav-overlay');
+
+  function openMobileMenu() {
+    if (nav) nav.classList.add('active');
+    if (overlay) overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeMobileMenu() {
+    if (nav) nav.classList.remove('active');
+    if (overlay) overlay.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  if (menuToggle) {
+    menuToggle.addEventListener('click', openMobileMenu);
+  }
+
+  closeButtons.forEach((btn) => {
+    btn.addEventListener('click', closeMobileMenu);
+  });
+
+  // Close menu on escape key
+  container.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeMobileMenu();
+    }
+  });
+
+  // Swipe gesture support for mobile drawer
+  let touchStartX = 0;
+  let touchEndX = 0;
+  let touchStartY = 0;
+
+  if (nav) {
+    nav.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+      touchStartY = e.changedTouches[0].screenY;
+    }, { passive: true });
+
+    nav.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      const touchEndY = e.changedTouches[0].screenY;
+      handleSwipe();
+    }, { passive: true });
+  }
+
+  // Swipe from left edge to open menu
+  document.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+    touchStartY = e.changedTouches[0].screenY;
+  }, { passive: true });
+
+  document.addEventListener('touchend', (e) => {
+    touchEndX = e.changedTouches[0].screenX;
+    const touchEndY = e.changedTouches[0].screenY;
+
+    // Only trigger if not already near nav and starting from left edge
+    if (touchStartX < 30 && !nav.classList.contains('active')) {
+      const deltaX = touchEndX - touchStartX;
+      const deltaY = touchEndY - touchStartY;
+
+      // Check if it's a horizontal swipe (not vertical)
+      if (Math.abs(deltaX) > Math.abs(deltaY) && deltaX > 50) {
+        openMobileMenu();
+      }
+    }
+  }, { passive: true });
+
+  function handleSwipe() {
+    const deltaX = touchEndX - touchStartX;
+    const deltaY = touchEndY - touchStartY;
+    const minSwipeDistance = 50;
+
+    // Check if it's a horizontal swipe (not vertical)
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+      // Swipe left to close
+      if (deltaX < -minSwipeDistance && nav.classList.contains('active')) {
+        closeMobileMenu();
+      }
+    }
+  }
+
+  // Store close function for external access
+  container._closeMobileMenu = closeMobileMenu;
 }
 
 function renderLoading(content, label) {

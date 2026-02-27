@@ -8034,7 +8034,428 @@ footer {
   }
 }
 
-@media (max-width: 1024px) {
+/* ============================================
+   MOBILE MENU TOGGLE & DRAWER
+   ============================================ */
+
+/* Mobile menu toggle button */
+.mobile-menu-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--border-color, #d7e1f4);
+  border-radius: 11px;
+  background: var(--white);
+  color: #203457;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  z-index: 1001;
+  flex-shrink: 0;
+}
+
+.mobile-menu-toggle:hover {
+  background: #f5f9ff;
+  transform: scale(1.02);
+}
+
+.mobile-menu-toggle:active {
+  transform: scale(0.98);
+}
+
+.mobile-menu-toggle i {
+  font-size: 1.1rem;
+}
+
+[data-theme="dark"] .mobile-menu-toggle {
+  background: rgba(22, 37, 63, 0.6);
+  border-color: rgba(42, 63, 100, 0.5);
+  color: #d6e3ff;
+}
+
+[data-theme="dark"] .mobile-menu-toggle:hover {
+  background: rgba(139, 179, 255, 0.12);
+  border-color: rgba(139, 179, 255, 0.35);
+}
+
+/* Overlay for mobile drawer */
+.mobile-nav-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+
+.mobile-nav-overlay.active {
+  display: block;
+  opacity: 1;
+}
+
+/* Improved touch interactions */
+@media (hover: none) and (pointer: coarse) {
+  /* Touch device optimizations */
+  .app-nav-btn,
+  .mobile-menu-toggle,
+  .mobile-nav-close,
+  .app-shell .btn {
+    /* Remove hover transitions on touch devices */
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+
+  /* Tap feedback */
+  .app-nav-btn:active {
+    background: rgba(31, 111, 235, 0.15);
+    transform: scale(0.98);
+  }
+
+  [data-theme="dark"] .app-nav-btn:active {
+    background: rgba(90, 141, 255, 0.2);
+  }
+
+  .mobile-menu-toggle:active {
+    transform: scale(0.95);
+  }
+}
+
+/* Smooth scrollbar for navigation drawer */
+.app-shell-nav {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+}
+
+.app-shell-nav::-webkit-scrollbar {
+  width: 6px;
+}
+
+.app-shell-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.app-shell-nav::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
+}
+
+[data-theme="dark"] .app-shell-nav::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Prevent text selection on navigation buttons */
+.app-nav-btn,
+.mobile-menu-toggle,
+.mobile-nav-close {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Focus visible styles for keyboard navigation */
+.app-nav-btn:focus-visible,
+.mobile-menu-toggle:focus-visible,
+.mobile-nav-close:focus-visible {
+  outline: 2px solid #1f6feb;
+  outline-offset: 2px;
+}
+
+/* Animation for navigation items entrance */
+@media (max-width: 768px) {
+  .app-shell-nav.active .app-nav-btn {
+    animation: slideInLeft 0.3s ease backwards;
+  }
+
+  .app-shell-nav.active .app-nav-btn:nth-child(2) { animation-delay: 0.05s; }
+  .app-shell-nav.active .app-nav-btn:nth-child(3) { animation-delay: 0.1s; }
+  .app-shell-nav.active .app-nav-btn:nth-child(4) { animation-delay: 0.15s; }
+  .app-shell-nav.active .app-nav-btn:nth-child(5) { animation-delay: 0.2s; }
+  .app-shell-nav.active .app-nav-btn:nth-child(6) { animation-delay: 0.25s; }
+  .app-shell-nav.active .app-nav-btn:nth-child(7) { animation-delay: 0.3s; }
+  .app-shell-nav.active .app-nav-btn:nth-child(8) { animation-delay: 0.35s; }
+  .app-shell-nav.active .app-nav-btn:nth-child(9) { animation-delay: 0.4s; }
+  .app-shell-nav.active .app-nav-btn:nth-child(10) { animation-delay: 0.45s; }
+  .app-shell-nav.active .app-nav-btn:nth-child(11) { animation-delay: 0.5s; }
+  .app-shell-nav.active .app-nav-btn:nth-child(12) { animation-delay: 0.55s; }
+  .app-shell-nav.active .app-nav-btn:nth-child(13) { animation-delay: 0.6s; }
+  .app-shell-nav.active .app-nav-btn:nth-child(14) { animation-delay: 0.65s; }
+  .app-shell-nav.active .app-nav-btn:nth-child(15) { animation-delay: 0.7s; }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ============================================
+   TABLET OPTIMIZATIONS (768px - 1024px)
+   ============================================ */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .app-shell-main {
+    grid-template-columns: 200px minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .app-shell-nav {
+    position: sticky;
+    top: 12px;
+    max-height: calc(100vh - 28px);
+    overflow-y: auto;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .app-nav-head {
+    display: block;
+    padding: 2px 6px 6px;
+  }
+
+  .app-nav-btn {
+    width: 100%;
+    min-width: unset;
+    padding: 7px 8px;
+    font-size: 0.82rem;
+  }
+
+  .app-nav-icon {
+    width: 26px;
+    height: 26px;
+  }
+
+  .app-shell {
+    padding: 12px;
+  }
+
+  .app-shell-header {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .app-user-email {
+    font-size: 0.8rem;
+    padding: 6px 10px;
+  }
+}
+
+/* ============================================
+   MOBILE OPTIMIZATIONS (max-width: 768px)
+   ============================================ */
+@media (max-width: 768px) {
+  /* Show mobile menu toggle */
+  .mobile-menu-toggle {
+    display: flex;
+  }
+
+  /* Transform sidebar into off-canvas drawer */
+  .app-shell-main {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .app-shell-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    max-width: 85vw;
+    background: var(--white);
+    border-radius: 0;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    padding: 16px 12px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  [data-theme="dark"] .app-shell-nav {
+    background: rgba(14, 17, 22, 0.98);
+    backdrop-filter: blur(16px);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.4);
+  }
+
+  .app-shell-nav.active {
+    transform: translateX(0);
+  }
+
+  .app-nav-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 6px 12px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  }
+
+  [data-theme="dark"] .app-nav-head {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .app-nav-head span {
+    font-size: 0.75rem;
+  }
+
+  /* Close button in drawer */
+  .mobile-nav-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    color: #6b7c98;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+  }
+
+  .mobile-nav-close:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: #203457;
+  }
+
+  [data-theme="dark"] .mobile-nav-close {
+    color: #8fa4c7;
+  }
+
+  [data-theme="dark"] .mobile-nav-close:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #d6e3ff;
+  }
+
+  /* Navigation buttons in mobile drawer */
+  .app-nav-btn {
+    width: 100%;
+    min-width: unset;
+    padding: 12px 10px;
+    font-size: 0.9rem;
+    border-radius: 12px;
+    margin-bottom: 4px;
+  }
+
+  .app-nav-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+  }
+
+  .app-nav-icon i {
+    font-size: 0.85rem;
+  }
+
+  /* Touch-friendly tap targets */
+  .app-nav-btn,
+  .mobile-menu-toggle,
+  .mobile-nav-close {
+    min-height: 44px;
+    /* iOS tap highlight */
+    -webkit-tap-highlight-color: rgba(31, 111, 235, 0.2);
+  }
+
+  /* Header adjustments for mobile */
+  .app-shell {
+    padding: 10px;
+  }
+
+  .app-shell-header {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+  }
+
+  .app-brand {
+    flex: 0 0 auto;
+  }
+
+  .app-user-actions {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .app-user-email {
+    display: none;
+  }
+
+  .app-user-actions .btn {
+    font-size: 0.8rem;
+    padding: 8px 12px;
+    min-width: auto;
+  }
+
+  .app-theme-toggle {
+    min-width: auto;
+    padding: 8px 10px;
+  }
+
+  .app-theme-toggle span {
+    display: none;
+  }
+
+  .app-theme-toggle i {
+    margin: 0;
+  }
+}
+
+/* ============================================
+   SMALL MOBILE (max-width: 480px)
+   ============================================ */
+@media (max-width: 480px) {
+  .mobile-menu-toggle {
+    width: 40px;
+    height: 40px;
+  }
+
+  .app-shell-nav {
+    width: 260px;
+    padding: 14px 10px;
+  }
+
+  .app-nav-btn {
+    padding: 10px 8px;
+    font-size: 0.86rem;
+  }
+
+  .app-nav-icon {
+    width: 30px;
+    height: 30px;
+  }
+
+  .app-shell {
+    padding: 8px;
+  }
+
+  .app-user-actions .btn {
+    font-size: 0.76rem;
+    padding: 7px 10px;
+  }
+
+  .app-theme-toggle {
+    padding: 7px 8px;
+  }
+}
+
+/* ============================================
+   DESKTOP - Legacy horizontal nav fallback
+   ============================================ */
+@media (max-width: 1024px) and (min-width: 769px) {
   .app-shell-main {
     grid-template-columns: 1fr;
   }
@@ -8061,42 +8482,8 @@ footer {
   }
 }
 
+/* Legacy mobile styles for tasks, projects - kept for compatibility */
 @media (max-width: 768px) {
-  .app-shell {
-    padding: 12px;
-  }
-
-  .app-shell-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .app-user-actions {
-    width: 100%;
-    flex-wrap: wrap;
-  }
-
-  .app-user-email {
-    max-width: none;
-    width: 100%;
-  }
-
-  .app-user-actions .btn {
-    flex: 1 1 auto;
-  }
-
-  .app-theme-toggle {
-    min-width: 0;
-  }
-
-  .app-shell-nav {
-    padding: 8px;
-  }
-
-  .app-nav-btn {
-    min-width: 132px;
-  }
-
   .task-create-form {
     grid-template-columns: 1fr;
   }
