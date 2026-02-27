@@ -1014,9 +1014,9 @@ function renderReportsDistributionTable(rows) {
       <tbody>
         ${rows.slice(0, 12).map((row) => `
           <tr>
-            <td>${escapeHtml(row.name)}</td>
-            <td>${row.seconds}</td>
-            <td>${formatDuration(row.seconds)}</td>
+            <td data-label="Name">${escapeHtml(row.name)}</td>
+            <td data-label="Seconds">${row.seconds}</td>
+            <td data-label="Duration">${formatDuration(row.seconds)}</td>
           </tr>
         `).join('')}
       </tbody>

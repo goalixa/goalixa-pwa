@@ -1,13 +1,13 @@
-// Build: 9d802115aa778889143a7e8f007ba43daa9fc43e (2026-02-27T05:15:45Z)
-
-// Build: 810bf5d3307db6a97981696a526636f3a7b3af0d (2026-02-25T11:24:21Z)
+// Build: __BUILD_HASH__
+// Build Time: __BUILD_TIME__
 
 /**
  * Unified PWA Service Worker for Goalixa
  * Handles caching for auth and app views
+ * Auto-incrementing cache version based on build hash
  */
 
-const CACHE_VERSION = 'v6';
+const CACHE_VERSION = '__BUILD_HASH__';
 const CACHE_PREFIX = 'goalixa-pwa';
 
 // Cache names for different strategies
