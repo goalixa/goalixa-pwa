@@ -352,9 +352,8 @@ function clearCalendarView() {
 }
 
 function isLocalhostRuntime() {
-  if (typeof window === 'undefined') return false;
-  const host = window.location.hostname;
-  return host === 'localhost' || host === '127.0.0.1' || host === '::1';
+  // Demo mode disabled for production - always return false
+  return false;
 }
 
 function formatDurationAxis(seconds) {
@@ -473,33 +472,86 @@ function bindOverviewCharts(content, summary, distribution, habits) {
     }, { signal });
   });
 
-  // Handle date filter
-  const dateStartInput = content.querySelector('#overview-date-start');
-  const dateEndInput = content.querySelector('#overview-date-end');
-  const dateApplyButton = content.querySelector('#overview-date-apply');
-  const rangeDisplay = content.querySelector('.overview-range-dates');
+  // Handle date filter with Litepicker
+  (async () => {
+    const rangeInput = content.querySelector('#overview-range');
+    const rangeDisplay = content.querySelector('.overview-range-dates');
 
-  if (dateApplyButton && dateStartInput && dateEndInput && rangeDisplay) {
-    dateApplyButton.addEventListener('click', () => {
-      const newStart = dateStartInput.value;
-      const newEnd = dateEndInput.value;
+    if (rangeInput) {
+      const hasLitepicker = await ensureLitepickerAssets();
+      const startValue = rangeInput.dataset.start || '';
+      const endValue = rangeInput.dataset.end || '';
 
-      if (newStart && newEnd && newStart <= newEnd) {
-        // Update the display
-        rangeDisplay.textContent = formatDateRange(newStart, newEnd);
+      if (hasLitepicker && window.Litepicker) {
+        const today = new Date();
+        const startDate = startValue ? new Date(`${startValue}T00:00:00`) : new Date(today);
+        const endDate = endValue ? new Date(`${endValue}T00:00:00`) : new Date(today);
+        if (!startValue) {
+          startDate.setDate(today.getDate() - 6);
+        }
 
-        // Trigger a page reload with new date range
-        const currentUrl = new URL(window.location);
-        currentUrl.searchParams.set('start', newStart);
-        currentUrl.searchParams.set('end', newEnd);
+        const pickerInstance = new window.Litepicker({
+          element: rangeInput,
+          singleMode: false,
+          startDate,
+          endDate,
+          showTooltip: false,
+          numberOfMonths: 1,
+          numberOfColumns: 1,
+          format: 'YYYY-MM-DD'
+        });
 
-        // Reload the page with new date range
-        window.location.href = currentUrl.toString();
+        rangeInput.value = `${pickerInstance.getStartDate().format('YYYY-MM-DD')} → ${pickerInstance.getEndDate().format('YYYY-MM-DD')}`;
+
+        pickerInstance.on('selected', (date1, date2) => {
+          if (!date1 || !date2) return;
+
+          const newStart = date1.format('YYYY-MM-DD');
+          const newEnd = date2.format('YYYY-MM-DD');
+
+          // Update the display
+          if (rangeDisplay) {
+            rangeDisplay.textContent = formatDateRange(newStart, newEnd);
+          }
+
+          // Navigate with new date range
+          const currentUrl = new URL(window.location);
+          currentUrl.searchParams.set('start', newStart);
+          currentUrl.searchParams.set('end', newEnd);
+          window.location.href = currentUrl.toString();
+        });
+
+        // Store picker instance for cleanup
+        abortController.signal.addEventListener('abort', () => {
+          if (pickerInstance && typeof pickerInstance.destroy === 'function') {
+            pickerInstance.destroy();
+          }
+        });
       } else {
-        showToast('Invalid date range. Please ensure start date is before end date.', 'error');
+        // Fallback for when Litepicker is not available
+        const fallbackStart = startValue || new Date(Date.now() - (6 * 24 * 60 * 60 * 1000)).toISOString().slice(0, 10);
+        const fallbackEnd = endValue || new Date().toISOString().slice(0, 10);
+        rangeInput.value = `${fallbackStart} → ${fallbackEnd}`;
+        rangeInput.addEventListener('click', () => {
+          const nextStart = window.prompt('Start date (YYYY-MM-DD)', fallbackStart);
+          if (!nextStart) return;
+          const nextEnd = window.prompt('End date (YYYY-MM-DD)', fallbackEnd);
+          if (!nextEnd) return;
+
+          // Update the display
+          if (rangeDisplay) {
+            rangeDisplay.textContent = formatDateRange(nextStart, nextEnd);
+          }
+
+          // Navigate with new date range
+          const currentUrl = new URL(window.location);
+          currentUrl.searchParams.set('start', nextStart);
+          currentUrl.searchParams.set('end', nextEnd);
+          window.location.href = currentUrl.toString();
+        }, { signal });
       }
-    }, { signal });
-  }
+    }
+  })();
 
   overviewViewCleanup = () => {
     if (window.GoalixaCharts) {
@@ -543,10 +595,14 @@ function renderOverview(content, overview, tasksPayload, goalsPayload, reportsPa
           </div>
           <div class="overview-chart-toolbar">
             <div class="overview-date-filter">
-              <input type="date" id="overview-date-start" value="${escapeHtml(range.start)}" min="2020-01-01" max="2030-12-31" />
-              <span class="overview-date-separator">→</span>
-              <input type="date" id="overview-date-end" value="${escapeHtml(range.end)}" min="2020-01-01" max="2030-12-31" />
-              <button class="btn btn-sm btn-primary" id="overview-date-apply" type="button">Apply</button>
+              <input
+                class="calendar-input"
+                id="overview-range"
+                type="text"
+                readonly
+                data-start="${escapeHtml(range.start)}"
+                data-end="${escapeHtml(range.end)}"
+              />
             </div>
             <div class="mode-switch">
               <button class="mode-button" type="button" data-overview-mode="bar">Bar</button>
@@ -6499,7 +6555,22 @@ async function renderSection(container, section, currentPath) {
 
   try {
     if (section === 'overview') {
-      const range = lastSevenDaysRange();
+      const search = new URLSearchParams(window.location.search || '');
+      const start = search.get('start');
+      const end = search.get('end');
+
+      let range;
+      if (start && end) {
+        range = {
+          start,
+          end,
+          startIso: new Date(`${start}T00:00:00`).toISOString(),
+          endIso: new Date(`${end}T23:59:59`).toISOString()
+        };
+      } else {
+        range = lastSevenDaysRange();
+      }
+
       const [overview, tasks, goals, reports, habits] = await Promise.all([
         appApi.getOverview(),
         appApi.getTasks(),

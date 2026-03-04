@@ -25,6 +25,11 @@ RUN sed -i "s|__BUILD_HASH__|${BUILD_HASH}|g" /tmp/sw.js && \
     sed -i "s|__BUILD_TIME__|${BUILD_TIME}|g" /tmp/sw.js && \
     cp /tmp/sw.js /usr/share/nginx/html/sw.js
 
+# Copy entrypoint script
+COPY nginx-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
 EXPOSE 8080
 
-CMD ["nginx", "-g", "daemon off;"]
+# Use custom entrypoint that injects environment variables
+ENTRYPOINT ["/docker-entrypoint.sh"]

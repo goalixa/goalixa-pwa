@@ -1,2 +1,8 @@
+# Claude
 .claude
+
+# macOS
 .DS_Store
+
+# Vendor static files (third-party libraries)
+/vendor/

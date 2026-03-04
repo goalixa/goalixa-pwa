@@ -49,6 +49,13 @@
     })();
   </script>
 
+  <!-- Asset Configuration - Load external fonts/icons from local or CDN -->
+  <script src="/js/config.js"></script>
+  <script>
+    // Load assets immediately after config
+    AssetConfig.loadAssets();
+  </script>
+
   <!-- PWA Manifest -->
   <link rel="manifest" href="/manifest.webmanifest" />
 
@@ -67,12 +74,8 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
   <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512.png" />
 
-  <!-- External Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Montserrat:wght@600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
-
-  <!-- ApexCharts -->
+  <!-- External Fonts - Loaded dynamically based on environment -->
+  <!-- See js/config.js for local vs CDN configuration -->
   <script src="/vendor/apexcharts/apexcharts.min.js"></script>
 
   <!-- Charts Module -->
@@ -97,7 +100,7 @@
       const host = window.location.hostname;
       const isLocal = host === 'localhost' || host === '127.0.0.1' || host === '::1';
       if (isLocal) {
-        // Ensure localhost never falls back to production API endpoints.
+        // For local development, use relative URLs (nginx proxy handles routing)
         window.__GOALIXA_API_BASE__ = '';
       }
     })();
