@@ -8,7 +8,7 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-    - host: pwa.goalixa.com
+    - host: app.goalixa.com
       http:
         paths:
           - path: /
