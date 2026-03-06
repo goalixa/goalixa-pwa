@@ -1791,6 +1791,264 @@ a:hover {
   box-shadow: inset 0 0 0 1px #2a3650;
   color: #dce7fb;
 }
+
+/* ============================================
+   ENHANCED DARK MODE - OVERVIEW & REPORTS
+   ============================================ */
+
+/* Overview Page - Enhanced */
+[data-theme="dark"] .overview-time-card {
+  background: linear-gradient(180deg, rgba(26, 38, 57, 0.8) 0%, rgba(21, 30, 43, 0.9) 100%);
+  border: 1px solid rgba(42, 54, 80, 0.6);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .overview-card-header h2 {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .overview-subtitle {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .overview-metric {
+  background: linear-gradient(135deg, rgba(26, 38, 57, 0.7) 0%, rgba(21, 30, 43, 0.8) 100%);
+  border: 1px solid rgba(42, 54, 80, 0.6);
+  backdrop-filter: blur(10px);
+  transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .overview-metric:hover {
+  border-color: rgba(90, 141, 255, 0.3);
+  box-shadow: 0 4px 16px rgba(90, 141, 255, 0.1);
+}
+
+[data-theme="dark"] .overview-metric-label {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .overview-metric-value {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .overview-metric-meta {
+  color: #64748b;
+}
+
+/* Overview Modules */
+[data-theme="dark"] .overview-module {
+  background: linear-gradient(135deg, rgba(26, 38, 57, 0.7) 0%, rgba(21, 30, 43, 0.8) 100%);
+  border: 1px solid rgba(42, 54, 80, 0.6);
+  backdrop-filter: blur(10px);
+  transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .overview-module:hover {
+  border-color: rgba(90, 141, 255, 0.3);
+  box-shadow: 0 4px 16px rgba(90, 141, 255, 0.1);
+}
+
+[data-theme="dark"] .overview-module-header {
+  border-bottom: 1px solid rgba(42, 54, 80, 0.5);
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+}
+
+[data-theme="dark"] .overview-module h3 {
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .overview-inline-meta {
+  color: #e5ecfa;
+}
+
+/* Goals Card */
+[data-theme="dark"] .goals-card {
+  background: linear-gradient(135deg, rgba(26, 38, 57, 0.6) 0%, rgba(21, 30, 43, 0.7) 100%);
+  border: 1px solid rgba(42, 54, 80, 0.6);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+[data-theme="dark"] .goals-label {
+  color: #64748b;
+}
+
+[data-theme="dark"] .goals-title {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .goal-stat-card {
+  background: linear-gradient(135deg, rgba(26, 38, 57, 0.7) 0%, rgba(21, 30, 43, 0.8) 100%);
+  border: 1px solid rgba(42, 54, 80, 0.6);
+  transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .goal-stat-card:hover {
+  border-color: rgba(90, 141, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(90, 141, 255, 0.1);
+}
+
+[data-theme="dark"] .goal-stat-label {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .goal-stat-value {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .goal-stat-meta {
+  color: #64748b;
+}
+
+/* Progress Bars */
+[data-theme="dark"] .overview-goal-progress {
+  background: rgba(42, 54, 80, 0.6);
+}
+
+[data-theme="dark"] .overview-goal-progress-bar {
+  background: linear-gradient(90deg, #5a8dff 0%, #7aa8ff 100%);
+  box-shadow: 0 0 8px rgba(90, 141, 255, 0.4);
+}
+
+/* Overview List */
+[data-theme="dark"] .overview-list-title {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .overview-list-item {
+  background: linear-gradient(135deg, rgba(26, 38, 57, 0.7) 0%, rgba(21, 30, 43, 0.8) 100%);
+  border: 1px solid rgba(42, 54, 80, 0.6);
+  transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .overview-list-item:hover {
+  border-color: rgba(90, 141, 255, 0.3);
+  background: linear-gradient(135deg, rgba(30, 42, 61, 0.8) 0%, rgba(26, 35, 48, 0.9) 100%);
+}
+
+[data-theme="dark"] .overview-trend-panel {
+  background: linear-gradient(135deg, rgba(26, 38, 57, 0.6) 0%, rgba(21, 30, 43, 0.7) 100%);
+  border: 1px solid rgba(42, 54, 80, 0.6);
+  border-radius: 12px;
+}
+
+/* Reports Page - Enhanced */
+[data-theme="dark"] .reports-metrics {
+  gap: 10px;
+}
+
+[data-theme="dark"] .reports-chart-card {
+  background: linear-gradient(135deg, rgba(26, 38, 57, 0.7) 0%, rgba(21, 30, 43, 0.8) 100%);
+  border: 1px solid rgba(42, 54, 80, 0.6);
+  border-radius: 12px;
+  padding: 12px;
+  backdrop-filter: blur(10px);
+}
+
+[data-theme="dark"] .reports-trend-host {
+  background: linear-gradient(135deg, rgba(21, 30, 43, 0.8) 0%, rgba(17, 25, 38, 0.9) 100%);
+  border: 1px solid rgba(42, 54, 80, 0.6);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+[data-theme="dark"] .reports-distribution-card {
+  background: linear-gradient(135deg, rgba(26, 38, 57, 0.7) 0%, rgba(21, 30, 43, 0.8) 100%);
+  border: 1px solid rgba(42, 54, 80, 0.6);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+[data-theme="dark"] .reports-distribution-card select {
+  background: linear-gradient(135deg, rgba(26, 38, 57, 0.8) 0%, rgba(21, 30, 43, 0.9) 100%);
+  border: 1px solid rgba(42, 54, 80, 0.6);
+  color: #f1f5f9;
+  transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .reports-distribution-card select:hover {
+  border-color: rgba(90, 141, 255, 0.4);
+}
+
+[data-theme="dark"] .reports-distribution-card select:focus {
+  border-color: #5a8dff;
+  box-shadow: 0 0 0 3px rgba(90, 141, 255, 0.15);
+  outline: none;
+}
+
+/* Reports Insights */
+[data-theme="dark"] .reports-insights-grid {
+  gap: 12px;
+}
+
+[data-theme="dark"] .reports-insight-card {
+  background: linear-gradient(135deg, rgba(26, 38, 57, 0.7) 0%, rgba(21, 30, 43, 0.8) 100%);
+  border: 1px solid rgba(42, 54, 80, 0.6);
+  border-radius: 12px;
+  padding: 12px;
+  transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .reports-insight-card:hover {
+  border-color: rgba(90, 141, 255, 0.3);
+  box-shadow: 0 4px 16px rgba(90, 141, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+[data-theme="dark"] .reports-insight-card h3 {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .reports-insight-text {
+  color: #94a3b8;
+  line-height: 1.5;
+}
+
+/* Task States */
+[data-theme="dark"] .task-state.running {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+[data-theme="dark"] .task-state.idle {
+  background: rgba(100, 116, 139, 0.15);
+  color: #cbd5e1;
+  border: 1px solid rgba(100, 116, 139, 0.3);
+}
+
+/* Report Table */
+[data-theme="dark"] .report-table {
+  background: linear-gradient(135deg, rgba(26, 38, 57, 0.6) 0%, rgba(21, 30, 43, 0.7) 100%);
+  border-color: rgba(42, 54, 80, 0.6);
+}
+
+[data-theme="dark"] .report-table th,
+[data-theme="dark"] .report-table td {
+  border-bottom-color: rgba(42, 54, 80, 0.5);
+  color: #e5ecfa;
+}
+
+[data-theme="dark"] .report-table thead {
+  background: linear-gradient(180deg, rgba(30, 42, 61, 0.9) 0%, rgba(26, 38, 57, 0.95) 100%);
+}
+
+[data-theme="dark"] .report-table th {
+  color: #cbd5e1;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+[data-theme="dark"] .report-table tbody tr {
+  transition: all 0.15s ease;
+}
+
+[data-theme="dark"] .report-table tbody tr:hover {
+  background: rgba(90, 141, 255, 0.08);
+}
+
+[data-theme="dark"] .report-table tbody tr:last-child td {
+  border-bottom: none;
 }
 
 [data-theme="dark"] .projects-toolbar input,
@@ -1849,24 +2107,7 @@ a:hover {
   color: var(--dark);
 }
 
-[data-theme="dark"] .overview-time-card {
-  background: linear-gradient(180deg, var(--white) 0%, var(--field) 100%);
-}
-
-[data-theme="dark"] .overview-metric {
-  background: var(--white);
-  border-color: var(--light-gray);
-}
-
-[data-theme="dark"] .overview-module {
-  background: var(--white);
-  border-color: var(--light-gray);
-}
-
-[data-theme="dark"] .overview-list-item {
-  background: var(--white);
-  border-color: var(--light-gray);
-}
+/* Overview dark mode styles are now in the enhanced section above */
 
 [data-theme="dark"] .timer-range-card {
   background: linear-gradient(180deg, var(--white) 0%, var(--field) 100%);
@@ -4236,6 +4477,12 @@ footer {
   border-color: rgba(255, 154, 168, 0.2);
 }
 
+/* Task Done Count Dark Mode */
+[data-theme="dark"] .tasks-page .task-done-count {
+  background: rgba(34, 197, 94, 0.18);
+  color: #4ade80;
+}
+
 @media (max-width: 1180px) {
   .tasks-page .task-form {
     grid-template-columns: 1fr 1fr 1fr;
@@ -5927,6 +6174,49 @@ footer {
   color: #166534;
   background: #ecfdf3;
   border: 1px solid #bbf7d0;
+}
+
+/* ============================================
+   TIMESHEET DARK MODE STYLES
+   ============================================ */
+
+/* Timesheet Target Banner Dark Mode */
+[data-theme="dark"] .timesheet-target-banner {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: rgba(148, 163, 184, 0.2);
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .timesheet-target-banner.is-success {
+  background: linear-gradient(135deg, rgba(20, 83, 45, 0.4), rgba(22, 101, 52, 0.3));
+  border-color: rgba(34, 197, 94, 0.3);
+  color: #86efac;
+}
+
+[data-theme="dark"] .timesheet-target-progress {
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .timesheet-target-congrats {
+  color: #4ade80;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Timesheet Task Completed Dark Mode */
+[data-theme="dark"] .timesheet-task.is-completed {
+  background: rgba(20, 83, 45, 0.25);
+  border-color: rgba(34, 197, 94, 0.25);
+}
+
+[data-theme="dark"] .timesheet-task.is-completed .timesheet-task-title {
+  color: #94a3b8;
+}
+
+/* Timesheet Task State Completed Dark Mode */
+[data-theme="dark"] .timesheet-task-state.is-completed {
+  color: #4ade80;
+  background: rgba(20, 83, 45, 0.4);
+  border-color: rgba(34, 197, 94, 0.3);
 }
 
 .timer-empty-state,
@@ -10971,87 +11261,7 @@ footer {
   border-bottom: none;
 }
 
-/* Dark theme improvements */
-[data-theme="dark"] .project-stat-card {
-  background: linear-gradient(135deg, #1a2332 0%, #151d2b 100%);
-  border-color: #2a3650;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-[data-theme="dark"] .project-stat-card:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-}
-
-[data-theme="dark"] .project-stat-label {
-  color: #9eb0ca;
-}
-
-[data-theme="dark"] .project-stat-value {
-  color: #e5ecfa;
-}
-
-[data-theme="dark"] .project-stat-meta {
-  color: #7a869b;
-}
-
-[data-theme="dark"] .reports-chart-card .goals-label {
-  color: #9eb0ca;
-}
-
-[data-theme="dark"] .reports-chart-card .goals-title {
-  color: #e5ecfa;
-}
-
-[data-theme="dark"] .reports-trend-host {
-  background: #121d31;
-  border-color: #2a3650;
-}
-
-[data-theme="dark"] .reports-donut-inner {
-  background: #1a2639;
-  box-shadow: inset 0 0 0 1px #2a3650;
-  color: #dce7fb;
-}
-
-[data-theme="dark"] .reports-distribution-card select {
-  background: #121d31;
-  border-color: #2a3650;
-  color: #dce7fb;
-}
-
-[data-theme="dark"] .reports-insight-card {
-  background: linear-gradient(135deg, #1a2639 0%, #151e30 100%);
-  border-color: #2a3650;
-}
-
-[data-theme="dark"] .reports-insight-card h3 {
-  color: #e5ecfa;
-}
-
-[data-theme="dark"] .reports-insight-text {
-  color: #9eb0ca;
-}
-
-[data-theme="dark"] .report-table {
-  border-color: #2a3650;
-}
-
-[data-theme="dark"] .report-table th,
-[data-theme="dark"] .report-table td {
-  border-bottom-color: #2a3650;
-}
-
-[data-theme="dark"] .report-table thead {
-  background: linear-gradient(180deg, #1a2639 0%, #151e30 100%);
-}
-
-[data-theme="dark"] .report-table th {
-  color: #9eb0ca;
-}
-
-[data-theme="dark"] .report-table tbody tr:hover {
-  background-color: #1a2639;
-}
+/* Dark theme improvements for reports page are now in the enhanced section above */
 
 /* ============================================
    FOOTER DARK MODE IMPROVEMENTS
