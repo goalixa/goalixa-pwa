@@ -6,7 +6,7 @@
 const AssetConfig = {
   // Asset source: 'local' or 'cdn' (set by environment via GOALIXA_ASSET_SOURCE)
   // This placeholder will be replaced by nginx entrypoint script
-  source: 'local' || 'local',
+  source: 'cdn' || 'cdn',
 
   // Font Awesome configuration
   fontAwesome: {
@@ -88,11 +88,11 @@ const AssetConfig = {
   }
 };
 
-// Initialize configuration - use injected value or fallback to local/CDN based on hostname
-const injectedSource = 'local';
+// Initialize configuration - use injected value or fallback to CDN
+const injectedSource = 'cdn';
 AssetConfig.source = injectedSource && injectedSource !== 'local'
   ? injectedSource
-  : (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'local' : 'cdn');
+  : 'cdn';
 
 console.log('[AssetConfig] Using asset source:', AssetConfig.source);
 
