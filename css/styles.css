@@ -38,7 +38,7 @@
 [data-theme="dark"] {
   --dark: #F8F9FA;
   --light: #0a0e17;
-  --white: rgba(26, 38, 57, 0.7);
+  --white: #FFFFFF;
   --gray: #94a3b8;
   --field: #1a2639;
   --light-gray: #2a3650;
@@ -48,6 +48,7 @@
   --muted: #64748b;
   --text: #f1f5f9;
   --primary: #5a8dff;
+  --primary-dark: #4a7dee;
   --shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.35);
 }

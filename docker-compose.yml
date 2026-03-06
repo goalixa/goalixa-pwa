@@ -6,5 +6,5 @@ services:
     volumes:
       - ./nginx.local.conf/nginx.conf:/etc/nginx/nginx.conf:ro
     ports:
-      - "8081:8080"
+      - "8090:8080"
     restart: unless-stopped
