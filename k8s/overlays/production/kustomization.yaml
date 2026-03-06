@@ -4,14 +4,8 @@ kind: Kustomization
 namespace: goalixa-pwa
 
 resources:
-  - namespace.yaml
-  - configmap.yaml
-  - nginx-configmap.yaml
-  - deployment.yaml
-  - service.yaml
+  - ../../
   # - ingress.yaml  # Removed - PWA is served via core-api ingress for PWA assets, not as separate ingress
-  - hpa.yaml
-  - poddisruptionbudget.yaml
 
 images:
   - name: ghcr.io/goalixa/pwa

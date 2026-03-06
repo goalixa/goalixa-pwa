@@ -38,9 +38,6 @@ spec:
             - name: http
               containerPort: 8080
               protocol: TCP
-          envFrom:
-            - configMapRef:
-                name: pwa-config
           readinessProbe:
             httpGet:
               path: /health
@@ -85,17 +82,11 @@ spec:
               drop:
                 - ALL
           volumeMounts:
-            - name: nginx-config
-              mountPath: /etc/nginx/conf.d/default.conf
-              subPath: default.conf
             - name: cache
               mountPath: /var/cache/nginx
             - name: run
               mountPath: /var/run
       volumes:
-        - name: nginx-config
-          configMap:
-            name: pwa-nginx-config
         - name: cache
           emptyDir: {}
         - name: run

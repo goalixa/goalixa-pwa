@@ -5,13 +5,9 @@ namespace: goalixa-pwa
 
 resources:
   - namespace.yaml
-  - configmap.yaml
-  - nginx-configmap.yaml
   - deployment.yaml
   - service.yaml
   - ingress.yaml
-  - hpa.yaml
-  - poddisruptionbudget.yaml
 
 images:
   - name: ghcr.io/goalixa/pwa
