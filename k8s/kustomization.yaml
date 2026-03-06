@@ -12,4 +12,4 @@ resources:
 images:
   - name: ghcr.io/goalixa/pwa
     newName: harbor.goalixa.com/goalixa-pwa/pwa
-    newTag: 4a4d534
+    newTag: 0a96a73
