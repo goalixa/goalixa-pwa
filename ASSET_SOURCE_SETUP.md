@@ -35,8 +35,9 @@ vendor/
 │   ├── css/all.min.css           # Font Awesome CSS
 │   └── webfonts/                  # Font files
 └── bootstrap-icons/
-    ├── font/bootstrap-icons.min.css  # Bootstrap Icons CSS
-    └── fonts/                       # Icon font files
+    ├── bootstrap-icons.min.css  # Bootstrap Icons CSS
+    ├── font/                     # Font files (alternative location)
+    └── fonts/                    # Icon font files (active location)
 ```
 
 ### Configuration Files

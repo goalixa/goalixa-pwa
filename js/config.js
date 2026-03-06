@@ -4,7 +4,7 @@
  */
 
 const AssetConfig = {
-  // Asset source: 'local' or 'cdn' (set by environment via local)
+  // Asset source: 'local' or 'cdn' (set by environment via GOALIXA_ASSET_SOURCE)
   // This placeholder will be replaced by nginx entrypoint script
   source: 'local' || 'local',
 
@@ -21,7 +21,7 @@ const AssetConfig = {
   // Bootstrap Icons configuration
   bootstrapIcons: {
     local: {
-      css: '/vendor/bootstrap-icons/font/bootstrap-icons.min.css'
+      css: '/vendor/bootstrap-icons/bootstrap-icons.min.css'
     },
     cdn: {
       css: 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css'
@@ -90,11 +90,11 @@ const AssetConfig = {
 
 // Initialize configuration - use injected value or fallback to local/CDN based on hostname
 const injectedSource = 'local';
-window.local = injectedSource && injectedSource !== 'local'
+AssetConfig.source = injectedSource && injectedSource !== 'local'
   ? injectedSource
   : (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'local' : 'cdn');
 
-console.log('[AssetConfig] Using asset source:', window.local);
+console.log('[AssetConfig] Using asset source:', AssetConfig.source);
 
 // Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
