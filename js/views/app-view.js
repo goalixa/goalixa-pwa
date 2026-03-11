@@ -9,6 +9,8 @@ import { showToast } from '../utils.js';
 import { navigate } from '../router.js';
 import { getTheme, toggleTheme } from '../theme.js';
 import { bindTasksSection, clearTasksView, renderTasksSection } from './app/tasks-view.js';
+import { openTaskEditModal, closeTaskEditModal } from '../components/task-edit-modal.js';
+import { openProjectEditModal, closeProjectEditModal } from '../components/project-edit-modal.js';
 
 const NAV_ITEMS = [
   { key: 'overview', label: 'Overview', icon: 'fa-chart-line' },
@@ -905,6 +907,9 @@ function projectRowMarkup(project) {
         </div>
         <div class="project-row-actions">
           <button class="btn btn-outline-secondary btn-sm" data-action="project-open-tasks" data-project-id="${project.id}" type="button">Tasks</button>
+          <button class="btn btn-outline-primary btn-sm" data-action="edit-project" data-project-id="${project.id}" type="button" title="Edit project">
+            <i class="bi bi-pencil"></i>
+          </button>
           <button class="btn btn-outline-danger btn-sm danger" data-action="delete-project" data-project-id="${project.id}" type="button">Delete</button>
         </div>
       </div>
@@ -1057,7 +1062,27 @@ async function bindProjectActions(container, currentPath, initialPayload) {
       return;
     }
 
-    
+    // Handle edit action - opens a modal
+    if (action === 'edit-project') {
+      const projectToEdit = data.rows.find(p => Number(p.id) === Number(projectId));
+      if (!projectToEdit) {
+        showToast('Project not found', 'error');
+        return;
+      }
+      const labels = Array.isArray(initialPayload?.labels?.labels) ? initialPayload.labels.labels : [];
+      openProjectEditModal(projectToEdit, {
+        labels: labels,
+        onSave: async (response) => {
+          showToast('Project updated', 'success');
+          await render(container, currentPath, {});
+        },
+        onCancel: () => {
+          // Optional cancel handling
+        }
+      });
+      return;
+    }
+
     if (action !== 'delete-project') return;
 
     if (!window.confirm('Delete this project?')) {
@@ -1638,6 +1663,9 @@ function renderTimer(content, payload) {
                                 <i class="bi bi-play-fill"></i>
                               </button>
                             `}
+                          <button class="btn btn-outline-secondary btn-sm timer-list-action" type="button" aria-label="Edit task" data-action="edit" data-task-id="${task.task_id}" title="Edit task">
+                            <i class="bi bi-pencil"></i>
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -1709,6 +1737,16 @@ function renderTimer(content, payload) {
                                       Complete
                                     </button>
                                   `}
+                                <button
+                                  class="btn btn-outline-secondary btn-sm"
+                                  type="button"
+                                  aria-label="Edit task"
+                                  data-action="edit"
+                                  data-task-id="${task.task_id}"
+                                  title="Edit task"
+                                >
+                                  <i class="bi bi-pencil"></i>
+                                </button>
                               </div>
                             </div>
                           </div>
@@ -1768,7 +1806,7 @@ async function ensureLitepickerAssets() {
   return Boolean(window.Litepicker);
 }
 
-async function bindTimerActions(container, currentPath) {
+async function bindTimerActions(container, currentPath, metadata = {}) {
   if (typeof timerViewCleanup === 'function') {
     timerViewCleanup();
     timerViewCleanup = null;
@@ -1798,6 +1836,7 @@ async function bindTimerActions(container, currentPath) {
       pickerInstance.destroy();
     }
     abortController.abort();
+    closeTaskEditModal();
   };
 
   const rangeInput = content.querySelector('#timer-range');
@@ -2697,6 +2736,53 @@ async function bindTimerActions(container, currentPath) {
     const taskId = actionButton.dataset.taskId;
     const action = actionButton.dataset.action;
     if (!taskId || !action) return;
+
+    // Handle edit action separately - it opens a modal
+    if (action === 'edit') {
+      // Get all tasks from the timer data to find the task to edit
+      const taskItems = content.querySelectorAll('[data-task-id]');
+      let taskToEdit = null;
+      for (const item of taskItems) {
+        const itemId = item.dataset.taskId;
+        if (String(itemId) === String(taskId)) {
+          const titleEl = item.querySelector('.timer-list-title, .timesheet-task-title');
+          const projectEl = item.querySelector('.timer-list-project, .timesheet-task-meta');
+          const labelsEl = item.querySelector('.timer-list-label');
+          if (titleEl) {
+            taskToEdit = {
+              id: taskId,
+              task_id: taskId,
+              name: titleEl.textContent,
+              task_name: titleEl.textContent,
+              project_name: projectEl ? projectEl.textContent.replace('No project', '').trim() : null,
+              labels: labelsEl ? labelsEl.textContent.split(', ') : [],
+              priority: 'medium', // Default since not shown in timer view
+              goal_id: null,
+              project_id: null
+            };
+            break;
+          }
+        }
+      }
+      if (!taskToEdit) {
+        showToast('Task not found', 'error');
+        return;
+      }
+      openTaskEditModal(taskToEdit, {
+        projects: metadata.projects?.projects || [],
+        goals: metadata.goals?.goals || [],
+        labels: metadata.labels?.labels || [],
+        onSave: async () => {
+          showToast('Task updated', 'success');
+          await render(container, currentPath, {});
+        },
+        onCancel: () => {
+          // Optional cancel handling
+        }
+      });
+      return;
+    }
+
     actionButton.disabled = true;
     try {
       if (action === 'start') await appApi.startTask(taskId);
@@ -6605,7 +6691,7 @@ async function renderSection(container, section, currentPath) {
         appApi.getLabels().catch(() => ({ labels: [] }))
       ]);
       renderTasksSection(content, tasks, projects, goals, labels);
-      await bindTasksSection(container, tasks);
+      await bindTasksSection(container, tasks, projects, goals, labels);
       return;
     }
 
@@ -6641,9 +6727,14 @@ async function renderSection(container, section, currentPath) {
       const params = {};
       if (start) params.start = start;
       if (end) params.end = end;
-      const payload = await appApi.getTimerDashboard(params);
+      const [payload, projects, goals, labels] = await Promise.all([
+        appApi.getTimerDashboard(params),
+        appApi.getProjects().catch(() => ({ projects: [] })),
+        appApi.getGoals().catch(() => ({ goals: [] })),
+        appApi.getLabels().catch(() => ({ labels: [] }))
+      ]);
       renderTimer(content, payload);
-      await bindTimerActions(container, currentPath);
+      await bindTimerActions(container, currentPath, { projects, goals, labels });
       return;
     }
 

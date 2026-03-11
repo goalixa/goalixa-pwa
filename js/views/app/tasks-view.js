@@ -1,5 +1,6 @@
 import { appApi } from '../../api.js';
 import { showToast } from '../../utils.js';
+import { openTaskEditModal, closeTaskEditModal } from '../../components/task-edit-modal.js';
 
 let tasksViewCleanup = null;
 
@@ -62,6 +63,93 @@ function sortTasksByMode(tasks, mode) {
   });
 }
 
+function groupCompletedTasks(tasks, groupBy) {
+  if (!Array.isArray(tasks) || tasks.length === 0) {
+    return [];
+  }
+
+  const groups = new Map();
+
+  tasks.forEach((task) => {
+    let groupKey = 'Ungrouped';
+    let groupLabel = 'Ungrouped';
+
+    switch (groupBy) {
+      case 'project':
+        groupKey = task.project_name || 'Unassigned';
+        groupLabel = task.project_name || 'Unassigned';
+        break;
+      case 'priority':
+        groupKey = String(task.priority || 'medium').toLowerCase();
+        groupLabel = formatTaskPriorityLabel(task.priority);
+        break;
+      case 'goal':
+        groupKey = task.goal_name || 'No goal';
+        groupLabel = task.goal_name || 'No goal';
+        break;
+      case 'date':
+        // Try to use completed_at timestamp, fallback to task ID as proxy
+        if (task.completed_at) {
+          const date = new Date(task.completed_at);
+          groupKey = date.toISOString().split('T')[0];
+          groupLabel = formatDateLabel(date);
+        } else {
+          // Fallback: group by task ID ranges (rough approximation of date)
+          const id = Number(task.id || 0);
+          const dayGroup = Math.floor(id / 1000);
+          groupKey = `group-${dayGroup}`;
+          groupLabel = `Group ${dayGroup}`;
+        }
+        break;
+      default:
+        groupKey = 'All';
+        groupLabel = 'All Tasks';
+    }
+
+    if (!groups.has(groupKey)) {
+      groups.set(groupKey, {
+        key: groupKey,
+        label: groupLabel,
+        tasks: []
+      });
+    }
+
+    groups.get(groupKey).tasks.push(task);
+  });
+
+  // Sort groups by label (except for 'date' which keeps chronological order)
+  const sortedGroups = Array.from(groups.values());
+  if (groupBy !== 'date') {
+    sortedGroups.sort((a, b) => String(a.label).localeCompare(String(b.label)));
+  }
+
+  // Sort tasks within each group
+  sortedGroups.forEach((group) => {
+    group.tasks = sortTasksByMode(group.tasks, 'newest');
+  });
+
+  return sortedGroups;
+}
+
+function formatDateLabel(date) {
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  const dateStr = date.toISOString().split('T')[0];
+  const todayStr = today.toISOString().split('T')[0];
+  const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+  if (dateStr === todayStr) return 'Today';
+  if (dateStr === yesterdayStr) return 'Yesterday';
+
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: date.getFullYear() !== today.getFullYear() ? 'numeric' : undefined
+  });
+}
+
 function normalizeTaskLabels(labels) {
   if (!Array.isArray(labels)) return [];
   return labels
@@ -108,6 +196,9 @@ function taskActionsMarkup(task, group) {
         <i class="bi bi-arrow-counterclockwise"></i>
         Reopen
       </button>
+      <button class="btn btn-outline-primary btn-sm menu-item" type="button" data-task-action="edit" data-task-id="${taskId}" title="Edit task">
+        <i class="bi bi-pencil"></i>
+      </button>
       <button class="btn btn-outline-danger btn-sm menu-item danger" type="button" data-task-action="delete" data-task-id="${taskId}">
         <i class="bi bi-trash"></i>
         Delete task
@@ -133,6 +224,9 @@ function taskActionsMarkup(task, group) {
     </button>
     <button class="btn btn-outline-success btn-sm menu-item complete-btn" type="button" aria-label="Complete" title="Complete task" data-task-action="complete" data-task-id="${taskId}">
       <i class="bi bi-check-lg"></i>
+    </button>
+    <button class="btn btn-outline-primary btn-sm menu-item" type="button" data-task-action="edit" data-task-id="${taskId}" title="Edit task">
+      <i class="bi bi-pencil"></i>
     </button>
     <button class="btn btn-outline-danger btn-sm menu-item danger" type="button" aria-label="Delete task" data-task-action="delete" data-task-id="${taskId}">
       <i class="bi bi-trash"></i>
@@ -187,6 +281,18 @@ function taskColumnMarkup(title, tasks, group) {
     return `<ul class="task-list task-board-list">${items}</ul>`;
   }
   return `<h3>${title}</h3><ul class="task-list task-board-list">${items}</ul>`;
+}
+
+function groupedCompletedTasksMarkup(groups) {
+  if (!groups || groups.length === 0) {
+    return '<p class="empty">No completed tasks yet.</p>';
+  }
+
+  return groups.map((group) => {
+    const groupTitle = `<h4 class="task-group-title">${escapeHtml(group.label)} <span class="task-group-count">${group.tasks.length}</span></h4>`;
+    const items = group.tasks.map((task) => taskItemMarkup(task, 'completed')).join('');
+    return `${groupTitle}<ul class="task-list task-board-list task-group-list">${items}</ul>`;
+  }).join('');
 }
 
 export function renderTasksSection(content, payload, projects, goals, labelsPayload) {
@@ -267,7 +373,18 @@ export function renderTasksSection(content, payload, projects, goals, labelsPayl
       </section>
 
       <section class="app-panel tasks-completed-card">
-        <h2>Completed</h2>
+        <div class="section-header">
+          <h2>Completed</h2>
+          <div class="task-controls">
+            <select id="completed-group-by" data-completed-group>
+              <option value="none">No grouping</option>
+              <option value="project">Group by Project</option>
+              <option value="priority">Group by Priority</option>
+              <option value="goal">Group by Goal</option>
+              <option value="date">Group by Date</option>
+            </select>
+          </div>
+        </div>
         <div id="completed-task-list">
           ${taskColumnMarkup('Completed', tasks.completedTasks, 'completed')}
         </div>
@@ -283,7 +400,7 @@ export function clearTasksView() {
   }
 }
 
-export async function bindTasksSection(container, initialPayload = {}) {
+export async function bindTasksSection(container, initialPayload = {}, projects = { projects: [] }, goals = { goals: [] }, labelsPayload = { labels: [] }) {
   clearTasksView();
 
   const content = container.querySelector('#app-shell-content');
@@ -306,16 +423,20 @@ export async function bindTasksSection(container, initialPayload = {}) {
   tasksViewCleanup = () => {
     stopLiveTimer();
     abortController.abort();
+    closeTaskEditModal();
   };
 
   let tasksPayload = normalizeTaskCollections(initialPayload);
   let currentSort = 'newest';
+  let currentCompletedGroup = 'none';
   let taskTimeState = new Map();
+  const allTasksList = [...tasksPayload.tasks, ...tasksPayload.doneTodayTasks, ...tasksPayload.completedTasks];
 
   const taskListContainer = content.querySelector('#task-list');
   const doneTodayContainer = content.querySelector('#done-today-list');
   const completedContainer = content.querySelector('#completed-task-list');
   const taskSort = content.querySelector('#task-sort');
+  const completedGroupBy = content.querySelector('#completed-group-by');
 
   const refreshTaskTimeState = (tasks) => {
     taskTimeState = new Map(
@@ -348,7 +469,12 @@ export async function bindTasksSection(container, initialPayload = {}) {
       doneTodayContainer.innerHTML = taskColumnMarkup('Done today', sortedDoneToday, 'done');
     }
     if (completedContainer) {
-      completedContainer.innerHTML = taskColumnMarkup('Completed', sortedCompleted, 'completed');
+      if (currentCompletedGroup === 'none') {
+        completedContainer.innerHTML = taskColumnMarkup('Completed', sortedCompleted, 'completed');
+      } else {
+        const groupedTasks = groupCompletedTasks(sortedCompleted, currentCompletedGroup);
+        completedContainer.innerHTML = groupedCompletedTasksMarkup(groupedTasks);
+      }
     }
 
     refreshTaskTimeState(sortedActive.concat(sortedDoneToday));
@@ -367,6 +493,13 @@ export async function bindTasksSection(container, initialPayload = {}) {
   if (taskSort) {
     taskSort.addEventListener('change', () => {
       currentSort = taskSort.value || 'newest';
+      paintTaskBoards();
+    }, { signal });
+  }
+
+  if (completedGroupBy) {
+    completedGroupBy.addEventListener('change', () => {
+      currentCompletedGroup = completedGroupBy.value || 'none';
       paintTaskBoards();
     }, { signal });
   }
@@ -455,6 +588,29 @@ export async function bindTasksSection(container, initialPayload = {}) {
     const action = actionButton.dataset.taskAction;
     const taskId = actionButton.dataset.taskId;
     if (!action || !taskId) return;
+
+    // Handle edit action separately - it opens a modal
+    if (action === 'edit') {
+      const taskToEdit = allTasksList.find(t => Number(t.id) === Number(taskId));
+      if (!taskToEdit) {
+        showToast('Task not found', 'error');
+        return;
+      }
+      openTaskEditModal(taskToEdit, {
+        projects: projects.projects || [],
+        goals: goals.goals || [],
+        labels: labelsPayload.labels || [],
+        onSave: async (response) => {
+          tasksPayload = normalizeTaskCollections(response);
+          paintTaskBoards();
+          showToast('Task updated', 'success');
+        },
+        onCancel: () => {
+          // Optional cancel handling
+        }
+      });
+      return;
+    }
 
     if (action === 'delete' && !window.confirm('Delete this task?')) {
       return;

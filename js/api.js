@@ -334,6 +334,13 @@ export const appApi = {
     });
   },
 
+  async updateTask(taskId, taskData) {
+    return apiRequest(buildUrl(`/app/tasks/${taskId}/edit`), {
+      method: 'POST',
+      body: taskData
+    });
+  },
+
   async getProjects() {
     return apiRequest(buildUrl('/app/projects'));
   },
@@ -348,6 +355,13 @@ export const appApi = {
   async deleteProject(projectId) {
     return apiRequest(buildUrl(`/app/projects/${projectId}/delete`), {
       method: 'POST'
+    });
+  },
+
+  async updateProject(projectId, projectData) {
+    return apiRequest(buildUrl(`/app/projects/${projectId}/update`), {
+      method: 'POST',
+      body: projectData
     });
   },
 

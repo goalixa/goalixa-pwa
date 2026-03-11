@@ -7,6 +7,40 @@
 const chartInstances = new Map();
 
 /**
+ * Add 7-day offset to a date string
+ * @param {string} dateString - ISO date string or label
+ * @returns {string} - Offset date string
+ */
+function addDayOffset(dateString, offsetDays = 7) {
+  // Try to parse as date
+  const date = new Date(dateString);
+  if (!isNaN(date.getTime())) {
+    date.setDate(date.getDate() + offsetDays);
+    return date.toISOString().split('T')[0];
+  }
+  // If not a date, return as-is
+  return dateString;
+}
+
+/**
+ * Format date label with optional offset
+ * @param {string} label - Date label
+ * @param {number} offsetDays - Days to offset (default: 7)
+ * @returns {string} - Formatted date label
+ */
+function formatDateLabelWithOffset(label, offsetDays = 7) {
+  const date = new Date(label);
+  if (!isNaN(date.getTime())) {
+    date.setDate(date.getDate() + offsetDays);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric'
+    });
+  }
+  return label;
+}
+
+/**
  * Get theme-specific colors for charts
  */
 function getChartTheme() {
@@ -59,8 +93,10 @@ function createOverviewTrendChart(containerId, data, mode = 'line') {
   const series = data.map(item => Number(item.seconds || 0));
   const categories = data.map(item => {
     const rawLabel = item?.label || item?.date || item?.day || '';
+    // Apply 7-day offset to dates
+    const offsetLabel = formatDateLabelWithOffset(rawLabel, 7);
     // Compact label
-    return rawLabel.length > 8 ? rawLabel.substring(0, 6) + '..' : rawLabel;
+    return offsetLabel.length > 8 ? offsetLabel.substring(0, 6) + '..' : offsetLabel;
   });
 
   const options = {
@@ -355,7 +391,9 @@ function createReportsTrendChart(containerId, data, mode = 'line') {
   const series = data.map(item => Number(item.seconds || 0));
   const categories = data.map(item => {
     const rawLabel = item?.label || item?.date || item?.day || '';
-    return rawLabel.length > 10 ? rawLabel.substring(0, 8) + '..' : rawLabel;
+    // Apply 7-day offset to dates
+    const offsetLabel = formatDateLabelWithOffset(rawLabel, 7);
+    return offsetLabel.length > 10 ? offsetLabel.substring(0, 8) + '..' : offsetLabel;
   });
 
   const options = {
@@ -668,7 +706,9 @@ function createHabitSeriesChart(containerId, habitSeries, habits) {
   const seriesData = habitSeries.series || [{ name: 'Completion', data: habitSeries.values || [] }];
 
   const categories = habitSeries.labels.map(label => {
+    // Apply 7-day offset to dates
     const date = new Date(label);
+    date.setDate(date.getDate() + 7);
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   });
 

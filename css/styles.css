@@ -4306,6 +4306,51 @@ footer {
   gap: 12px;
 }
 
+/* Task Group Styles */
+.tasks-page .task-group-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin: 20px 0 12px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tasks-page .task-group-title:first-child {
+  margin-top: 0;
+}
+
+.tasks-page .task-group-count {
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: var(--soft);
+  color: var(--muted);
+}
+
+.tasks-page .task-group-list {
+  margin-bottom: 8px;
+}
+
+.tasks-page .task-group-list:last-child {
+  margin-bottom: 0;
+}
+
+/* Dark mode for task groups */
+[data-theme="dark"] .tasks-page .task-group-title {
+  color: #94a3b8;
+  border-bottom-color: rgba(139, 179, 255, 0.2);
+}
+
+[data-theme="dark"] .tasks-page .task-group-count {
+  background: rgba(139, 179, 255, 0.12);
+  color: #94a3b8;
+}
+
 .tasks-page .task-item {
   display: flex;
   justify-content: space-between;
@@ -11699,4 +11744,850 @@ footer {
 
 .auth-view.auth-ui .auth-footer a:hover {
   color: #0d615c !important;
+}
+
+/* ============================================
+   TASK EDIT MODAL
+   ============================================ */
+
+/* Modal Overlay - Backdrop */
+.task-edit-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Modal Container */
+.task-edit-modal {
+  background: var(--card);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Modal Header */
+.task-edit-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.task-edit-modal-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.task-edit-modal-close {
+  background: transparent;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  border-radius: 8px;
+  color: var(--muted);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.task-edit-modal-close:hover {
+  background: var(--soft);
+  color: var(--text);
+}
+
+/* Modal Form */
+.task-edit-modal-form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Modal Body */
+.task-edit-modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Form Fields */
+.task-edit-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.task-edit-field-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.task-edit-input,
+.task-edit-select {
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.95rem;
+  background: var(--card);
+  color: var(--text);
+  transition: all 0.2s ease;
+}
+
+.task-edit-input:focus,
+.task-edit-select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Labels List */
+.task-edit-labels-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.task-edit-label-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--card);
+}
+
+.task-edit-label-item:hover {
+  background: var(--soft);
+  border-color: var(--primary);
+}
+
+.task-edit-label-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--primary);
+}
+
+.task-edit-label-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.task-edit-label-swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.task-edit-label-name {
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.task-edit-no-labels {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-style: italic;
+  padding: 12px 0;
+}
+
+/* Modal Footer */
+.task-edit-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+  background: var(--soft);
+}
+
+.task-edit-cancel-btn,
+.task-edit-save-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.task-edit-cancel-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.task-edit-cancel-btn:hover {
+  background: var(--soft);
+  border-color: var(--muted);
+  color: var(--text);
+}
+
+.task-edit-save-btn {
+  background: var(--primary);
+  border: 1px solid var(--primary);
+  color: white;
+}
+
+.task-edit-save-btn:hover {
+  background: var(--primary-dark, #1d4ed8);
+  border-color: var(--primary-dark, #1d4ed8);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.task-edit-save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Error Message */
+.task-edit-error {
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ============================================
+   DARK MODE - TASK EDIT MODAL
+   ============================================ */
+
+[data-theme="dark"] .task-edit-modal {
+  background: linear-gradient(145deg, #1a2336 0%, #16213e 100%);
+  border: 1px solid rgba(139, 179, 255, 0.2);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .task-edit-modal-header {
+  border-bottom-color: rgba(139, 179, 255, 0.2);
+}
+
+[data-theme="dark"] .task-edit-modal-header h2 {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .task-edit-modal-close {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .task-edit-modal-close:hover {
+  background: rgba(139, 179, 255, 0.15);
+  color: #dce8ff;
+}
+
+[data-theme="dark"] .task-edit-input,
+[data-theme="dark"] .task-edit-select {
+  background: rgba(26, 38, 60, 0.7);
+  border-color: rgba(139, 179, 255, 0.18);
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .task-edit-input:focus,
+[data-theme="dark"] .task-edit-select:focus {
+  background: rgba(26, 38, 60, 0.9);
+  border-color: rgba(139, 179, 255, 0.5);
+  box-shadow: 0 0 0 3px rgba(139, 179, 255, 0.15);
+}
+
+[data-theme="dark"] .task-edit-field-label {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .task-edit-label-item {
+  background: rgba(26, 38, 60, 0.5);
+  border-color: rgba(139, 179, 255, 0.18);
+}
+
+[data-theme="dark"] .task-edit-label-item:hover {
+  background: rgba(139, 179, 255, 0.12);
+  border-color: rgba(139, 179, 255, 0.4);
+}
+
+[data-theme="dark"] .task-edit-label-name {
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .task-edit-modal-footer {
+  background: rgba(22, 33, 55, 0.6);
+  border-top-color: rgba(139, 179, 255, 0.2);
+}
+
+[data-theme="dark"] .task-edit-cancel-btn {
+  background: transparent;
+  border-color: rgba(139, 179, 255, 0.3);
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .task-edit-cancel-btn:hover {
+  background: rgba(139, 179, 255, 0.12);
+  border-color: rgba(139, 179, 255, 0.5);
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .task-edit-save-btn {
+  background: linear-gradient(135deg, #5a8dff 0%, #4a7cf0 100%);
+  border-color: transparent;
+}
+
+[data-theme="dark"] .task-edit-save-btn:hover {
+  background: linear-gradient(135deg, #4a7cf0 0%, #3a6ce0 100%);
+  box-shadow: 0 4px 16px rgba(90, 141, 255, 0.4);
+}
+
+[data-theme="dark"] .task-edit-error {
+  background: rgba(220, 38, 38, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN - TASK EDIT MODAL
+   ============================================ */
+
+@media (max-width: 768px) {
+  .task-edit-modal-overlay {
+    padding: 12px;
+  }
+
+  .task-edit-modal {
+    max-width: 100%;
+    max-height: 95vh;
+    border-radius: 12px;
+  }
+
+  .task-edit-modal-header {
+    padding: 16px 20px;
+  }
+
+  .task-edit-modal-header h2 {
+    font-size: 1.1rem;
+  }
+
+  .task-edit-modal-body {
+    padding: 20px;
+    gap: 14px;
+  }
+
+  .task-edit-modal-footer {
+    padding: 12px 20px;
+  }
+
+  .task-edit-cancel-btn,
+  .task-edit-save-btn {
+    padding: 8px 16px;
+    font-size: 0.875rem;
+  }
+
+  .task-edit-save-btn {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .task-edit-modal-overlay {
+    padding: 8px;
+    align-items: flex-end;
+  }
+
+  .task-edit-modal {
+    max-height: 85vh;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    animation: slideUpMobile 0.3s ease-out;
+  }
+
+  @keyframes slideUpMobile {
+    from {
+      opacity: 0;
+      transform: translateY(100%);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+/* ============================================
+   PROJECT EDIT MODAL
+   ============================================ */
+
+/* Modal Overlay - Backdrop */
+.project-edit-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeInProject 0.2s ease-out;
+}
+
+@keyframes fadeInProject {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Modal Container */
+.project-edit-modal {
+  background: var(--card);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: slideUpProject 0.3s ease-out;
+}
+
+@keyframes slideUpProject {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Modal Header */
+.project-edit-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.project-edit-modal-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.project-edit-modal-close {
+  background: transparent;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  border-radius: 8px;
+  color: var(--muted);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.project-edit-modal-close:hover {
+  background: var(--soft);
+  color: var(--text);
+}
+
+/* Modal Form */
+.project-edit-modal-form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Modal Body */
+.project-edit-modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Form Fields */
+.project-edit-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.project-edit-field-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.project-edit-input,
+.project-edit-select {
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.95rem;
+  background: var(--card);
+  color: var(--text);
+  transition: all 0.2s ease;
+}
+
+.project-edit-input:focus,
+.project-edit-select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Labels List */
+.project-edit-labels-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.project-edit-label-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--card);
+}
+
+.project-edit-label-item:hover {
+  background: var(--soft);
+  border-color: var(--primary);
+}
+
+.project-edit-label-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--primary);
+}
+
+.project-edit-label-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.project-edit-label-swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.project-edit-label-name {
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.project-edit-no-labels {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-style: italic;
+  padding: 12px 0;
+}
+
+/* Modal Footer */
+.project-edit-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+  background: var(--soft);
+}
+
+.project-edit-cancel-btn,
+.project-edit-save-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.project-edit-cancel-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.project-edit-cancel-btn:hover {
+  background: var(--soft);
+  border-color: var(--muted);
+  color: var(--text);
+}
+
+.project-edit-save-btn {
+  background: var(--primary);
+  border: 1px solid var(--primary);
+  color: white;
+}
+
+.project-edit-save-btn:hover {
+  background: var(--primary-dark, #1d4ed8);
+  border-color: var(--primary-dark, #1d4ed8);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.project-edit-save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Error Message */
+.project-edit-error {
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ============================================
+   DARK MODE - PROJECT EDIT MODAL
+   ============================================ */
+
+[data-theme="dark"] .project-edit-modal {
+  background: linear-gradient(145deg, #1a2336 0%, #16213e 100%);
+  border: 1px solid rgba(139, 179, 255, 0.2);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .project-edit-modal-header {
+  border-bottom-color: rgba(139, 179, 255, 0.2);
+}
+
+[data-theme="dark"] .project-edit-modal-header h2 {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .project-edit-modal-close {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .project-edit-modal-close:hover {
+  background: rgba(139, 179, 255, 0.15);
+  color: #dce8ff;
+}
+
+[data-theme="dark"] .project-edit-input,
+[data-theme="dark"] .project-edit-select {
+  background: rgba(26, 38, 60, 0.7);
+  border-color: rgba(139, 179, 255, 0.18);
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .project-edit-input:focus,
+[data-theme="dark"] .project-edit-select:focus {
+  background: rgba(26, 38, 60, 0.9);
+  border-color: rgba(139, 179, 255, 0.5);
+  box-shadow: 0 0 0 3px rgba(139, 179, 255, 0.15);
+}
+
+[data-theme="dark"] .project-edit-field-label {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .project-edit-label-item {
+  background: rgba(26, 38, 60, 0.5);
+  border-color: rgba(139, 179, 255, 0.18);
+}
+
+[data-theme="dark"] .project-edit-label-item:hover {
+  background: rgba(139, 179, 255, 0.12);
+  border-color: rgba(139, 179, 255, 0.4);
+}
+
+[data-theme="dark"] .project-edit-label-name {
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .project-edit-modal-footer {
+  background: rgba(22, 33, 55, 0.6);
+  border-top-color: rgba(139, 179, 255, 0.2);
+}
+
+[data-theme="dark"] .project-edit-cancel-btn {
+  background: transparent;
+  border-color: rgba(139, 179, 255, 0.3);
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .project-edit-cancel-btn:hover {
+  background: rgba(139, 179, 255, 0.12);
+  border-color: rgba(139, 179, 255, 0.5);
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .project-edit-save-btn {
+  background: linear-gradient(135deg, #5a8dff 0%, #4a7cf0 100%);
+  border-color: transparent;
+}
+
+[data-theme="dark"] .project-edit-save-btn:hover {
+  background: linear-gradient(135deg, #4a7cf0 0%, #3a6ce0 100%);
+  box-shadow: 0 4px 16px rgba(90, 141, 255, 0.4);
+}
+
+[data-theme="dark"] .project-edit-error {
+  background: rgba(220, 38, 38, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN - PROJECT EDIT MODAL
+   ============================================ */
+
+@media (max-width: 768px) {
+  .project-edit-modal-overlay {
+    padding: 12px;
+  }
+
+  .project-edit-modal {
+    max-width: 100%;
+    max-height: 95vh;
+    border-radius: 12px;
+  }
+
+  .project-edit-modal-header {
+    padding: 16px 20px;
+  }
+
+  .project-edit-modal-header h2 {
+    font-size: 1.1rem;
+  }
+
+  .project-edit-modal-body {
+    padding: 20px;
+    gap: 14px;
+  }
+
+  .project-edit-modal-footer {
+    padding: 12px 20px;
+  }
+
+  .project-edit-cancel-btn,
+  .project-edit-save-btn {
+    padding: 8px 16px;
+    font-size: 0.875rem;
+  }
+
+  .project-edit-save-btn {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .project-edit-modal-overlay {
+    padding: 8px;
+    align-items: flex-end;
+  }
+
+  .project-edit-modal {
+    max-height: 85vh;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    animation: slideUpMobileProject 0.3s ease-out;
+  }
+
+  @keyframes slideUpMobileProject {
+    from {
+      opacity: 0;
+      transform: translateY(100%);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 }

@@ -16,11 +16,12 @@
 /**
  * Unified PWA Service Worker for Goalixa
  * Handles caching for auth and app views
- * Auto-incrementing cache version based on build hash
+ * DEVELOPMENT MODE: Network-first for all local files to see changes immediately
  */
 
 const CACHE_VERSION = '__BUILD_HASH__';
 const CACHE_PREFIX = 'goalixa-pwa';
+const DEV_MODE = true; // Set to false for production
 
 // Cache names for different strategies
 const CACHES = {
@@ -30,8 +31,8 @@ const CACHES = {
   PAGES: `${CACHE_PREFIX}-pages-${CACHE_VERSION}`
 };
 
-// Core assets to cache immediately
-const CORE_ASSETS = [
+// Core assets to cache immediately (only cache in production)
+const CORE_ASSETS = DEV_MODE ? [] : [
   '/',
   '/index.html',
   '/offline.html',
@@ -45,7 +46,8 @@ const CORE_ASSETS = [
   '/js/charts.js',
   '/js/views/auth-view.js',
   '/js/views/app-view.js',
-  '/js/views/app/tasks-view.js'
+  '/js/views/app/tasks-view.js',
+  '/js/components/task-edit-modal.js'
 ];
 
 // Asset URLs for icons and external resources
@@ -127,6 +129,12 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // DEVELOPMENT MODE: Always use network-first for local JS/CSS files
+  if (DEV_MODE && isLocalDevFile(url)) {
+    event.respondWith(networkFirstStrategy(request, CACHES.PAGES));
+    return;
+  }
+
   // Handle API requests - network first, fallback to cache
   if (isApiRequest(url)) {
     event.respondWith(networkFirstStrategy(request, CACHES.API));
@@ -157,10 +165,21 @@ function isApiRequest(url) {
 }
 
 /**
+ * Check if request is for local development file (JS/CSS)
+ * In dev mode, these should always be fetched from network
+ */
+function isLocalDevFile(url) {
+  const pathname = url.pathname || '';
+  // Check for local JS and CSS files (not CDN)
+  return (pathname.startsWith('/js/') || pathname.startsWith('/css/')) &&
+    !pathname.includes('node_modules');
+}
+
+/**
  * Check if request is for static asset
  */
 function isAssetRequest(url) {
-  return /\.(png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|css|js)$/.test(url.pathname);
+  return /\.(png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot)$/.test(url.pathname);
 }
 
 /**
