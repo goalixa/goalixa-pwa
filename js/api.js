@@ -87,7 +87,11 @@ async function apiRequest(url, options = {}) {
     const contentType = response.headers.get('content-type');
     if (!contentType || !contentType.includes('application/json')) {
       if (!response.ok) {
-        if (response.status === 401 && !url.includes('/auth/refresh')) {
+        // Don't trigger refresh for login, register, or refresh endpoints
+        if (response.status === 401 &&
+            !url.includes('/auth/refresh') &&
+            !url.includes('/auth/login') &&
+            !url.includes('/auth/register')) {
           return handle401Error(url, options);
         }
         const nonJsonError = new Error(`HTTP ${response.status}`);
@@ -100,8 +104,11 @@ async function apiRequest(url, options = {}) {
     const data = await response.json();
 
     if (!response.ok) {
-      // Don't trigger refresh loop for the refresh endpoint itself
-      if (response.status === 401 && !url.includes('/auth/refresh')) {
+      // Don't trigger refresh for login, register, or refresh endpoints
+      if (response.status === 401 &&
+          !url.includes('/auth/refresh') &&
+          !url.includes('/auth/login') &&
+          !url.includes('/auth/register')) {
         return handle401Error(url, options);
       }
       const error = new Error(data.message || data.error || `HTTP ${response.status}`);

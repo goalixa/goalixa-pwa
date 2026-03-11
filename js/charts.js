@@ -6,33 +6,22 @@
 // Chart instance storage for cleanup
 const chartInstances = new Map();
 
-// Offset state - enabled by default, persisted in localStorage
-let offsetEnabled = localStorage.getItem('goalixa-chart-offset') !== 'false';
-
 /**
- * Toggle offset state
+ * Get chart offset state from global (managed by app-view.js)
  */
-function toggleOffset() {
-  offsetEnabled = !offsetEnabled;
-  localStorage.setItem('goalixa-chart-offset', String(offsetEnabled));
-  // Re-render all charts with new offset state
-  chartInstances.forEach((chart, containerId) => {
-    // Trigger chart re-render by dispatching event
-    window.dispatchEvent(new CustomEvent('chart-offset-toggled', {
-      detail: { containerId, enabled: offsetEnabled }
-    }));
-  });
-  updateOffsetButtons();
+function getOffsetEnabled() {
+  return window.chartOffsetEnabled !== false;
 }
 
 /**
  * Update all offset button states
  */
 function updateOffsetButtons() {
+  const enabled = getOffsetEnabled();
   document.querySelectorAll('.chart-offset-btn').forEach(btn => {
     const icon = btn.querySelector('.chart-offset-icon');
     const text = btn.querySelector('.chart-offset-text');
-    if (offsetEnabled) {
+    if (enabled) {
       btn.classList.add('active');
       btn.title = 'Disable 7-day offset';
       if (icon) icon.className = 'chart-offset-icon bi bi-toggle-on';
@@ -50,14 +39,24 @@ function updateOffsetButtons() {
  * Create offset toggle button HTML
  */
 function createOffsetButton() {
+  const enabled = getOffsetEnabled();
   return `
-    <button class="btn btn-sm btn-outline-secondary chart-offset-btn ${offsetEnabled ? 'active' : ''}"
-            title="${offsetEnabled ? 'Disable 7-day offset' : 'Enable 7-day offset'}"
-            onclick="window.GoalixaCharts.toggleOffset()">
-      <i class="chart-offset-icon bi bi-${offsetEnabled ? 'toggle-on' : 'toggle-off'}"></i>
-      <span class="chart-offset-text">${offsetEnabled ? 'Offset: ON' : 'Offset: OFF'}</span>
+    <button class="btn btn-sm btn-outline-secondary chart-offset-btn ${enabled ? 'active' : ''}"
+            title="${enabled ? 'Disable 7-day offset' : 'Enable 7-day offset'}"
+            onclick="window.toggleChartOffset()">
+      <i class="chart-offset-icon bi bi-${enabled ? 'toggle-on' : 'toggle-off'}"></i>
+      <span class="chart-offset-text">${enabled ? 'Offset: ON' : 'Offset: OFF'}</span>
     </button>
   `;
+}
+
+/**
+ * Toggle offset (wrapper for app-view.js function)
+ */
+function toggleOffset() {
+  if (typeof window.toggleChartOffset === 'function') {
+    window.toggleChartOffset();
+  }
 }
 
 /**
@@ -102,20 +101,22 @@ function getChartTheme() {
   return {
     isDark,
     textColor: isDark ? '#e2e8f0' : '#1e293b',
-    gridColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
+    gridColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)',
     tooltipBg: isDark ? '#1e293b' : '#ffffff',
     tooltipBorder: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+    // High contrast colors that work on both light and dark backgrounds
     colors: [
-      '#6366f1', // Primary purple
-      '#8b5cf6', // Violet
-      '#ec4899', // Pink
-      '#f43f5e', // Rose
-      '#f97316', // Orange
-      '#eab308', // Yellow
-      '#22c55e', // Green
-      '#14b8a6', // Teal
-      '#06b6d4', // Cyan
-      '#3b82f6', // Blue
+      '#4f46e5', // Indigo (dark purple) - very visible on all backgrounds
+      '#0891b2', // Sky blue - highly visible
+      '#059669', // Emerald green - excellent contrast
+      '#d97706', // Amber - warm and visible
+      '#dc2626', // Red - bold and visible
+      '#7c3aed', // Violet - strong purple
+      '#2563eb', // Blue - very visible
+      '#db2777', // Pink - clear and visible
+      '#16a34a', // Green - dark and readable
+      '#9333ea', // Purple - strong visible
+      '#ea580c', // Orange - warm contrast
     ]
   };
 }
@@ -148,10 +149,12 @@ function createOverviewTrendChart(containerId, data, mode = 'line') {
   const categories = data.map(item => {
     const rawLabel = item?.label || item?.date || item?.day || '';
     // Apply offset only if enabled
-    const offsetLabel = offsetEnabled ? formatDateLabelWithOffset(rawLabel, 7) : rawLabel;
+    const offsetLabel = getOffsetEnabled() ? formatDateLabelWithOffset(rawLabel, 7) : rawLabel;
     // Compact label
     return offsetLabel.length > 8 ? offsetLabel.substring(0, 6) + '..' : offsetLabel;
   });
+
+  const isOffsetEnabled = getOffsetEnabled();
 
   const options = {
     series: [{
@@ -178,6 +181,16 @@ function createOverviewTrendChart(containerId, data, mode = 'line') {
       }
     },
     colors: [theme.colors[0]],
+    title: {
+      text: isOffsetEnabled ? '(+7 day offset)' : '',
+      align: 'right',
+      style: {
+        fontSize: '11px',
+        fontWeight: 400,
+        color: theme.textColor,
+        cssClass: 'apexcharts-title-offset'
+      }
+    },
     plotOptions: {
       bar: {
         borderRadius: 6,
@@ -186,6 +199,16 @@ function createOverviewTrendChart(containerId, data, mode = 'line') {
           position: 'top'
         }
       }
+    },
+    markers: {
+      size: 6,
+      colors: [theme.colors[0]],
+      strokeColors: theme.isDark ? '#0f172a' : '#ffffff',
+      strokeWidth: 2,
+      hover: {
+        size: 8
+      },
+      discrete: []
     },
     dataLabels: {
       enabled: false
@@ -446,9 +469,11 @@ function createReportsTrendChart(containerId, data, mode = 'line') {
   const categories = data.map(item => {
     const rawLabel = item?.label || item?.date || item?.day || '';
     // Apply offset only if enabled
-    const offsetLabel = offsetEnabled ? formatDateLabelWithOffset(rawLabel, 7) : rawLabel;
+    const offsetLabel = getOffsetEnabled() ? formatDateLabelWithOffset(rawLabel, 7) : rawLabel;
     return offsetLabel.length > 10 ? offsetLabel.substring(0, 8) + '..' : offsetLabel;
   });
+
+  const isOffsetEnabled = getOffsetEnabled();
 
   const options = {
     series: [{
@@ -473,6 +498,16 @@ function createReportsTrendChart(containerId, data, mode = 'line') {
       }
     },
     colors: [theme.colors[1]],
+    title: {
+      text: isOffsetEnabled ? '(+7 day offset)' : '',
+      align: 'right',
+      style: {
+        fontSize: '11px',
+        fontWeight: 400,
+        color: theme.textColor,
+        cssClass: 'apexcharts-title-offset'
+      }
+    },
     plotOptions: {
       bar: {
         borderRadius: 6,
@@ -480,6 +515,15 @@ function createReportsTrendChart(containerId, data, mode = 'line') {
         dataLabels: {
           position: 'top'
         }
+      }
+    },
+    markers: {
+      size: 6,
+      colors: [theme.colors[1]],
+      strokeColors: theme.isDark ? '#0f172a' : '#ffffff',
+      strokeWidth: 2,
+      hover: {
+        size: 8
       }
     },
     dataLabels: {
@@ -762,11 +806,13 @@ function createHabitSeriesChart(containerId, habitSeries, habits) {
   const categories = habitSeries.labels.map(label => {
     const date = new Date(label);
     // Apply offset only if enabled
-    if (offsetEnabled) {
+    if (getOffsetEnabled()) {
       date.setDate(date.getDate() + 7);
     }
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   });
+
+  const isOffsetEnabled = getOffsetEnabled();
 
   const options = {
     series: seriesData.map(s => ({
@@ -788,10 +834,29 @@ function createHabitSeriesChart(containerId, habitSeries, habits) {
       }
     },
     colors: theme.colors.slice(0, seriesData.length),
+    title: {
+      text: isOffsetEnabled ? '(+7 day offset)' : '',
+      align: 'right',
+      style: {
+        fontSize: '11px',
+        fontWeight: 400,
+        color: theme.textColor,
+        cssClass: 'apexcharts-title-offset'
+      }
+    },
     plotOptions: {
       bar: {
         borderRadius: 6,
         columnWidth: '50%'
+      }
+    },
+    markers: {
+      size: 5,
+      colors: theme.colors.slice(0, seriesData.length),
+      strokeColors: theme.isDark ? '#0f172a' : '#ffffff',
+      strokeWidth: 2,
+      hover: {
+        size: 7
       }
     },
     stroke: {
@@ -1118,23 +1183,15 @@ window.GoalixaCharts = {
   updateChartsTheme,
   getChartTheme,
   formatDuration,
+  getOffsetEnabled,
   toggleOffset,
-  createOffsetButton,
-  offsetEnabled: () => offsetEnabled
+  updateOffsetButtons,
+  createOffsetButton
 };
 
 // Make theme update available globally
 window.addEventListener('theme-changed', () => {
   updateChartsTheme();
 });
-
-// Handle offset toggle - re-render all charts when offset is toggled
-window.addEventListener('chart-offset-toggled', () => {
-  // The charts will be re-rendered by their respective view modules
-  console.log('[GoalixaCharts] Chart offset toggled');
-});
-
-// Initialize offset button states
-updateOffsetButtons();
 
 console.log('[GoalixaCharts] Enhanced charts module loaded');

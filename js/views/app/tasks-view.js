@@ -288,11 +288,69 @@ function groupedCompletedTasksMarkup(groups) {
     return '<p class="empty">No completed tasks yet.</p>';
   }
 
-  return groups.map((group) => {
-    const groupTitle = `<h4 class="task-group-title">${escapeHtml(group.label)} <span class="task-group-count">${group.tasks.length}</span></h4>`;
+  return groups.map((group, index) => {
+    const groupId = `completed-group-${index}`;
+    const groupTitle = `
+      <h4 class="task-group-title">
+        <button type="button" class="task-group-toggle" data-group-toggle="${groupId}" aria-expanded="true" aria-controls="${groupId}">
+          <i class="bi bi-chevron-down task-group-icon"></i>
+          <span class="task-group-name">${escapeHtml(group.label)}</span>
+          <span class="task-group-count">${group.tasks.length}</span>
+        </button>
+      </h4>
+    `;
     const items = group.tasks.map((task) => taskItemMarkup(task, 'completed')).join('');
-    return `${groupTitle}<ul class="task-list task-board-list task-group-list">${items}</ul>`;
+    return `${groupTitle}<ul id="${groupId}" class="task-list task-board-list task-group-list" role="region" aria-labelledby="${groupId}-toggle">${items}</ul>`;
   }).join('');
+}
+
+function sortCompletedTasksByCompletionTime(tasks) {
+  if (!Array.isArray(tasks)) return [];
+  return tasks.slice().sort((left, right) => {
+    // Try to use completed_at timestamp
+    const leftTime = left.completed_at ? new Date(left.completed_at).getTime() : 0;
+    const rightTime = right.completed_at ? new Date(right.completed_at).getTime() : 0;
+
+    if (leftTime && rightTime) {
+      return rightTime - leftTime; // Newest first
+    }
+
+    // Fallback to task ID as completion order proxy
+    return Number(right.id || 0) - Number(left.id || 0);
+  });
+}
+
+function getProjectGroupedCompletedTasks(tasks) {
+  if (!Array.isArray(tasks) || tasks.length === 0) {
+    return [];
+  }
+
+  // Group by project
+  const projectGroups = new Map();
+
+  tasks.forEach((task) => {
+    const projectName = task.project_name || 'Unassigned';
+    if (!projectGroups.has(projectName)) {
+      projectGroups.set(projectName, {
+        key: projectName,
+        label: projectName,
+        tasks: []
+      });
+    }
+    projectGroups.get(projectName).tasks.push(task);
+  });
+
+  // Convert to array and sort groups by project name
+  const groups = Array.from(projectGroups.values()).sort((a, b) =>
+    String(a.label).localeCompare(String(b.label))
+  );
+
+  // Sort tasks within each group by completion time (newest first)
+  groups.forEach((group) => {
+    group.tasks = sortCompletedTasksByCompletionTime(group.tasks);
+  });
+
+  return groups;
 }
 
 export function renderTasksSection(content, payload, projects, goals, labelsPayload) {
@@ -377,8 +435,8 @@ export function renderTasksSection(content, payload, projects, goals, labelsPayl
           <h2>Completed</h2>
           <div class="task-controls">
             <select id="completed-group-by" data-completed-group>
+              <option value="project" selected>Group by Project</option>
               <option value="none">No grouping</option>
-              <option value="project">Group by Project</option>
               <option value="priority">Group by Priority</option>
               <option value="goal">Group by Goal</option>
               <option value="date">Group by Date</option>
@@ -386,7 +444,10 @@ export function renderTasksSection(content, payload, projects, goals, labelsPayl
           </div>
         </div>
         <div id="completed-task-list">
-          ${taskColumnMarkup('Completed', tasks.completedTasks, 'completed')}
+          ${(() => {
+            const projectGroups = getProjectGroupedCompletedTasks(tasks.completedTasks);
+            return groupedCompletedTasksMarkup(projectGroups);
+          })()}
         </div>
       </section>
     </div>
@@ -471,6 +532,10 @@ export async function bindTasksSection(container, initialPayload = {}, projects 
     if (completedContainer) {
       if (currentCompletedGroup === 'none') {
         completedContainer.innerHTML = taskColumnMarkup('Completed', sortedCompleted, 'completed');
+      } else if (currentCompletedGroup === 'project') {
+        // Use special project grouping with completion time sorting
+        const projectGroups = getProjectGroupedCompletedTasks(sortedCompleted);
+        completedContainer.innerHTML = groupedCompletedTasksMarkup(projectGroups);
       } else {
         const groupedTasks = groupCompletedTasks(sortedCompleted, currentCompletedGroup);
         completedContainer.innerHTML = groupedCompletedTasksMarkup(groupedTasks);
@@ -503,6 +568,42 @@ export async function bindTasksSection(container, initialPayload = {}, projects 
       paintTaskBoards();
     }, { signal });
   }
+
+  // Handle collapsible project groups
+  const setupCollapsibleGroups = () => {
+    const toggleButtons = content.querySelectorAll('[data-group-toggle]');
+    toggleButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const groupId = button.dataset.groupToggle;
+        if (!groupId) return;
+
+        const groupList = document.getElementById(groupId);
+        const icon = button.querySelector('.task-group-icon');
+        const isExpanded = button.getAttribute('aria-expanded') === 'true';
+
+        // Toggle state
+        button.setAttribute('aria-expanded', !isExpanded);
+
+        if (groupList) {
+          groupList.classList.toggle('is-collapsed', !isExpanded);
+        }
+
+        if (icon) {
+          icon.classList.toggle('bi-chevron-down', isExpanded);
+          icon.classList.toggle('bi-chevron-right', !isExpanded);
+        }
+      }, { signal });
+    });
+  };
+
+  setupCollapsibleGroups();
+
+  // Re-setup collapsible groups after repainting
+  const originalPaintTaskBoards = paintTaskBoards;
+  paintTaskBoards = () => {
+    originalPaintTaskBoards();
+    setupCollapsibleGroups();
+  };
 
   const createLabelToggle = content.querySelector('#create-label-toggle');
   const createLabelPicker = content.querySelector('#create-label-picker');

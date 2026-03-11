@@ -1214,26 +1214,23 @@ a:hover {
 }
 
 .reports-chart-card,
-.reports-distribution-card,
-.reports-calendar-card {
+.reports-distribution-card {
   display: grid;
   gap: 10px;
 }
 
-/* Reports Calendar Styles */
-.reports-period-controls {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: var(--soft);
-  padding: 4px;
-  border-radius: 10px;
+/* Reports Period Presets */
+.reports-period-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
 }
 
-.period-btn {
-  background: transparent;
-  border: none;
-  padding: 6px 12px;
+.period-preset-btn {
+  background: var(--card);
+  border: 1px solid var(--border);
+  padding: 8px 16px;
   border-radius: 8px;
   font-size: 0.85rem;
   font-weight: 500;
@@ -1242,353 +1239,55 @@ a:hover {
   transition: all 0.2s ease;
 }
 
-.period-btn:hover {
-  background: var(--card);
+.period-preset-btn:hover {
+  background: var(--soft);
+  border-color: var(--primary);
   color: var(--text);
 }
 
-.period-btn.is-active {
+.period-preset-btn.is-active {
   background: var(--primary);
+  border-color: var(--primary);
   color: white;
 }
 
-.reports-calendar-container {
-  min-height: 200px;
-}
-
-.reports-calendar-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--border);
-}
-
-.reports-calendar-header h4 {
-  margin: 0;
-  font-size: 1rem;
-  color: var(--text);
-}
-
-.reports-calendar-total {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--primary);
-}
-
-.reports-calendar-legend {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 8px;
-  flex-wrap: wrap;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.75rem;
-  color: var(--muted);
-}
-
-.legend-color {
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
-}
-
-.legend-0 { background: #f1f5f9; border: 1px solid #e2e8f0; }
-.legend-1 { background: #bfdbfe; border: 1px solid #93c5fd; }
-.legend-2 { background: #60a5fa; border: 1px solid #3b82f6; }
-.legend-3 { background: #2563eb; border: 1px solid #1d4ed8; }
-.legend-4 { background: #1e40af; border: 1px solid #1e3a8a; }
-
-/* Calendar Grids */
-.reports-calendar-grid {
-  display: grid;
-  gap: 4px;
-}
-
-.reports-calendar-hourly {
-  grid-template-columns: repeat(6, 1fr);
-  gap: 4px;
-}
-
-.calendar-hour-cell {
-  aspect-ratio: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  font-size: 0.7rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-}
-
-.calendar-hour-cell:hover {
-  transform: scale(1.05);
-}
-
-.hour-label {
-  color: var(--muted);
-}
-
-.reports-calendar-week {
-  grid-template-columns: repeat(7, 1fr);
-  gap: 6px;
-}
-
-.reports-calendar-month {
-  display: grid;
-  gap: 8px;
-}
-
-.calendar-month-header {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
-  text-align: center;
-}
-
-.calendar-weekday {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--muted);
-  padding: 4px;
-}
-
-.calendar-month-days {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
-}
-
-.calendar-empty-cell {
-  aspect-ratio: 1;
-}
-
-.reports-calendar-year {
-  grid-template-columns: repeat(6, 1fr);
-  gap: 8px;
-}
-
-.calendar-day-cell,
-.calendar-month-cell {
-  aspect-ratio: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-  position: relative;
-}
-
-.calendar-day-cell:hover,
-.calendar-month-cell:hover {
-  transform: scale(1.05);
-}
-
-.calendar-day-cell.is-today,
-.calendar-month-cell.is-today {
-  border: 2px solid var(--primary);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-}
-
-.day-number,
-.month-label {
-  font-size: 0.85rem;
-  font-weight: 500;
-}
-
-.day-label {
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-/* Intensity colors */
-.intensity-0 {
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
-}
-
-.intensity-1 {
-  background: #bfdbfe;
-  border: 1px solid #93c5fd;
-}
-
-.intensity-2 {
-  background: #60a5fa;
-  border: 1px solid #3b82f6;
-}
-
-.intensity-2 .day-number,
-.intensity-2 .month-label,
-.intensity-2 .day-label,
-.intensity-2 .hour-label {
-  color: white;
-}
-
-.intensity-3 {
-  background: #2563eb;
-  border: 1px solid #1d4ed8;
-}
-
-.intensity-3 .day-number,
-.intensity-3 .month-label,
-.intensity-3 .day-label,
-.intensity-3 .hour-label {
-  color: white;
-}
-
-.intensity-4 {
-  background: #1e40af;
-  border: 1px solid #1e3a8a;
-}
-
-.intensity-4 .day-number,
-.intensity-4 .month-label,
-.intensity-4 .day-label,
-.intensity-4 .hour-label {
-  color: white;
-}
-
-/* Dark mode for calendar */
-[data-theme="dark"] .reports-period-controls {
-  background: rgba(139, 179, 255, 0.1);
-}
-
-[data-theme="dark"] .period-btn {
+/* Dark mode for preset buttons */
+[data-theme="dark"] .period-preset-btn {
+  background: rgba(26, 38, 60, 0.7);
+  border-color: rgba(139, 179, 255, 0.18);
   color: #94a3b8;
 }
 
-[data-theme="dark"] .period-btn:hover {
-  background: rgba(139, 179, 255, 0.15);
+[data-theme="dark"] .period-preset-btn:hover {
+  background: rgba(139, 179, 255, 0.12);
+  border-color: rgba(139, 179, 255, 0.4);
   color: #cbd5e1;
 }
 
-[data-theme="dark"] .period-btn.is-active {
+[data-theme="dark"] .period-preset-btn.is-active {
   background: linear-gradient(135deg, #5a8dff 0%, #4a7cf0 100%);
+  border-color: transparent;
   color: white;
 }
 
-[data-theme="dark"] .reports-calendar-header {
-  border-bottom-color: rgba(139, 179, 255, 0.2);
-}
-
-[data-theme="dark"] .reports-calendar-header h4 {
-  color: #f1f5f9;
-}
-
-[data-theme="dark"] .calendar-weekday {
-  color: #94a3b8;
-}
-
-[data-theme="dark"] .legend-0 { background: #1e293b; border-color: rgba(139, 179, 255, 0.2); }
-[data-theme="dark"] .legend-1 { background: rgba(59, 130, 246, 0.3); border-color: rgba(59, 130, 246, 0.4); }
-[data-theme="dark"] .legend-2 { background: rgba(59, 130, 246, 0.6); border-color: rgba(59, 130, 246, 0.7); }
-[data-theme="dark"] .legend-3 { background: rgba(59, 130, 246, 0.85); border-color: rgba(59, 130, 246, 0.9); }
-[data-theme="dark"] .legend-4 { background: #3b82f6; border-color: #2563eb; }
-
-[data-theme="dark"] .intensity-0 {
-  background: #1e293b;
-  border-color: rgba(139, 179, 255, 0.15);
-}
-
-[data-theme="dark"] .intensity-1 {
-  background: rgba(59, 130, 246, 0.25);
-  border-color: rgba(59, 130, 246, 0.35);
-}
-
-[data-theme="dark"] .intensity-2 {
-  background: rgba(59, 130, 246, 0.5);
-  border-color: rgba(59, 130, 246, 0.6);
-}
-
-[data-theme="dark"] .intensity-3 {
-  background: rgba(59, 130, 246, 0.75);
-  border-color: rgba(59, 130, 246, 0.85);
-}
-
-[data-theme="dark"] .intensity-4 {
-  background: #3b82f6;
-  border-color: #2563eb;
-}
-
-/* Responsive Design for Reports Calendar */
+/* Responsive Design for Reports */
 @media (max-width: 768px) {
-  .reports-period-controls {
-    width: 100%;
-    justify-content: space-between;
+  .reports-period-presets {
+    gap: 6px;
   }
 
-  .period-btn {
+  .period-preset-btn {
     flex: 1;
-    padding: 8px 4px;
-    font-size: 0.75rem;
-  }
-
-  .reports-calendar-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-
-  .reports-calendar-legend {
-    font-size: 0.7rem;
-    gap: 8px;
-  }
-
-  .reports-calendar-hourly {
-    grid-template-columns: repeat(4, 1fr);
-  }
-
-  .reports-calendar-year {
-    grid-template-columns: repeat(4, 1fr);
-  }
-
-  .calendar-day-cell,
-  .calendar-month-cell {
-    aspect-ratio: 1.2;
-  }
-
-  .day-number,
-  .month-label {
-    font-size: 0.75rem;
-  }
-
-  .day-label {
-    font-size: 0.7rem;
-  }
-
-  .calendar-weekday {
-    font-size: 0.65rem;
+    min-width: calc(50% - 3px);
+    padding: 10px 8px;
+    font-size: 0.8rem;
   }
 }
 
 @media (max-width: 480px) {
-  .reports-calendar-hourly {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .reports-calendar-year {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .reports-calendar-legend {
-    gap: 6px;
-  }
-
-  .legend-item {
-    font-size: 0.65rem;
-  }
-
-  .legend-color {
-    width: 10px;
-    height: 10px;
+  .period-preset-btn {
+    font-size: 0.75rem;
+    padding: 8px 6px;
   }
 }
 
@@ -4467,6 +4166,98 @@ footer {
   color: var(--text);
   padding: 0 10px;
   font-size: 0.9rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tasks-page .task-form input:focus,
+.tasks-page .task-form select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Touch-friendly buttons on mobile */
+@media (hover: none) and (pointer: coarse) {
+  .tasks-page .task-item {
+    padding: 16px;
+  }
+
+  .tasks-page .menu-item {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .tasks-page .complete-btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  .tasks-page .label-toggle {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* Improve button touch feedback */
+.tasks-page .menu-item:active {
+  transform: scale(0.95);
+}
+
+.tasks-page .complete-btn:active {
+  transform: scale(0.95);
+}
+
+/* Better spacing for task meta on mobile */
+@media (max-width: 768px) {
+  .tasks-page .task-meta-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 6px;
+  }
+
+  .tasks-page .meta-pill {
+    justify-self: start;
+  }
+
+  /* Submit button full width on mobile */
+  .tasks-page .task-form button[type="submit"] {
+    width: 100%;
+    height: 48px;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .tasks-page .task-form button[type="submit"] i {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .tasks-page .task-meta-row {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px;
+  }
+
+  .tasks-page .task-labels {
+    width: 100%;
+  }
+
+  /* Even better touch targets on small phones */
+  .tasks-page .task-form button[type="submit"] {
+    height: 52px;
+    font-size: 1.05rem;
+    padding: 0 20px;
+  }
+
+  /* Improve label picker button */
+  .tasks-page .label-toggle {
+    width: 100%;
+    border-radius: 10px;
+  }
+
+  .tasks-page .label-toggle i {
+    font-size: 1.1rem;
+  }
 }
 
 .tasks-page .task-form select:disabled {
@@ -4617,6 +4408,12 @@ footer {
   font-size: 1.1rem;
 }
 
+.tasks-page .task-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .tasks-page .task-controls select {
   height: 38px;
   border-radius: 9px;
@@ -4624,6 +4421,17 @@ footer {
   background: var(--card);
   color: var(--text);
   padding: 0 12px;
+  font-size: 0.85rem;
+  min-width: 140px;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.tasks-page .task-controls select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
   font-size: 0.9rem;
 }
 
@@ -4681,28 +4489,88 @@ footer {
 
 /* Task Group Styles */
 .tasks-page .task-group-title {
-  font-size: 0.95rem;
+  font-size: 0;
   font-weight: 600;
   color: var(--muted);
   margin: 20px 0 12px 0;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  padding: 0;
+  border-bottom: none;
+  display: block;
 }
 
 .tasks-page .task-group-title:first-child {
   margin-top: 0;
 }
 
+/* Collapsible Group Toggle Button */
+.tasks-page .task-group-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--soft);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+  text-align: left;
+}
+
+.tasks-page .task-group-toggle:hover {
+  background: var(--card);
+  border-color: var(--primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.tasks-page .task-group-toggle:active {
+  transform: scale(0.99);
+}
+
+.tasks-page .task-group-icon {
+  font-size: 0.85rem;
+  color: var(--muted);
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.tasks-page .task-group-toggle[aria-expanded="false"] .task-group-icon {
+  transform: rotate(-90deg);
+}
+
+.tasks-page .task-group-name {
+  flex: 1;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
 .tasks-page .task-group-count {
   font-size: 0.8rem;
   font-weight: 500;
-  padding: 2px 8px;
+  padding: 4px 10px;
   border-radius: 12px;
-  background: var(--soft);
+  background: var(--card);
   color: var(--muted);
+  flex-shrink: 0;
+}
+
+/* Collapsible Group List */
+.tasks-page .task-group-list {
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.tasks-page .task-group-list.is-collapsed {
+  display: none;
+}
+
+.tasks-page .task-group-list.is-collapsed[aria-hidden="true"] {
+  display: none;
 }
 
 .tasks-page .task-group-list {
@@ -4714,13 +4582,24 @@ footer {
 }
 
 /* Dark mode for task groups */
-[data-theme="dark"] .tasks-page .task-group-title {
-  color: #94a3b8;
-  border-bottom-color: rgba(139, 179, 255, 0.2);
+[data-theme="dark"] .tasks-page .task-group-toggle {
+  background: rgba(26, 38, 60, 0.5);
+  border-color: rgba(139, 179, 255, 0.18);
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .tasks-page .task-group-toggle:hover {
+  background: rgba(139, 179, 255, 0.12);
+  border-color: rgba(139, 179, 255, 0.4);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .tasks-page .task-group-name {
+  color: #f1f5f9;
 }
 
 [data-theme="dark"] .tasks-page .task-group-count {
-  background: rgba(139, 179, 255, 0.12);
+  background: rgba(139, 179, 255, 0.15);
   color: #94a3b8;
 }
 
@@ -4905,32 +4784,75 @@ footer {
 @media (max-width: 1180px) {
   .tasks-page .task-form {
     grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+
+  .tasks-page .task-form input[type="text"] {
+    grid-column: 1 / -1;
   }
 }
 
 @media (max-width: 900px) {
   .tasks-page .task-columns {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
 
   .tasks-page .task-item {
     flex-direction: column;
     align-items: stretch;
+    gap: 10px;
   }
 
   .tasks-page .task-actions {
     justify-content: flex-start;
+    width: 100%;
+  }
+
+  .tasks-page .task-header {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .tasks-page .task-title-row {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .tasks-page .task-time {
+    font-size: 0.9rem;
   }
 }
 
 @media (max-width: 768px) {
+  .tasks-page {
+    gap: 12px;
+  }
+
+  .tasks-page .tasks-create-card {
+    padding: 12px;
+  }
+
   .tasks-page .task-form {
     grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .tasks-page .task-form input,
+  .tasks-page .task-form select {
+    height: 44px;
+    font-size: 1rem;
+    padding: 0 12px;
   }
 
   .tasks-page .section-header {
     flex-direction: column;
     align-items: flex-start;
+    gap: 10px;
+  }
+
+  .tasks-page .section-header h2 {
+    font-size: 1.25rem;
   }
 
   .tasks-page .task-controls {
@@ -4939,15 +4861,303 @@ footer {
 
   .tasks-page .task-controls select {
     width: 100%;
+    height: 44px;
+    font-size: 1rem;
+  }
+
+  .tasks-page .task-column {
+    padding: 12px;
+  }
+
+  .tasks-page .task-column h3 {
+    font-size: 0.95rem;
+    margin-bottom: 10px;
+  }
+
+  .tasks-page .task-item {
+    padding: 12px;
+    gap: 10px;
   }
 
   .tasks-page .task-header {
     flex-direction: column;
     align-items: flex-start;
+    gap: 8px;
+  }
+
+  .tasks-page .task-title-row {
+    width: 100%;
+  }
+
+  .tasks-page .task-title {
+    font-size: 0.95rem;
   }
 
   .tasks-page .task-time {
     font-size: 0.86rem;
+    align-self: flex-start;
+  }
+
+  .tasks-page .task-meta-row {
+    gap: 4px;
+  }
+
+  .tasks-page .meta-pill {
+    font-size: 0.7rem;
+    padding: 3px 7px;
+  }
+
+  .tasks-page .task-done-count {
+    font-size: 0.7rem;
+    padding: 3px 7px;
+  }
+
+  .tasks-page .task-actions {
+    gap: 6px;
+  }
+
+  .tasks-page .menu-item {
+    min-width: 34px;
+    min-height: 34px;
+    padding: 6px 8px;
+    font-size: 0.85rem;
+  }
+
+  .tasks-page .complete-btn {
+    width: 34px;
+    height: 34px;
+  }
+
+  /* Label picker responsive */
+  .tasks-page .label-picker {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-radius: 16px 16px 0 0;
+    max-height: 50vh;
+    overflow-y: auto;
+    z-index: 1000;
+  }
+
+  .tasks-page .label-options {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    padding: 16px;
+  }
+
+  .tasks-page .label-option {
+    padding: 10px;
+  }
+
+  .tasks-page .label-pill {
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .tasks-page {
+    gap: 10px;
+  }
+
+  .tasks-page .tasks-create-card {
+    padding: 10px;
+  }
+
+  .tasks-page .task-form {
+    gap: 8px;
+  }
+
+  .tasks-page .task-form input,
+  .tasks-page .task-form select {
+    height: 42px;
+    font-size: 0.95rem;
+  }
+
+  .tasks-page .section-header h2 {
+    font-size: 1.15rem;
+  }
+
+  .tasks-page .task-column {
+    padding: 10px;
+    border-radius: 12px;
+  }
+
+  .tasks-page .task-column h3 {
+    font-size: 0.9rem;
+  }
+
+  .tasks-page .task-item {
+    padding: 10px;
+    border-radius: 12px;
+  }
+
+  .tasks-page .task-title {
+    font-size: 0.9rem;
+  }
+
+  .tasks-page .priority-badge {
+    font-size: 0.65rem;
+    padding: 2px 6px;
+  }
+
+  .tasks-page .task-time {
+    font-size: 0.8rem;
+  }
+
+  .tasks-page .meta-pill {
+    font-size: 0.65rem;
+    padding: 2px 6px;
+  }
+
+  .tasks-page .meta-pill i {
+    font-size: 0.65rem;
+  }
+
+  .tasks-page .task-done-count {
+    font-size: 0.65rem;
+    padding: 2px 6px;
+  }
+
+  .tasks-page .task-actions {
+    gap: 4px;
+    justify-content: space-between;
+  }
+
+  .tasks-page .menu-item {
+    min-width: 32px;
+    min-height: 32px;
+    padding: 4px 6px;
+    font-size: 0;
+  }
+
+  .tasks-page .menu-item i {
+    font-size: 0.9rem;
+  }
+
+  .tasks-page .menu-item.danger {
+    padding: 4px 6px;
+    font-size: 0;
+  }
+
+  .tasks-page .complete-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  /* Action buttons with text should wrap properly */
+  .tasks-page .task-actions .btn-sm {
+    font-size: 0;
+    padding: 6px;
+  }
+
+  .tasks-page .task-actions .btn-sm i {
+    font-size: 0.9rem;
+  }
+
+  /* Label options on very small screens */
+  .tasks-page .label-options {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  /* Task list items spacing */
+  .tasks-page .task-list {
+    gap: 8px;
+  }
+
+  /* Improve touch targets */
+  .tasks-page .label-toggle {
+    width: 42px;
+    height: 42px;
+  }
+}
+
+/* Extra small phones (iPhone SE, etc.) */
+@media (max-width: 375px) {
+  .tasks-page .task-form input,
+  .tasks-page .task-form select {
+    font-size: 0.9rem;
+  }
+
+  .tasks-page .section-header h2 {
+    font-size: 1.1rem;
+  }
+
+  .tasks-page .task-title {
+    font-size: 0.85rem;
+  }
+
+  .tasks-page .task-time {
+    font-size: 0.75rem;
+  }
+
+  .tasks-page .priority-badge {
+    font-size: 0.6rem;
+    padding: 2px 5px;
+  }
+
+  /* Stack label picker and submit button */
+  .tasks-page .label-picker-wrap {
+    width: 100%;
+    order: 3;
+  }
+
+  .tasks-page .task-form button[type="submit"] {
+    order: 4;
+  }
+}
+
+/* Landscape mobile improvements */
+@media (max-width: 768px) and (orientation: landscape) {
+  .tasks-page .task-form {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .tasks-page .task-form input[type="text"] {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Responsive styles for collapsible groups */
+@media (max-width: 768px) {
+  .tasks-page .task-group-toggle {
+    padding: 10px 14px;
+    font-size: 0.9rem;
+  }
+
+  .tasks-page .task-group-name {
+    font-size: 0.9rem;
+  }
+
+  .tasks-page .task-group-count {
+    padding: 3px 8px;
+    font-size: 0.75rem;
+  }
+
+  .tasks-page .task-group-icon {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .tasks-page .task-group-toggle {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+  }
+
+  .tasks-page .task-group-name {
+    font-size: 0.85rem;
+  }
+
+  .tasks-page .task-group-count {
+    padding: 2px 6px;
+    font-size: 0.7rem;
+  }
+
+  .tasks-page .task-group-icon {
+    font-size: 0.75rem;
   }
 }
 
@@ -13023,4 +13233,14 @@ footer {
   background: linear-gradient(135deg, #5a8dff 0%, #4a7cf0 100%);
   border-color: transparent;
   color: white;
+}
+
+/* Chart offset title indicator */
+.apexcharts-title-offset {
+  opacity: 0.7;
+  font-style: italic;
+}
+
+[data-theme="dark"] .apexcharts-title-offset {
+  opacity: 0.6;
 }

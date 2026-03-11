@@ -80,11 +80,29 @@ self.addEventListener('install', (event) => {
 
   event.waitUntil(
     Promise.all([
-      caches.open(CACHES.CORE).then((cache) => cache.addAll(CORE_ASSETS)),
-      caches.open(CACHES.ASSETS).then((cache) => cache.addAll(ASSET_URLS))
+      caches.open(CACHES.CORE).then((cache) => {
+        // Add each asset individually, continue on failures
+        return Promise.allSettled(
+          CORE_ASSETS.map(url =>
+            cache.add(url).catch(err => {
+              console.warn('[SW] Failed to cache core asset:', url, err);
+            })
+          )
+        );
+      }),
+      caches.open(CACHES.ASSETS).then((cache) => {
+        // Add each asset individually, continue on failures
+        return Promise.allSettled(
+          ASSET_URLS.map(url =>
+            cache.add(url).catch(err => {
+              console.warn('[SW] Failed to cache asset:', url, err);
+            })
+          )
+        );
+      })
     ])
       .then(() => {
-        console.log('[SW] Core assets cached');
+        console.log('[SW] Service worker installed');
         return self.skipWaiting();
       })
       .catch((error) => {

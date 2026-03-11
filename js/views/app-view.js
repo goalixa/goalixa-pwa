@@ -34,6 +34,81 @@ let overviewViewCleanup = null;
 let reportsViewCleanup = null;
 let calendarViewCleanup = null;
 
+// Chart offset state - enabled by default, persisted in localStorage
+let chartOffsetEnabled = localStorage.getItem('goalixa-chart-offset') !== 'false';
+
+/**
+ * Toggle chart offset state
+ */
+function toggleChartOffset() {
+  chartOffsetEnabled = !chartOffsetEnabled;
+  localStorage.setItem('goalixa-chart-offset', String(chartOffsetEnabled));
+
+  // Update global export
+  window.chartOffsetEnabled = chartOffsetEnabled;
+
+  // Update all button states
+  updateAllOffsetButtons();
+
+  // Dispatch event to re-render charts
+  window.dispatchEvent(new CustomEvent('chart-offset-toggled', {
+    detail: { enabled: chartOffsetEnabled }
+  }));
+}
+
+/**
+ * Update all offset button states
+ */
+function updateAllOffsetButtons() {
+  document.querySelectorAll('.chart-offset-btn').forEach(btn => {
+    const icon = btn.querySelector('.chart-offset-icon');
+    const text = btn.querySelector('.chart-offset-text');
+    if (chartOffsetEnabled) {
+      btn.classList.add('active');
+      btn.title = 'Disable 7-day offset';
+      if (icon) icon.className = 'chart-offset-icon bi bi-toggle-on';
+      if (text) text.textContent = 'Offset: ON';
+    } else {
+      btn.classList.remove('active');
+      btn.title = 'Enable 7-day offset';
+      if (icon) icon.className = 'chart-offset-icon bi bi-toggle-off';
+      if (text) text.textContent = 'Offset: OFF';
+    }
+  });
+}
+
+/**
+ * Initialize offset button with correct state
+ */
+function initOffsetButton(buttonId) {
+  const btn = document.getElementById(buttonId);
+  if (!btn) return;
+
+  btn.onclick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleChartOffset();
+  };
+
+  // Set initial state
+  const icon = btn.querySelector('.chart-offset-icon');
+  const text = btn.querySelector('.chart-offset-text');
+  if (chartOffsetEnabled) {
+    btn.classList.add('active');
+    if (icon) icon.className = 'chart-offset-icon bi bi-toggle-on';
+    if (text) text.textContent = 'Offset: ON';
+  } else {
+    btn.classList.remove('active');
+    if (icon) icon.className = 'chart-offset-icon bi bi-toggle-off';
+    if (text) text.textContent = 'Offset: OFF';
+  }
+}
+
+// Export to global scope for charts module access
+window.chartOffsetEnabled = chartOffsetEnabled;
+window.toggleChartOffset = toggleChartOffset;
+window.updateAllOffsetButtons = updateAllOffsetButtons;
+
 function resolveSection(path) {
   const subPath = path.replace('/app', '') || '/overview';
   const trimmed = subPath.startsWith('/') ? subPath.slice(1) : subPath;
@@ -429,6 +504,9 @@ function bindOverviewCharts(content, summary, distribution, habits) {
   if (window.GoalixaCharts && normalizedSummary.length > 0) {
     window.GoalixaCharts.createOverviewTrendChart('[data-overview-trend-canvas]', normalizedSummary, 'line');
   }
+
+  // Initialize offset button
+  initOffsetButton('overview-offset-btn');
 
   // Initialize donut chart
   if (window.GoalixaCharts && donutHost && distribution) {
@@ -1200,6 +1278,9 @@ function paintReportsView(content, state) {
     window.GoalixaCharts.createReportsTrendChart('[data-reports-trend]', summaryRows, state.mode);
   }
 
+  // Initialize offset button
+  initOffsetButton('reports-offset-btn');
+
   // Use ApexCharts for donut chart
   if (donutHost && window.GoalixaCharts) {
     window.GoalixaCharts.createDistributionDonut('[data-reports-donut]', distributionRows, totalSeconds);
@@ -1226,186 +1307,38 @@ function paintReportsView(content, state) {
   if (topCategoryEl) topCategoryEl.textContent = topCategory ? `${topCategory.name} (${formatDuration(topCategory.seconds)})` : '-';
 }
 
-function renderReportsCalendar(content, summary, period = 'monthly') {
-  const calendarContainer = content.querySelector('#reports-calendar-container');
-  if (!calendarContainer) return;
-
-  const safeSummary = Array.isArray(summary) ? summary : [];
-  const summaryMap = new Map(
-    safeSummary.map(item => [
-      String(item?.label || item?.date || item?.day || ''),
-      Number(item?.seconds || 0)
-    ])
-  );
-
-  const now = new Date();
-  let days = [];
-  let calendarTitle = '';
-  let weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-  if (period === 'daily') {
-    // Show hourly breakdown for today
-    calendarTitle = 'Today - Hourly';
-    const today = now.toISOString().split('T')[0];
-    for (let hour = 0; hour < 24; hour++) {
-      const key = `${today} ${String(hour).padStart(2, '0')}:00`;
-      days.push({
-        label: `${hour}:00`,
-        key: key,
-        seconds: summaryMap.get(key) || 0,
-        isToday: true
-      });
-    }
-  } else if (period === 'weekly') {
-    // Show current week
-    const startOfWeek = new Date(now);
-    startOfWeek.setDate(now.getDate() - now.getDay());
-    calendarTitle = `Week of ${startOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
-
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(startOfWeek);
-      date.setDate(startOfWeek.getDate() + i);
-      const dateStr = date.toISOString().split('T')[0];
-      const dayName = weekDays[date.getDay()];
-      days.push({
-        label: `${dayName} ${date.getDate()}`,
-        key: dateStr,
-        seconds: summaryMap.get(dateStr) || 0,
-        isToday: date.toDateString() === now.toDateString()
-      });
-    }
-  } else if (period === 'monthly') {
-    // Show current month
-    const year = now.getFullYear();
-    const month = now.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    calendarTitle = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-
-    for (let day = 1; day <= lastDay.getDate(); day++) {
-      const date = new Date(year, month, day);
-      const dateStr = date.toISOString().split('T')[0];
-      days.push({
-        label: String(day),
-        key: dateStr,
-        seconds: summaryMap.get(dateStr) || 0,
-        isToday: date.toDateString() === now.toDateString(),
-        dayOfWeek: date.getDay()
-      });
-    }
-  } else if (period === 'yearly') {
-    // Show current year months
-    const year = now.getFullYear();
-    calendarTitle = String(year);
-
-    for (let month = 0; month < 12; month++) {
-      const monthStr = `${year}-${String(month + 1).padStart(2, '0')}`;
-      // Sum all days in the month
-      let monthTotal = 0;
-      safeSummary.forEach(item => {
-        const itemDate = String(item?.label || item?.date || item?.day || '');
-        if (itemDate.startsWith(monthStr)) {
-          monthTotal += Number(item?.seconds || 0);
-        }
-      });
-      days.push({
-        label: now.toLocaleDateString('en-US', { month: 'short' }),
-        key: monthStr,
-        seconds: monthTotal,
-        isToday: month === now.getMonth()
-      });
-    }
-  }
-
-  // Calculate max for color scaling
-  const maxSeconds = Math.max(...days.map(d => d.seconds), 1);
-
-  // Get intensity level (0-4)
-  const getIntensity = (seconds) => {
-    if (seconds === 0) return 0;
-    const ratio = seconds / maxSeconds;
-    if (ratio < 0.2) return 1;
-    if (ratio < 0.4) return 2;
-    if (ratio < 0.6) return 3;
-    return 4;
-  };
-
-  // Generate calendar HTML
-  let calendarHTML = '';
-
-  if (period === 'daily') {
-    // Hourly view - simple grid
-    calendarHTML = `
-      <div class="reports-calendar-header">
-        <h4>${calendarTitle}</h4>
-        <span class="reports-calendar-total">${formatDuration(days.reduce((sum, d) => sum + d.seconds, 0))}</span>
-      </div>
-      <div class="reports-calendar-grid reports-calendar-hourly">
-        ${days.map(day => `
-          <div class="calendar-hour-cell intensity-${getIntensity(day.seconds)}" title="${day.label}: ${formatDuration(day.seconds)}">
-            <span class="hour-label">${day.label}</span>
-          </div>
-        `).join('')}
-      </div>
-    `;
-  } else if (period === 'weekly') {
-    calendarHTML = `
-      <div class="reports-calendar-header">
-        <h4>${calendarTitle}</h4>
-        <span class="reports-calendar-total">${formatDuration(days.reduce((sum, d) => sum + d.seconds, 0))}</span>
-      </div>
-      <div class="reports-calendar-grid reports-calendar-week">
-        ${days.map(day => `
-          <div class="calendar-day-cell intensity-${getIntensity(day.seconds)}${day.isToday ? ' is-today' : ''}" title="${day.label}: ${formatDuration(day.seconds)}">
-            <span class="day-label">${day.label}</span>
-          </div>
-        `).join('')}
-      </div>
-    `;
-  } else if (period === 'monthly') {
-    // Monthly calendar grid
-    const firstDayOffset = days[0]?.dayOfWeek || 0;
-    calendarHTML = `
-      <div class="reports-calendar-header">
-        <h4>${calendarTitle}</h4>
-        <span class="reports-calendar-total">${formatDuration(days.reduce((sum, d) => sum + d.seconds, 0))}</span>
-      </div>
-      <div class="reports-calendar-grid reports-calendar-month">
-        <div class="calendar-month-header">
-          ${weekDays.map(d => `<span class="calendar-weekday">${d}</span>`).join('')}
-        </div>
-        <div class="calendar-month-days">
-          ${Array(firstDayOffset).fill('<div class="calendar-empty-cell"></div>').join('')}
-          ${days.map(day => `
-            <div class="calendar-day-cell intensity-${getIntensity(day.seconds)}${day.isToday ? ' is-today' : ''}" title="${day.key}: ${formatDuration(day.seconds)}">
-              <span class="day-number">${day.label}</span>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-    `;
-  } else if (period === 'yearly') {
-    calendarHTML = `
-      <div class="reports-calendar-header">
-        <h4>${calendarTitle}</h4>
-        <span class="reports-calendar-total">${formatDuration(days.reduce((sum, d) => sum + d.seconds, 0))}</span>
-      </div>
-      <div class="reports-calendar-grid reports-calendar-year">
-        ${days.map(day => `
-          <div class="calendar-month-cell intensity-${getIntensity(day.seconds)}${day.isToday ? ' is-today' : ''}" title="${day.label}: ${formatDuration(day.seconds)}">
-            <span class="month-label">${day.label}</span>
-          </div>
-        `).join('')}
-      </div>
-    `;
-  }
-
-  calendarContainer.innerHTML = calendarHTML;
-}
-
 function renderReports(content, report, range) {
   content.innerHTML = `
     <div class="reports-page">
+      <section class="app-panel overview-time-card">
+        <div class="overview-card-header">
+          <div>
+            <h3>Time Period</h3>
+            <p class="overview-subtitle">Select date range for reports</p>
+          </div>
+          <div class="overview-chart-toolbar">
+            <div class="overview-date-filter">
+              <input
+                class="calendar-input"
+                id="reports-range"
+                type="text"
+                readonly
+                data-start="${escapeHtml(range.start)}"
+                data-end="${escapeHtml(range.end)}"
+              />
+            </div>
+          </div>
+        </div>
+        <div class="reports-period-presets">
+          <button class="period-preset-btn" data-preset="today" type="button">Today</button>
+          <button class="period-preset-btn" data-preset="week" type="button">This Week</button>
+          <button class="period-preset-btn is-active" data-preset="month" type="button">This Month</button>
+          <button class="period-preset-btn" data-preset="year" type="button">This Year</button>
+          <button class="period-preset-btn" data-preset="30days" type="button">Last 30 Days</button>
+          <button class="period-preset-btn" data-preset="90days" type="button">Last 90 Days</button>
+        </div>
+      </section>
+
       <section class="reports-metrics">
         <article class="project-stat-card">
           <span class="project-stat-label">Total focus</span>
@@ -1425,33 +1358,8 @@ function renderReports(content, report, range) {
         <article class="project-stat-card">
           <span class="project-stat-label">Top category</span>
           <span class="project-stat-value" id="reports-top">-</span>
-          <span class="project-stat-meta">${escapeHtml(range.start)} - ${escapeHtml(range.end)}</span>
+          <span class="project-stat-meta" id="reports-range-display">${escapeHtml(range.start)} - ${escapeHtml(range.end)}</span>
         </article>
-      </section>
-
-      <section class="app-panel reports-calendar-card">
-        <div class="overview-card-header">
-          <div>
-            <p class="goals-label">Calendar</p>
-            <h3 class="goals-title">Daily activity</h3>
-          </div>
-          <div class="reports-period-controls">
-            <button class="period-btn" data-period="daily" type="button">Day</button>
-            <button class="period-btn" data-period="weekly" type="button">Week</button>
-            <button class="period-btn is-active" data-period="monthly" type="button">Month</button>
-            <button class="period-btn" data-period="yearly" type="button">Year</button>
-          </div>
-        </div>
-        <div id="reports-calendar-container" class="reports-calendar-container">
-          <!-- Calendar will be rendered here -->
-        </div>
-        <div id="reports-calendar-legend" class="reports-calendar-legend">
-          <span class="legend-item"><span class="legend-color legend-0"></span>0h</span>
-          <span class="legend-item"><span class="legend-color legend-1"></span>1-2h</span>
-          <span class="legend-item"><span class="legend-color legend-2"></span>2-4h</span>
-          <span class="legend-item"><span class="legend-color legend-3"></span>4-6h</span>
-          <span class="legend-item"><span class="legend-color legend-4"></span>6h+</span>
-        </div>
       </section>
 
       <section class="app-panel reports-chart-card">
@@ -1529,32 +1437,143 @@ async function bindReportsActions(container, range, initialReport) {
   const state = {
     mode: 'line',
     group: 'projects',
-    report: initialReport || { summary: [], distribution: [], total_seconds: 0 }
+    report: initialReport || { summary: [], distribution: [], total_seconds: 0 },
+    range: { ...range }
   };
 
   const modeButtons = content.querySelectorAll('[data-reports-mode]');
   const groupSelect = content.querySelector('#reports-group-select');
-  const periodButtons = content.querySelectorAll('[data-period]');
-  let currentPeriod = 'monthly';
+  const presetButtons = content.querySelectorAll('[data-preset]');
+  const rangeDisplay = content.querySelector('#reports-range-display');
+
+  const loadReportsForRange = async (start, end) => {
+    const token = ++requestToken;
+    try {
+      showToast('Loading reports...', 'info');
+      const [report, dist] = await Promise.all([
+        appApi.getReportsSummary({ start, end }),
+        appApi.getReportsSummary({ start, end, group: state.group }).catch(() => ({ distribution: [] }))
+      ]);
+
+      if (signal.aborted || token !== requestToken) return;
+
+      state.report = report;
+      state.report.distribution = dist.distribution || [];
+      state.range = { start, end };
+
+      // Update range display
+      if (rangeDisplay) {
+        rangeDisplay.textContent = `${start} - ${end}`;
+      }
+
+      paintReportsView(content, state);
+      showToast('Reports updated', 'success');
+    } catch (error) {
+      if (!signal.aborted) {
+        showToast(error.message || 'Failed to load reports', 'error');
+      }
+    }
+  };
 
   const repaint = () => {
     paintReportsView(content, state);
-    renderReportsCalendar(content, state.report.summary || [], currentPeriod);
   };
 
-  // Initial calendar render
-  renderReportsCalendar(content, state.report.summary || [], currentPeriod);
+  // Handle Litepicker date range
+  (async () => {
+    const rangeInput = content.querySelector('#reports-range');
+    if (!rangeInput) return;
 
-  // Handle period buttons
-  periodButtons.forEach((button) => {
-    button.addEventListener('click', () => {
-      const period = button.dataset.period;
-      if (!period) return;
-      currentPeriod = period;
-      periodButtons.forEach((btn) => {
-        btn.classList.toggle('is-active', btn === button);
+    const hasLitepicker = await ensureLitepickerAssets();
+    const startValue = rangeInput.dataset.start || range.start;
+    const endValue = rangeInput.dataset.end || range.end;
+
+    if (hasLitepicker && window.Litepicker) {
+      const today = new Date();
+      const startDate = new Date(`${startValue}T00:00:00`);
+      const endDate = new Date(`${endValue}T00:00:00`);
+
+      const pickerInstance = new window.Litepicker({
+        element: rangeInput,
+        singleMode: false,
+        startDate,
+        endDate,
+        showTooltip: false,
+        numberOfMonths: 1,
+        numberOfColumns: 1,
+        format: 'YYYY-MM-DD'
       });
-      renderReportsCalendar(content, state.report.summary || [], currentPeriod);
+
+      rangeInput.value = `${pickerInstance.getStartDate().format('YYYY-MM-DD')} → ${pickerInstance.getEndDate().format('YYYY-MM-DD')}`;
+
+      pickerInstance.on('selected', (date1, date2) => {
+        if (!date1 || !date2) return;
+        const newStart = date1.format('YYYY-MM-DD');
+        const newEnd = date2.format('YYYY-MM-DD');
+        loadReportsForRange(newStart, newEnd);
+
+        // Remove active state from preset buttons
+        presetButtons.forEach(btn => btn.classList.remove('is-active'));
+      });
+    }
+  })();
+
+  // Handle preset buttons
+  presetButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      const preset = button.dataset.preset;
+      if (!preset) return;
+
+      const today = new Date();
+      let startDate, endDate;
+
+      switch (preset) {
+        case 'today':
+          startDate = new Date(today);
+          endDate = new Date(today);
+          break;
+        case 'week':
+          const dayOfWeek = today.getDay();
+          startDate = new Date(today);
+          startDate.setDate(today.getDate() - dayOfWeek);
+          endDate = new Date(today);
+          break;
+        case 'month':
+          startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+          endDate = new Date(today);
+          break;
+        case 'year':
+          startDate = new Date(today.getFullYear(), 0, 1);
+          endDate = new Date(today);
+          break;
+        case '30days':
+          startDate = new Date(today);
+          startDate.setDate(today.getDate() - 29);
+          endDate = new Date(today);
+          break;
+        case '90days':
+          startDate = new Date(today);
+          startDate.setDate(today.getDate() - 89);
+          endDate = new Date(today);
+          break;
+        default:
+          return;
+      }
+
+      const startStr = startDate.toISOString().split('T')[0];
+      const endStr = endDate.toISOString().split('T')[0];
+
+      // Update Litepicker if exists
+      const rangeInput = content.querySelector('#reports-range');
+      if (rangeInput && window.Litepicker) {
+        rangeInput.value = `${startStr} → ${endStr}`;
+      }
+
+      loadReportsForRange(startStr, endStr);
+
+      // Update active state
+      presetButtons.forEach(btn => btn.classList.remove('is-active'));
+      button.classList.add('is-active');
     }, { signal });
   });
 
@@ -1584,12 +1603,12 @@ async function bindReportsActions(container, range, initialReport) {
       groupSelect.disabled = true;
       try {
         const report = await appApi.getReportsSummary({
-          start: range.start,
-          end: range.end,
+          start: state.range.start,
+          end: state.range.end,
           group: requestedGroup
         });
         if (signal.aborted || token !== requestToken) return;
-        state.report = report;
+        state.report.distribution = report.distribution || [];
         repaint();
       } catch (error) {
         if (!signal.aborted) {
@@ -4748,6 +4767,9 @@ async function bindHabitActions(container, currentPath, payload) {
   if (chartHost && window.GoalixaCharts && habitSeries) {
     window.GoalixaCharts.createHabitSeriesChart('[data-habit-series-chart]', habitSeries, habits);
   }
+
+  // Initialize offset button
+  initOffsetButton('habits-offset-btn');
 
   // Handle offset toggle - re-render chart when offset is toggled
   window.addEventListener('chart-offset-toggled', () => {
