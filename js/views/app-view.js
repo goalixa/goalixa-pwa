@@ -60,19 +60,19 @@ function toggleChartOffset() {
  * Update all offset button states
  */
 function updateAllOffsetButtons() {
-  document.querySelectorAll('.chart-offset-btn').forEach(btn => {
-    const icon = btn.querySelector('.chart-offset-icon');
-    const text = btn.querySelector('.chart-offset-text');
+  document.querySelectorAll('.chart-compare-btn').forEach(btn => {
+    const icon = btn.querySelector('.chart-compare-icon');
+    const text = btn.querySelector('.chart-compare-text');
     if (chartOffsetEnabled) {
       btn.classList.add('active');
-      btn.title = 'Disable 7-day offset';
-      if (icon) icon.className = 'chart-offset-icon bi bi-toggle-on';
-      if (text) text.textContent = 'Offset: ON';
+      btn.title = 'Hide comparison';
+      if (icon) icon.className = 'chart-compare-icon bi bi-calendar-week';
+      if (text) text.textContent = 'Last Week';
     } else {
       btn.classList.remove('active');
-      btn.title = 'Enable 7-day offset';
-      if (icon) icon.className = 'chart-offset-icon bi bi-toggle-off';
-      if (text) text.textContent = 'Offset: OFF';
+      btn.title = 'Compare with previous period';
+      if (icon) icon.className = 'chart-compare-icon bi bi-calendar-week';
+      if (text) text.textContent = 'Last Week';
     }
   });
 }
@@ -91,16 +91,16 @@ function initOffsetButton(buttonId) {
   };
 
   // Set initial state
-  const icon = btn.querySelector('.chart-offset-icon');
-  const text = btn.querySelector('.chart-offset-text');
+  const icon = btn.querySelector('.chart-compare-icon');
+  const text = btn.querySelector('.chart-compare-text');
   if (chartOffsetEnabled) {
     btn.classList.add('active');
-    if (icon) icon.className = 'chart-offset-icon bi bi-toggle-on';
-    if (text) text.textContent = 'Offset: ON';
+    if (icon) icon.className = 'chart-compare-icon bi bi-calendar-week';
+    if (text) text.textContent = 'Last Week';
   } else {
     btn.classList.remove('active');
-    if (icon) icon.className = 'chart-offset-icon bi bi-toggle-off';
-    if (text) text.textContent = 'Offset: OFF';
+    if (icon) icon.className = 'chart-compare-icon bi bi-calendar-week';
+    if (text) text.textContent = 'Last Week';
   }
 }
 
@@ -772,9 +772,17 @@ function renderOverview(content, overview, tasksPayload, goalsPayload, reportsPa
               />
             </div>
             <div class="mode-switch">
-              <button class="mode-button" type="button" data-overview-mode="bar">Bar</button>
-              <button class="mode-button is-active" type="button" data-overview-mode="line">Line</button>
+              <button class="mode-button" type="button" data-overview-mode="bar">
+                <i class="fas fa-chart-bar"></i> Bar
+              </button>
+              <button class="mode-button is-active" type="button" data-overview-mode="line">
+                <i class="fas fa-chart-line"></i> Line
+              </button>
             </div>
+            <button class="chart-compare-btn" id="overview-offset-btn" title="Compare with last week">
+              <i class="chart-compare-icon bi bi-calendar-week"></i>
+              <span class="chart-compare-text">Last Week</span>
+            </button>
           </div>
         </div>
 
@@ -784,13 +792,7 @@ function renderOverview(content, overview, tasksPayload, goalsPayload, reportsPa
         </div>
 
         <div class="overview-trend-panel">
-          <div class="overview-chart-header" style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
-            <div class="overview-trend-canvas" data-overview-trend-canvas style="flex: 1;"></div>
-            <button class="chart-offset-btn" id="overview-offset-btn" title="Toggle 7-day offset">
-              <i class="chart-offset-icon bi bi-toggle-on"></i>
-              <span class="chart-offset-text">Offset: ON</span>
-            </button>
-          </div>
+          <div class="overview-trend-canvas" data-overview-trend-canvas></div>
         </div>
 
         <div class="overview-time-metrics">
@@ -1450,12 +1452,16 @@ function renderReports(content, report, range) {
             <h3 class="goals-title">Time overview</h3>
           </div>
           <div class="mode-switch">
-            <button class="mode-button" type="button" data-reports-mode="bar">Bar</button>
-            <button class="mode-button is-active" type="button" data-reports-mode="line">Line</button>
+            <button class="mode-button" type="button" data-reports-mode="bar">
+              <i class="fas fa-chart-bar"></i> Bar
+            </button>
+            <button class="mode-button is-active" type="button" data-reports-mode="line">
+              <i class="fas fa-chart-line"></i> Line
+            </button>
           </div>
-          <button class="chart-offset-btn" id="reports-offset-btn" title="Toggle 7-day offset">
-            <i class="chart-offset-icon bi bi-toggle-on"></i>
-            <span class="chart-offset-text">Offset: ON</span>
+          <button class="chart-compare-btn" id="reports-offset-btn" title="Compare with previous period">
+            <i class="chart-compare-icon bi bi-calendar-week"></i>
+            <span class="chart-compare-text">Last Week</span>
           </button>
         </div>
         <div class="reports-trend-host" data-reports-trend></div>
@@ -4879,9 +4885,9 @@ function renderHabits(content, payload) {
           </div>
           <div style="display: flex; align-items: center; gap: 10px;">
             <span class="habit-chart-note">Last 14 days</span>
-            <button class="chart-offset-btn" id="habits-offset-btn" title="Toggle 7-day offset">
-              <i class="chart-offset-icon bi bi-toggle-on"></i>
-              <span class="chart-offset-text">Offset: ON</span>
+            <button class="chart-compare-btn" id="habits-offset-btn" title="Compare with previous period">
+              <i class="chart-compare-icon bi bi-calendar-week"></i>
+              <span class="chart-compare-text">Last Week</span>
             </button>
           </div>
         </div>

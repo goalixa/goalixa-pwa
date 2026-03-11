@@ -18,19 +18,19 @@ function getOffsetEnabled() {
  */
 function updateOffsetButtons() {
   const enabled = getOffsetEnabled();
-  document.querySelectorAll('.chart-offset-btn').forEach(btn => {
-    const icon = btn.querySelector('.chart-offset-icon');
-    const text = btn.querySelector('.chart-offset-text');
+  document.querySelectorAll('.chart-compare-btn').forEach(btn => {
+    const icon = btn.querySelector('.chart-compare-icon');
+    const text = btn.querySelector('.chart-compare-text');
     if (enabled) {
       btn.classList.add('active');
-      btn.title = 'Disable 7-day offset';
-      if (icon) icon.className = 'chart-offset-icon bi bi-toggle-on';
-      if (text) text.textContent = 'Offset: ON';
+      btn.title = 'Hide comparison';
+      if (icon) icon.className = 'chart-compare-icon bi bi-calendar-week';
+      if (text) text.textContent = 'Last Week';
     } else {
       btn.classList.remove('active');
-      btn.title = 'Enable 7-day offset';
-      if (icon) icon.className = 'chart-offset-icon bi bi-toggle-off';
-      if (text) text.textContent = 'Offset: OFF';
+      btn.title = 'Compare with previous period';
+      if (icon) icon.className = 'chart-compare-icon bi bi-calendar-week';
+      if (text) text.textContent = 'Last Week';
     }
   });
 }
@@ -41,11 +41,11 @@ function updateOffsetButtons() {
 function createOffsetButton() {
   const enabled = getOffsetEnabled();
   return `
-    <button class="btn btn-sm btn-outline-secondary chart-offset-btn ${enabled ? 'active' : ''}"
-            title="${enabled ? 'Disable 7-day offset' : 'Enable 7-day offset'}"
+    <button class="chart-compare-btn ${enabled ? 'active' : ''}"
+            title="${enabled ? 'Hide comparison' : 'Compare with previous period'}"
             onclick="window.toggleChartOffset()">
-      <i class="chart-offset-icon bi bi-${enabled ? 'toggle-on' : 'toggle-off'}"></i>
-      <span class="chart-offset-text">${enabled ? 'Offset: ON' : 'Offset: OFF'}</span>
+      <i class="chart-compare-icon bi bi-calendar-week"></i>
+      <span class="chart-compare-text">Last Week</span>
     </button>
   `;
 }
@@ -212,16 +212,6 @@ function createOverviewTrendChart(containerId, currentData, mode = 'line', previ
       }
     },
     colors: chartColors,
-    title: {
-      text: isComparison ? '(Comparison: Current vs Previous Week)' : '',
-      align: 'right',
-      style: {
-        fontSize: '11px',
-        fontWeight: 400,
-        color: theme.textColor,
-        cssClass: 'apexcharts-title-offset'
-      }
-    },
     plotOptions: {
       bar: {
         borderRadius: 6,
@@ -557,16 +547,6 @@ function createReportsTrendChart(containerId, currentData, mode = 'line', previo
       }
     },
     colors: chartColors,
-    title: {
-      text: isComparison ? '(Comparison: Current vs Previous)' : '',
-      align: 'right',
-      style: {
-        fontSize: '11px',
-        fontWeight: 400,
-        color: theme.textColor,
-        cssClass: 'apexcharts-title-offset'
-      }
-    },
     plotOptions: {
       bar: {
         borderRadius: 6,
@@ -891,16 +871,6 @@ function createHabitSeriesChart(containerId, habitSeries, habits) {
       }
     },
     colors: theme.colors.slice(0, seriesData.length),
-    title: {
-      text: isOffsetEnabled ? '(+7 day offset)' : '',
-      align: 'right',
-      style: {
-        fontSize: '11px',
-        fontWeight: 400,
-        color: theme.textColor,
-        cssClass: 'apexcharts-title-offset'
-      }
-    },
     plotOptions: {
       bar: {
         borderRadius: 6,
