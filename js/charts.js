@@ -138,29 +138,60 @@ function formatDuration(seconds) {
 
 /**
  * Create overview trend chart (line or bar)
+ * @param {string} containerId - CSS selector for chart container
+ * @param {Array} currentData - Current week data
+ * @param {string} mode - Chart mode ('line' or 'bar')
+ * @param {Array} previousData - Optional previous week data for comparison
  */
-function createOverviewTrendChart(containerId, data, mode = 'line') {
+function createOverviewTrendChart(containerId, currentData, mode = 'line', previousData = null) {
   const theme = getChartTheme();
 
   // Destroy existing chart if any
   destroyChart(containerId);
 
-  const series = data.map(item => Number(item.seconds || 0));
-  const categories = data.map(item => {
+  const isOffsetEnabled = getOffsetEnabled();
+  const isComparison = isOffsetEnabled && previousData && Array.isArray(previousData) && previousData.length > 0;
+
+  // Build categories (x-axis labels)
+  const categories = currentData.map(item => {
     const rawLabel = item?.label || item?.date || item?.day || '';
-    // Apply offset only if enabled
-    const offsetLabel = getOffsetEnabled() ? formatDateLabelWithOffset(rawLabel, 7) : rawLabel;
-    // Compact label
-    return offsetLabel.length > 8 ? offsetLabel.substring(0, 6) + '..' : offsetLabel;
+    // In comparison mode, use the current week labels without offset
+    // The previous week data is shown on the same timeline for comparison
+    return rawLabel.length > 8 ? rawLabel.substring(0, 6) + '..' : rawLabel;
   });
 
-  const isOffsetEnabled = getOffsetEnabled();
+  // Build series data
+  let chartSeries = [];
+  let chartColors = [];
 
-  const options = {
-    series: [{
+  if (isComparison) {
+    // Comparison mode: show both current and previous week
+    const currentSeries = currentData.map(item => Number(item.seconds || 0));
+    const previousSeries = previousData.map(item => Number(item.seconds || 0));
+
+    chartSeries = [
+      {
+        name: 'Previous Week',
+        data: previousSeries
+      },
+      {
+        name: 'Current Week',
+        data: currentSeries
+      }
+    ];
+    chartColors = [theme.colors[4], theme.colors[0]]; // Red for previous, Indigo for current
+  } else {
+    // Single series mode
+    const series = currentData.map(item => Number(item.seconds || 0));
+    chartSeries = [{
       name: 'Focus Time',
       data: series
-    }],
+    }];
+    chartColors = [theme.colors[0]];
+  }
+
+  const options = {
+    series: chartSeries,
     chart: {
       type: mode === 'bar' ? 'bar' : 'area',
       height: 250,
@@ -180,9 +211,9 @@ function createOverviewTrendChart(containerId, data, mode = 'line') {
         }
       }
     },
-    colors: [theme.colors[0]],
+    colors: chartColors,
     title: {
-      text: isOffsetEnabled ? '(+7 day offset)' : '',
+      text: isComparison ? '(Comparison: Current vs Previous Week)' : '',
       align: 'right',
       style: {
         fontSize: '11px',
@@ -201,29 +232,29 @@ function createOverviewTrendChart(containerId, data, mode = 'line') {
       }
     },
     markers: {
-      size: 6,
-      colors: [theme.colors[0]],
+      size: isComparison ? [4, 6] : 6,
+      colors: chartColors,
       strokeColors: theme.isDark ? '#0f172a' : '#ffffff',
-      strokeWidth: 2,
+      strokeWidth: isComparison ? [1, 2] : 2,
       hover: {
-        size: 8
-      },
-      discrete: []
+        size: isComparison ? [5, 8] : 8
+      }
     },
     dataLabels: {
       enabled: false
     },
     stroke: {
       curve: 'smooth',
-      width: mode === 'bar' ? 0 : 3,
+      width: mode === 'bar' ? 0 : (isComparison ? [2, 3] : 3),
+      dashArray: isComparison ? [5, 0] : 0,
       lineCap: 'round'
     },
     fill: {
       type: mode === 'bar' ? 'solid' : 'gradient',
       gradient: {
         shadeIntensity: 1,
-        opacityFrom: 0.6,
-        opacityTo: 0.1,
+        opacityFrom: isComparison ? [0.3, 0.6] : 0.6,
+        opacityTo: isComparison ? [0.02, 0.1] : 0.1,
         stops: [0, 90, 100]
       }
     },
@@ -282,14 +313,11 @@ function createOverviewTrendChart(containerId, data, mode = 'line') {
         fontFamily: 'Poppins, sans-serif'
       },
       y: {
-        formatter: (value) => formatDuration(value),
-        title: {
-          formatter: () => 'Focus Time'
-        }
+        formatter: (value) => formatDuration(value)
       },
       x: {
         formatter: (value, { series, seriesIndex, dataPointIndex, w }) => {
-          const fullLabel = data[dataPointIndex]?.label || data[dataPointIndex]?.date || data[dataPointIndex]?.day || value;
+          const fullLabel = currentData[dataPointIndex]?.label || currentData[dataPointIndex]?.date || currentData[dataPointIndex]?.day || value;
           return fullLabel;
         }
       }
@@ -458,28 +486,59 @@ function createDistributionDonut(containerId, distribution, totalSeconds = 0) {
 
 /**
  * Create reports trend chart
+ * @param {string} containerId - CSS selector for chart container
+ * @param {Array} currentData - Current period data
+ * @param {string} mode - Chart mode ('line' or 'bar')
+ * @param {Array} previousData - Optional previous period data for comparison
  */
-function createReportsTrendChart(containerId, data, mode = 'line') {
+function createReportsTrendChart(containerId, currentData, mode = 'line', previousData = null) {
   const theme = getChartTheme();
 
   // Destroy existing chart if any
   destroyChart(containerId);
 
-  const series = data.map(item => Number(item.seconds || 0));
-  const categories = data.map(item => {
+  const isOffsetEnabled = getOffsetEnabled();
+  const isComparison = isOffsetEnabled && previousData && Array.isArray(previousData) && previousData.length > 0;
+
+  // Build categories (x-axis labels)
+  const categories = currentData.map(item => {
     const rawLabel = item?.label || item?.date || item?.day || '';
-    // Apply offset only if enabled
-    const offsetLabel = getOffsetEnabled() ? formatDateLabelWithOffset(rawLabel, 7) : rawLabel;
-    return offsetLabel.length > 10 ? offsetLabel.substring(0, 8) + '..' : offsetLabel;
+    // In comparison mode, use the current period labels without offset
+    return rawLabel.length > 10 ? rawLabel.substring(0, 8) + '..' : rawLabel;
   });
 
-  const isOffsetEnabled = getOffsetEnabled();
+  // Build series data
+  let chartSeries = [];
+  let chartColors = [];
 
-  const options = {
-    series: [{
+  if (isComparison) {
+    // Comparison mode: show both current and previous period
+    const currentSeries = currentData.map(item => Number(item.seconds || 0));
+    const previousSeries = previousData.map(item => Number(item.seconds || 0));
+
+    chartSeries = [
+      {
+        name: 'Previous Period',
+        data: previousSeries
+      },
+      {
+        name: 'Current Period',
+        data: currentSeries
+      }
+    ];
+    chartColors = [theme.colors[4], theme.colors[1]]; // Red for previous, Sky blue for current
+  } else {
+    // Single series mode
+    const series = currentData.map(item => Number(item.seconds || 0));
+    chartSeries = [{
       name: 'Focus Time',
       data: series
-    }],
+    }];
+    chartColors = [theme.colors[1]];
+  }
+
+  const options = {
+    series: chartSeries,
     chart: {
       type: mode === 'bar' ? 'bar' : 'area',
       height: 300,
@@ -497,9 +556,9 @@ function createReportsTrendChart(containerId, data, mode = 'line') {
         speed: 800
       }
     },
-    colors: [theme.colors[1]],
+    colors: chartColors,
     title: {
-      text: isOffsetEnabled ? '(+7 day offset)' : '',
+      text: isComparison ? '(Comparison: Current vs Previous)' : '',
       align: 'right',
       style: {
         fontSize: '11px',
@@ -518,12 +577,12 @@ function createReportsTrendChart(containerId, data, mode = 'line') {
       }
     },
     markers: {
-      size: 6,
-      colors: [theme.colors[1]],
+      size: isComparison ? [4, 6] : 6,
+      colors: chartColors,
       strokeColors: theme.isDark ? '#0f172a' : '#ffffff',
-      strokeWidth: 2,
+      strokeWidth: isComparison ? [1, 2] : 2,
       hover: {
-        size: 8
+        size: isComparison ? [5, 8] : 8
       }
     },
     dataLabels: {
@@ -531,15 +590,16 @@ function createReportsTrendChart(containerId, data, mode = 'line') {
     },
     stroke: {
       curve: 'smooth',
-      width: mode === 'bar' ? 0 : 3,
+      width: mode === 'bar' ? 0 : (isComparison ? [2, 3] : 3),
+      dashArray: isComparison ? [5, 0] : 0,
       lineCap: 'round'
     },
     fill: {
       type: mode === 'bar' ? 'solid' : 'gradient',
       gradient: {
         shadeIntensity: 1,
-        opacityFrom: 0.5,
-        opacityTo: 0.05,
+        opacityFrom: isComparison ? [0.3, 0.5] : 0.5,
+        opacityTo: isComparison ? [0.02, 0.05] : 0.05,
         stops: [0, 90, 100]
       }
     },
@@ -602,14 +662,11 @@ function createReportsTrendChart(containerId, data, mode = 'line') {
         fontFamily: 'Poppins, sans-serif'
       },
       y: {
-        formatter: (value) => formatDuration(value),
-        title: {
-          formatter: () => 'Focus Time'
-        }
+        formatter: (value) => formatDuration(value)
       },
       x: {
         formatter: (value, { series, seriesIndex, dataPointIndex, w }) => {
-          const fullLabel = data[dataPointIndex]?.label || data[dataPointIndex]?.date || data[dataPointIndex]?.day || value;
+          const fullLabel = currentData[dataPointIndex]?.label || currentData[dataPointIndex]?.date || currentData[dataPointIndex]?.day || value;
           return fullLabel;
         }
       }

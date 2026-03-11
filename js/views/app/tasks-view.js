@@ -518,7 +518,7 @@ export async function bindTasksSection(container, initialPayload = {}, projects 
     }
   };
 
-  const paintTaskBoards = () => {
+  let paintTaskBoards = () => {
     const sortedActive = sortTasksByMode(tasksPayload.tasks, currentSort);
     const sortedDoneToday = sortTasksByMode(tasksPayload.doneTodayTasks, currentSort);
     const sortedCompleted = sortTasksByMode(tasksPayload.completedTasks, currentSort);

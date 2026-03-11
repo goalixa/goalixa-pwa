@@ -407,6 +407,20 @@ function lastSevenDaysRange() {
   };
 }
 
+function previousSevenDaysRange() {
+  const end = new Date();
+  const start = new Date(end.getTime() - 6 * 24 * 60 * 60 * 1000);
+  // Shift back by 7 days for previous week
+  const prevEnd = new Date(start.getTime() - 24 * 60 * 60 * 1000);
+  const prevStart = new Date(prevEnd.getTime() - 6 * 24 * 60 * 60 * 1000);
+  return {
+    start: prevStart.toISOString().slice(0, 10),
+    end: prevEnd.toISOString().slice(0, 10),
+    startIso: prevStart.toISOString(),
+    endIso: prevEnd.toISOString()
+  };
+}
+
 function clearOverviewView() {
   if (typeof overviewViewCleanup === 'function') {
     overviewViewCleanup();
@@ -500,10 +514,47 @@ function bindOverviewCharts(content, summary, distribution, habits) {
     fullLabel: String(item?.label || item?.date || item?.day || `Day ${index + 1}`)
   })) : [];
 
+  // Store for later use in comparison mode
+  let previousWeekData = null;
+
+  // Function to render chart with optional comparison data
+  const renderChart = async (showComparison = false) => {
+    if (!window.GoalixaCharts || normalizedSummary.length === 0) return;
+
+    if (showComparison && !previousWeekData) {
+      // Fetch previous week data for comparison
+      try {
+        const prevRange = previousSevenDaysRange();
+        const prevData = await appApi.getReportsSummary({
+          start: prevRange.start,
+          end: prevRange.end
+        });
+        previousWeekData = Array.isArray(prevData.summary) ? prevData.summary.map((item, index) => ({
+          label: compactOverviewLabel(item?.label || item?.date || item?.day, `D${index + 1}`),
+          seconds: Number(item.seconds || 0),
+          fullLabel: String(item?.label || item?.date || item?.day || `Day ${index + 1}`)
+        })) : [];
+      } catch (error) {
+        console.error('[Overview] Failed to fetch previous week data:', error);
+        previousWeekData = [];
+      }
+    }
+
+    // If comparison is disabled, clear previous data
+    if (!showComparison) {
+      previousWeekData = null;
+    }
+
+    window.GoalixaCharts.createOverviewTrendChart(
+      '[data-overview-trend-canvas]',
+      normalizedSummary,
+      'line',
+      previousWeekData
+    );
+  };
+
   // Initialize trend chart
-  if (window.GoalixaCharts && normalizedSummary.length > 0) {
-    window.GoalixaCharts.createOverviewTrendChart('[data-overview-trend-canvas]', normalizedSummary, 'line');
-  }
+  renderChart(chartOffsetEnabled);
 
   // Initialize offset button
   initOffsetButton('overview-offset-btn');
@@ -536,7 +587,7 @@ function bindOverviewCharts(content, summary, distribution, habits) {
   let currentMode = 'line';
 
   modeButtons.forEach((button) => {
-    button.addEventListener('click', () => {
+    button.addEventListener('click', async () => {
       const requestedMode = button.dataset.overviewMode;
       if (!requestedMode || (requestedMode !== 'line' && requestedMode !== 'bar')) return;
 
@@ -545,17 +596,46 @@ function bindOverviewCharts(content, summary, distribution, habits) {
         candidate.classList.toggle('is-active', candidate === button);
       });
 
-      // Recreate chart with new mode
+      // Recreate chart with new mode and comparison state
       if (window.GoalixaCharts) {
-        window.GoalixaCharts.createOverviewTrendChart('[data-overview-trend-canvas]', normalizedSummary, currentMode);
+        if (chartOffsetEnabled && previousWeekData) {
+          window.GoalixaCharts.createOverviewTrendChart('[data-overview-trend-canvas]', normalizedSummary, currentMode, previousWeekData);
+        } else {
+          window.GoalixaCharts.createOverviewTrendChart('[data-overview-trend-canvas]', normalizedSummary, currentMode);
+        }
       }
     }, { signal });
   });
 
   // Handle offset toggle - re-render chart when offset is toggled
-  window.addEventListener('chart-offset-toggled', () => {
-    if (window.GoalixaCharts && normalizedSummary.length > 0) {
+  window.addEventListener('chart-offset-toggled', async () => {
+    if (!window.GoalixaCharts || normalizedSummary.length === 0) return;
+
+    if (chartOffsetEnabled && !previousWeekData) {
+      // Fetch previous week data when enabling offset
+      try {
+        const prevRange = previousSevenDaysRange();
+        const prevData = await appApi.getReportsSummary({
+          start: prevRange.start,
+          end: prevRange.end
+        });
+        previousWeekData = Array.isArray(prevData.summary) ? prevData.summary.map((item, index) => ({
+          label: compactOverviewLabel(item?.label || item?.date || item?.day, `D${index + 1}`),
+          seconds: Number(item.seconds || 0),
+          fullLabel: String(item?.label || item?.date || item?.day || `Day ${index + 1}`)
+        })) : [];
+      } catch (error) {
+        console.error('[Overview] Failed to fetch previous week data:', error);
+        previousWeekData = [];
+      }
+    }
+
+    // Render chart with or without comparison
+    if (chartOffsetEnabled && previousWeekData) {
+      window.GoalixaCharts.createOverviewTrendChart('[data-overview-trend-canvas]', normalizedSummary, currentMode, previousWeekData);
+    } else {
       window.GoalixaCharts.createOverviewTrendChart('[data-overview-trend-canvas]', normalizedSummary, currentMode);
+      previousWeekData = null; // Clear data when offset is disabled
     }
   }, { signal });
 
@@ -1275,7 +1355,8 @@ function paintReportsView(content, state) {
 
   // Use ApexCharts for trend chart
   if (trendHost && window.GoalixaCharts) {
-    window.GoalixaCharts.createReportsTrendChart('[data-reports-trend]', summaryRows, state.mode);
+    const previousData = state.previousReport ? normalizeReportSummary(state.previousReport.summary) : null;
+    window.GoalixaCharts.createReportsTrendChart('[data-reports-trend]', summaryRows, state.mode, previousData);
   }
 
   // Initialize offset button
@@ -1438,7 +1519,8 @@ async function bindReportsActions(container, range, initialReport) {
     mode: 'line',
     group: 'projects',
     report: initialReport || { summary: [], distribution: [], total_seconds: 0 },
-    range: { ...range }
+    range: { ...range },
+    previousReport: null
   };
 
   const modeButtons = content.querySelectorAll('[data-reports-mode]');
@@ -1460,6 +1542,32 @@ async function bindReportsActions(container, range, initialReport) {
       state.report = report;
       state.report.distribution = dist.distribution || [];
       state.range = { start, end };
+
+      // Clear previous report data when range changes
+      state.previousReport = null;
+
+      // Re-fetch previous data if offset is enabled
+      if (chartOffsetEnabled) {
+        try {
+          const startDate = new Date(start + 'T00:00:00');
+          const endDate = new Date(end + 'T00:00:00');
+          const dayDiff = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+
+          const prevEndDate = new Date(startDate);
+          prevEndDate.setDate(prevEndDate.getDate() - 1);
+          const prevStartDate = new Date(prevEndDate);
+          prevStartDate.setDate(prevStartDate.getDate() - dayDiff + 1);
+
+          const prevStartStr = prevStartDate.toISOString().split('T')[0];
+          const prevEndStr = prevEndDate.toISOString().split('T')[0];
+
+          const prevReport = await appApi.getReportsSummary({ start: prevStartStr, end: prevEndStr });
+          state.previousReport = prevReport;
+        } catch (error) {
+          console.error('[Reports] Failed to fetch previous period data:', error);
+          state.previousReport = null;
+        }
+      }
 
       // Update range display
       if (rangeDisplay) {
@@ -1590,7 +1698,34 @@ async function bindReportsActions(container, range, initialReport) {
   });
 
   // Handle offset toggle - re-render chart when offset is toggled
-  window.addEventListener('chart-offset-toggled', () => {
+  window.addEventListener('chart-offset-toggled', async () => {
+    if (!chartOffsetEnabled) {
+      // Clear previous data when offset is disabled
+      state.previousReport = null;
+    } else if (!state.previousReport) {
+      // Fetch previous period data when enabling offset
+      try {
+        // Calculate previous period range
+        const startDate = new Date(state.range.start + 'T00:00:00');
+        const endDate = new Date(state.range.end + 'T00:00:00');
+        const dayDiff = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+
+        // Previous period is the same duration immediately before current period
+        const prevEndDate = new Date(startDate);
+        prevEndDate.setDate(prevEndDate.getDate() - 1);
+        const prevStartDate = new Date(prevEndDate);
+        prevStartDate.setDate(prevStartDate.getDate() - dayDiff + 1);
+
+        const prevStartStr = prevStartDate.toISOString().split('T')[0];
+        const prevEndStr = prevEndDate.toISOString().split('T')[0];
+
+        const prevReport = await appApi.getReportsSummary({ start: prevStartStr, end: prevEndStr });
+        state.previousReport = prevReport;
+      } catch (error) {
+        console.error('[Reports] Failed to fetch previous period data:', error);
+        state.previousReport = null;
+      }
+    }
     repaint();
   }, { signal });
 
