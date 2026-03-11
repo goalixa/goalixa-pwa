@@ -5849,6 +5849,64 @@ footer {
   border-radius: 999px;
 }
 
+.pomodoro-card--compact {
+  padding: 12px;
+  gap: 12px;
+}
+
+.pomodoro-compact-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pomodoro-card--compact .pomodoro-ring {
+  width: 120px;
+  height: 120px;
+}
+
+.pomodoro-card--compact .pomodoro-dial {
+  font-size: 1.6rem;
+}
+
+.pomodoro-compact-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.pomodoro-compact-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pomodoro-compact-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pomodoro-task-select {
+  flex: 1;
+  min-width: 140px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid var(--border, #d8e0f0);
+  padding: 0 10px;
+  background: var(--white);
+  color: var(--dark);
+  font-size: 0.9rem;
+}
+
+[data-theme="dark"] .pomodoro-task-select {
+  background: rgba(26, 38, 57, 0.7);
+  border-color: rgba(42, 54, 80, 0.6);
+  color: #f1f5f9;
+}
+
 .timer-task-create-card {
   padding: 12px 14px;
   display: grid;

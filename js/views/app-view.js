@@ -11,6 +11,7 @@ import { getTheme, toggleTheme } from '../theme.js';
 import { bindTasksSection, clearTasksView, renderTasksSection } from './app/tasks-view.js';
 import { openTaskEditModal, closeTaskEditModal } from '../components/task-edit-modal.js';
 import { openProjectEditModal, closeProjectEditModal } from '../components/project-edit-modal.js';
+import { createPomodoroController } from '../pomodoro.js';
 
 const NAV_ITEMS = [
   { key: 'overview', label: 'Overview', icon: 'fa-chart-line' },
@@ -923,6 +924,69 @@ function renderOverview(content, overview, tasksPayload, goalsPayload, reportsPa
             </div>
           </div>
         </article>
+
+        <article class="app-panel overview-chart-card overview-pomodoro-card" data-pomodoro-root="overview">
+          <div class="overview-card-header">
+            <div>
+              <p class="goals-label">Focus</p>
+              <h3 class="goals-title">Quick Pomodoro</h3>
+            </div>
+          </div>
+          <div class="pomodoro-card pomodoro-card--compact">
+            <div class="pomodoro-compact-main">
+              <div class="pomodoro-ring" data-pomodoro-ring>
+                <div class="pomodoro-dial" data-pomodoro-display>25:00</div>
+                <span class="pomodoro-caption">Remaining</span>
+              </div>
+              <div class="pomodoro-compact-meta">
+                <p class="pomodoro-label">Pomodoro</p>
+                <h4 class="pomodoro-mode" data-pomodoro-mode>Focus</h4>
+                <p class="pomodoro-task" data-pomodoro-task>No task selected</p>
+                <p class="pomodoro-meta" data-pomodoro-meta>Session 1 of 4</p>
+                <div class="pomodoro-dots">
+                  <span data-session-dot="1"></span>
+                  <span data-session-dot="2"></span>
+                  <span data-session-dot="3"></span>
+                  <span data-session-dot="4"></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="pomodoro-compact-actions pomodoro-controls">
+              <button class="btn btn-primary btn-sm" type="button" data-pomodoro-toggle>
+                <i class="bi bi-play-fill" data-pomodoro-toggle-icon></i>
+                <span data-pomodoro-toggle-text>Start</span>
+              </button>
+              <button class="btn btn-outline-secondary btn-sm" type="button" data-pomodoro-skip>
+                <i class="bi bi-skip-forward-fill"></i>
+                Skip
+              </button>
+              <button class="btn btn-outline-success btn-sm" type="button" data-pomodoro-done>
+                <i class="bi bi-check2-circle"></i>
+                Done today
+              </button>
+            </div>
+
+            <div class="pomodoro-presets pomodoro-presets--compact">
+              <button class="btn btn-light btn-sm" type="button" data-pomodoro-mode="work">25</button>
+              <button class="btn btn-light btn-sm" type="button" data-pomodoro-mode="short">5</button>
+              <button class="btn btn-light btn-sm" type="button" data-pomodoro-mode="long">15</button>
+            </div>
+
+            <div class="pomodoro-compact-picker">
+              <select class="pomodoro-task-select" data-pomodoro-task-picker>
+                <option value="">Select task</option>
+                ${recentTasks.map((task) => `
+                  <option value="${task.id}">${escapeHtml(task.name || 'Task')}</option>
+                `).join('')}
+              </select>
+              <button class="btn btn-outline-secondary btn-sm" type="button" data-pomodoro-task-clear>
+                <i class="bi bi-x-circle"></i>
+                Clear
+              </button>
+            </div>
+          </div>
+        </article>
       </section>
 
       <section class="app-panel">
@@ -947,6 +1011,25 @@ function renderOverview(content, overview, tasksPayload, goalsPayload, reportsPa
   `;
 
   bindOverviewCharts(content, summary, distribution, habits);
+
+  const overviewPomodoroCleanup = createPomodoroController({
+    root: content.querySelector('[data-pomodoro-root="overview"]'),
+    appApi,
+    showToast,
+    initialTasks: recentTasks,
+    getTasks: () => appApi.getTasks(),
+    mode: 'compact'
+  });
+
+  const previousCleanup = overviewViewCleanup;
+  overviewViewCleanup = () => {
+    if (typeof previousCleanup === 'function') {
+      previousCleanup();
+    }
+    if (typeof overviewPomodoroCleanup === 'function') {
+      overviewPomodoroCleanup();
+    }
+  };
 }
 
 function normalizeProjectLabels(labels) {
@@ -2221,18 +2304,13 @@ async function bindTimerActions(container, currentPath, metadata = {}) {
 
   const abortController = new AbortController();
   const { signal } = abortController;
-  let intervalId = null;
   let pickerInstance = null;
-
-  const stopInterval = () => {
-    if (intervalId) {
-      clearInterval(intervalId);
-      intervalId = null;
-    }
-  };
+  let pomodoroCleanup = null;
 
   timerViewCleanup = () => {
-    stopInterval();
+    if (typeof pomodoroCleanup === 'function') {
+      pomodoroCleanup();
+    }
     if (pickerInstance && typeof pickerInstance.destroy === 'function') {
       pickerInstance.destroy();
     }
@@ -2416,718 +2494,14 @@ async function bindTimerActions(container, currentPath, metadata = {}) {
     toggleTaskDetails(toggle);
   }, { signal });
 
-  const baseTitle = document.title;
-  const presets = {
-    work: 25 * 60,
-    short: 5 * 60,
-    long: 15 * 60
-  };
-  const storageKey = 'pomodoroState';
-  let cachedTasks = [];
-  let selectedTaskIds = new Set();
-  let audioContext = null;
-
-  const defaultState = {
-    mode: 'work',
-    remaining: presets.work,
-    isRunning: false,
-    completedWork: 0,
-    lastTick: null,
-    taskId: null,
-    taskIds: [],
-    taskNames: [],
-    taskRunning: false
-  };
-
-  const pomodoroDisplay = content.querySelector('#pomodoro-display');
-  const pomodoroMode = content.querySelector('#pomodoro-mode');
-  const pomodoroTask = content.querySelector('#pomodoro-task');
-  const pomodoroMeta = content.querySelector('#pomodoro-meta');
-  const pomodoroRing = content.querySelector('.pomodoro-ring');
-  const pomodoroDots = content.querySelectorAll('[data-session-dot]');
-  const toggleButton = content.querySelector('#pomodoro-toggle');
-  const toggleIcon = content.querySelector('#pomodoro-toggle-icon');
-  const toggleText = content.querySelector('#pomodoro-toggle-text');
-  const resetButton = content.querySelector('#pomodoro-reset');
-  const skipButton = content.querySelector('#pomodoro-skip');
-  const doneButton = content.querySelector('#pomodoro-done');
-  const presetButtons = content.querySelectorAll('[data-pomodoro-mode]');
-
-  const modeLabel = (mode) => {
-    if (mode === 'short') return 'Short Break';
-    if (mode === 'long') return 'Long Break';
-    return 'Focus';
-  };
-
-  const loadState = () => {
-    try {
-      const raw = localStorage.getItem(storageKey);
-      if (!raw) return { ...defaultState };
-      return { ...defaultState, ...JSON.parse(raw) };
-    } catch (_error) {
-      return { ...defaultState };
-    }
-  };
-
-  const saveState = (state) => {
-    localStorage.setItem(storageKey, JSON.stringify(state));
-  };
-
-  const normalizeStateTaskIds = (state) => {
-    const ids = Array.isArray(state.taskIds)
-      ? state.taskIds
-      : state.taskId
-        ? [state.taskId]
-        : [];
-    const normalized = [];
-    const seen = new Set();
-    ids.forEach((id) => {
-      const parsed = Number.parseInt(String(id), 10);
-      if (!Number.isFinite(parsed) || parsed <= 0 || seen.has(parsed)) return;
-      seen.add(parsed);
-      normalized.push(parsed);
-    });
-    state.taskIds = normalized;
-    state.taskId = normalized.length ? normalized[0] : null;
-    if (!Array.isArray(state.taskNames)) {
-      state.taskNames = [];
-    }
-  };
-
-  const setStateTasks = (state, tasks) => {
-    const safeTasks = (tasks || []).filter((task) => task && task.id);
-    state.taskIds = safeTasks.map((task) => Number(task.id));
-    state.taskNames = safeTasks.map((task) => task.name || `Task #${task.id}`);
-    state.taskId = state.taskIds.length ? state.taskIds[0] : null;
-    state.taskName = state.taskNames.length ? state.taskNames[0] : null;
-  };
-
-  const updatePageTitle = (state) => {
-    if (!state.isRunning) {
-      document.title = baseTitle;
-      return;
-    }
-    normalizeStateTaskIds(state);
-    const time = formatPomodoroClock(state.remaining);
-    const mode = modeLabel(state.mode);
-    const taskLabel = state.taskIds.length > 1
-      ? ` - ${state.taskIds.length} tasks`
-      : state.taskName
-        ? ` - ${state.taskName}`
-        : '';
-    document.title = `${time} · ${mode}${taskLabel}`;
-  };
-
-  const updatePomodoroUI = (state) => {
-    if (!pomodoroDisplay || !pomodoroMode || !pomodoroMeta) return;
-    normalizeStateTaskIds(state);
-    pomodoroDisplay.textContent = formatPomodoroClock(state.remaining);
-    pomodoroMode.textContent = modeLabel(state.mode);
-    pomodoroMeta.textContent = `Session ${(state.completedWork % 4) + 1} of 4`;
-
-    if (pomodoroTask) {
-      if (!state.taskIds.length) {
-        pomodoroTask.textContent = 'No task selected';
-      } else if (state.taskIds.length === 1) {
-        pomodoroTask.textContent = state.taskName ? `Task: ${state.taskName}` : 'Task selected';
-      } else {
-        const preview = (state.taskNames || []).slice(0, 2).join(', ');
-        const extra = state.taskNames.length > 2 ? ` +${state.taskNames.length - 2}` : '';
-        pomodoroTask.textContent = preview
-          ? `Working simultaneously: ${preview}${extra}`
-          : `Working simultaneously on ${state.taskIds.length} tasks`;
-      }
-    }
-
-    if (pomodoroDots.length) {
-      const completed = state.completedWork % 4;
-      pomodoroDots.forEach((dot, index) => {
-        dot.classList.toggle('is-active', index < completed);
-        dot.classList.toggle('is-current', index === completed);
-      });
-    }
-
-    if (pomodoroRing) {
-      const total = presets[state.mode] || 0;
-      const progressValue = total > 0 ? Math.min(1, Math.max(0, state.remaining / total)) : 0;
-      pomodoroRing.style.setProperty('--pomodoro-progress', `${progressValue * 360}deg`);
-    }
-
-    const requiresTask = state.mode === 'work' && !state.taskIds.length;
-    if (toggleButton) {
-      toggleButton.disabled = requiresTask;
-      if (state.isRunning) {
-        if (toggleIcon) toggleIcon.className = 'bi bi-pause-fill';
-        if (toggleText) toggleText.textContent = 'Pause';
-        toggleButton.classList.remove('btn-primary');
-        toggleButton.classList.add('btn-outline-warning');
-      } else {
-        if (toggleIcon) toggleIcon.className = 'bi bi-play-fill';
-        if (toggleText) toggleText.textContent = requiresTask ? 'Select task' : 'Start';
-        toggleButton.classList.add('btn-primary');
-        toggleButton.classList.remove('btn-outline-warning');
-      }
-    }
-
-    if (doneButton) doneButton.disabled = !state.taskIds.length;
-    if (taskClear) taskClear.disabled = !state.taskIds.length;
-    updatePageTitle(state);
-  };
-
-  const getNextMode = (state) => {
-    if (state.mode === 'work') {
-      const nextWork = state.completedWork + 1;
-      return nextWork % 4 === 0 ? 'long' : 'short';
-    }
-    return 'work';
-  };
-
-  const applyMode = (state, mode) => {
-    const duration = presets[mode];
-    return {
-      ...state,
-      mode,
-      remaining: duration,
-      isRunning: false,
-      lastTick: null,
-      taskRunning: false
-    };
-  };
-
-  const ensureAudioContext = () => {
-    if (!audioContext) {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (AudioCtx) {
-        audioContext = new AudioCtx();
-      }
-    }
-    return audioContext;
-  };
-
-  const playChime = () => {
-    const context = ensureAudioContext();
-    if (!context) return;
-    const now = context.currentTime;
-    [523.25, 659.25, 783.99].forEach((frequency, index) => {
-      const oscillator = context.createOscillator();
-      const gain = context.createGain();
-      oscillator.type = 'sine';
-      oscillator.frequency.value = frequency;
-      gain.gain.setValueAtTime(0, now + index * 0.18);
-      gain.gain.linearRampToValueAtTime(0.2, now + index * 0.18 + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + index * 0.18 + 0.16);
-      oscillator.connect(gain);
-      gain.connect(context.destination);
-      oscillator.start(now + index * 0.18);
-      oscillator.stop(now + index * 0.18 + 0.2);
-    });
-  };
-
-  const notifyPomodoro = (completedMode) => {
-    if (completedMode === 'work') {
-      showToast('Focus complete. Time for a break.', 'success');
-    } else {
-      showToast('Break complete. Time to focus.', 'info');
-    }
-    playChime();
-  };
-
-  const applyElapsed = (state, elapsedSeconds) => {
-    const startingRemaining = state.remaining;
-    let remaining = state.remaining;
-    let mode = state.mode;
-    let completedWork = state.completedWork;
-    let secondsLeft = elapsedSeconds;
-
-    while (secondsLeft > 0) {
-      if (remaining > secondsLeft) {
-        remaining -= secondsLeft;
-        secondsLeft = 0;
-      } else {
-        secondsLeft -= remaining;
-        if (mode === 'work') {
-          completedWork += 1;
-        }
-        notifyPomodoro(mode);
-        mode = mode === 'work' ? (completedWork % 4 === 0 ? 'long' : 'short') : 'work';
-        remaining = presets[mode];
-      }
-    }
-
-    state.remaining = remaining;
-    state.mode = mode;
-    state.completedWork = completedWork;
-    if (elapsedSeconds >= startingRemaining) {
-      state.isRunning = false;
-      state.lastTick = null;
-      state.taskRunning = false;
-    }
-  };
-
-  const startTaskTimer = async (state) => {
-    normalizeStateTaskIds(state);
-    if (!state.taskIds.length || state.taskRunning) return;
-    state.taskRunning = true;
-    saveState(state);
-    try {
-      await appApi.bulkTaskAction(state.taskIds, 'start');
-    } catch (error) {
-      state.taskRunning = false;
-      saveState(state);
-      console.error(error);
-    }
-  };
-
-  const stopTaskTimer = async (state) => {
-    normalizeStateTaskIds(state);
-    if (!state.taskIds.length || !state.taskRunning) return;
-    state.taskRunning = false;
-    saveState(state);
-    try {
-      await appApi.bulkTaskAction(state.taskIds, 'stop');
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const startInterval = (state) => {
-    stopInterval();
-    state.lastTick = Date.now();
-    intervalId = setInterval(() => {
-      const now = Date.now();
-      const elapsed = Math.max(1, Math.floor((now - (state.lastTick || now)) / 1000));
-      state.lastTick = now;
-      state.remaining -= elapsed;
-
-      if (state.remaining <= 0) {
-        if (state.mode === 'work') {
-          stopTaskTimer(state);
-        }
-        notifyPomodoro(state.mode);
-        state.remaining = 0;
-        state.isRunning = false;
-        if (state.mode === 'work') {
-          state.completedWork += 1;
-        }
-        const nextMode = getNextMode(state);
-        const nextState = applyMode(state, nextMode);
-        state.mode = nextState.mode;
-        state.remaining = nextState.remaining;
-        state.lastTick = null;
-        stopInterval();
-
-        if (nextMode !== 'work') {
-          state.isRunning = true;
-          state.lastTick = Date.now();
-          startInterval(state);
-        }
-      }
-
-      saveState(state);
-      updatePomodoroUI(state);
-    }, 1000);
-  };
-
-  const mergeTaskPayload = (payload) => {
-    const merged = [
-      ...((payload && payload.tasks) || []),
-      ...((payload && payload.done_today_tasks) || []),
-      ...((payload && payload.completed_tasks) || [])
-    ];
-    const byId = new Map();
-    merged.forEach((task) => {
-      const taskId = normalizeTaskIdValue(task.id);
-      if (taskId) byId.set(taskId, task);
-    });
-    return Array.from(byId.values()).sort((a, b) => (b.total_seconds || 0) - (a.total_seconds || 0));
-  };
-
-  const filterTasks = (tasks, query) => {
-    const term = String(query || '').toLowerCase().trim();
-    return tasks.filter((task) => {
-      if ((task.status || 'active') === 'completed') return false;
-      const name = String(task.name || '').toLowerCase();
-      const project = String(task.project_name || '').toLowerCase();
-      return !term || name.includes(term) || project.includes(term);
-    });
-  };
-
-  const syncSelectedTaskIds = (tasks) => {
-    const availableIds = new Set(
-      (tasks || [])
-        .filter((task) => (task.status || 'active') !== 'completed')
-        .map((task) => normalizeTaskIdValue(task.id))
-        .filter(Boolean)
-    );
-    selectedTaskIds = new Set(Array.from(selectedTaskIds).filter((id) => availableIds.has(id)));
-  };
-
-  const updateBulkControls = (visibleTasks = []) => {
-    if (timerBulkCount) timerBulkCount.textContent = `${selectedTaskIds.size} selected`;
-    if (timerBulkApply) timerBulkApply.disabled = selectedTaskIds.size === 0;
-    if (timerBulkClear) timerBulkClear.disabled = selectedTaskIds.size === 0;
-  };
-
-  const renderTasks = (tasks, query) => {
-    if (!taskList) return;
-    syncSelectedTaskIds(tasks);
-    const filtered = filterTasks(tasks, query);
-    if (!filtered.length) {
-      taskList.innerHTML = '<div class="timer-empty-state">No tasks found.</div>';
-      updateBulkControls(filtered);
-      return;
-    }
-
-    taskList.innerHTML = filtered.map((task) => {
-      const taskId = normalizeTaskIdValue(task.id);
-      const isSelected = selectedTaskIds.has(taskId);
-      const isCompleted = (task.status || 'active') === 'completed';
-      const project = task.project_name ? ` • ${escapeHtml(task.project_name)}` : '';
-      return `
-        <div class="timer-task-option${isSelected ? ' is-selected' : ''}">
-          <label class="timer-task-check-wrap" aria-label="Select ${escapeHtml(task.name || '')}">
-            <input class="timer-task-check" type="checkbox" data-task-check-id="${taskId}" ${isSelected ? 'checked' : ''} ${isCompleted ? 'disabled' : ''} />
-          </label>
-          <button type="button" class="timer-task-pick${isCompleted ? ' is-completed' : ''}" data-task-id="${taskId}" ${isCompleted ? 'disabled' : ''}>
-            <span>${escapeHtml(task.name || '')}${project}</span>
-            <span class="timer-task-meta">${isCompleted ? 'Completed' : 'Active'} · ${formatDurationClock(task.total_seconds || 0)}</span>
-          </button>
-        </div>
-      `;
-    }).join('');
-
-    updateBulkControls(filtered);
-  };
-
-  const openDropdown = () => {
-    taskDropdown?.classList.add('is-open');
-    taskPicker?.setAttribute('aria-expanded', 'true');
-  };
-
-  const closeDropdown = () => {
-    taskDropdown?.classList.remove('is-open');
-    taskPicker?.setAttribute('aria-expanded', 'false');
-  };
-
-  const state = loadState();
-  normalizeStateTaskIds(state);
-  if (!state.taskNames.length && state.taskName) {
-    state.taskNames = [state.taskName];
-  }
-  state.taskName = state.taskName || null;
-
-  if (state.isRunning && state.lastTick) {
-    const elapsed = Math.floor((Date.now() - state.lastTick) / 1000);
-    if (elapsed > 0) {
-      applyElapsed(state, elapsed);
-    }
-  }
-
-  const startPomodoro = () => {
-    normalizeStateTaskIds(state);
-    if (state.mode === 'work' && !state.taskIds.length) {
-      showToast('Select a task for this Pomodoro.', 'warning');
-      return;
-    }
-    state.isRunning = true;
-    state.lastTick = Date.now();
-    if (state.mode === 'work') {
-      startTaskTimer(state);
-    }
-    saveState(state);
-    updatePomodoroUI(state);
-    startInterval(state);
-  };
-
-  const pausePomodoro = () => {
-    state.isRunning = false;
-    state.lastTick = null;
-    stopTaskTimer(state);
-    saveState(state);
-    updatePomodoroUI(state);
-    stopInterval();
-  };
-
-  if (state.isRunning) {
-    startInterval(state);
-  }
-  updatePomodoroUI(state);
-
-  toggleButton?.addEventListener('click', () => {
-    if (state.isRunning) {
-      pausePomodoro();
-    } else {
-      startPomodoro();
-    }
-  }, { signal });
-
-  resetButton?.addEventListener('click', () => {
-    state.mode = 'work';
-    state.remaining = presets.work;
-    state.isRunning = false;
-    state.completedWork = 0;
-    state.lastTick = null;
-    stopTaskTimer(state);
-    saveState(state);
-    updatePomodoroUI(state);
-    stopInterval();
-  }, { signal });
-
-  skipButton?.addEventListener('click', () => {
-    if (state.mode === 'work') {
-      state.completedWork += 1;
-    }
-    stopTaskTimer(state);
-    const nextMode = getNextMode(state);
-    const nextState = applyMode(state, nextMode);
-    state.mode = nextState.mode;
-    state.remaining = nextState.remaining;
-    state.isRunning = false;
-    state.lastTick = null;
-    saveState(state);
-    updatePomodoroUI(state);
-    stopInterval();
-  }, { signal });
-
-  doneButton?.addEventListener('click', async () => {
-    normalizeStateTaskIds(state);
-    if (!state.taskIds.length) {
-      showToast('Select a task to mark it done today.', 'warning');
-      return;
-    }
-    try {
-      if (state.taskIds.length === 1) {
-        await appApi.setTaskDailyCheck(state.taskIds[0]);
-      } else {
-        await appApi.bulkTaskAction(state.taskIds, 'daily-check');
-      }
-      showToast(`${state.taskIds.length} task(s) checked off for today.`, 'success');
-    } catch (error) {
-      showToast(error.message || 'Failed to mark task done', 'error');
-    }
-  }, { signal });
-
-  presetButtons.forEach((button) => {
-    button.addEventListener('click', () => {
-      const mode = button.dataset.pomodoroMode;
-      if (!mode || !presets[mode]) return;
-      stopTaskTimer(state);
-      state.mode = mode;
-      state.remaining = presets[mode];
-      state.isRunning = false;
-      state.lastTick = null;
-      saveState(state);
-      updatePomodoroUI(state);
-      stopInterval();
-    }, { signal });
+  pomodoroCleanup = createPomodoroController({
+    root: timerPage,
+    appApi,
+    showToast,
+    signal,
+    mode: 'full',
+    getTasks: () => appApi.getTasks()
   });
-
-  taskClear?.addEventListener('click', () => {
-    if (state.isRunning && state.mode === 'work') {
-      pausePomodoro();
-    }
-    state.taskId = null;
-    state.taskName = null;
-    state.taskIds = [];
-    state.taskNames = [];
-    if (taskPicker) taskPicker.value = '';
-    if (cachedTasks.length) renderTasks(cachedTasks, '');
-    saveState(state);
-    updatePomodoroUI(state);
-  }, { signal });
-
-  const selectTask = (selectedTask) => {
-    if (!selectedTask) return;
-    normalizeStateTaskIds(state);
-    if (state.isRunning) {
-      pausePomodoro();
-    }
-    setStateTasks(state, [selectedTask]);
-    state.taskRunning = Boolean(selectedTask.is_running);
-    if (taskPicker) {
-      taskPicker.value = selectedTask.name || '';
-    }
-    if (state.mode !== 'work' || state.remaining !== presets.work) {
-      state.mode = 'work';
-      state.remaining = presets.work;
-      state.isRunning = false;
-      state.lastTick = null;
-    }
-    renderTasks(cachedTasks, '');
-    closeDropdown();
-    saveState(state);
-    updatePomodoroUI(state);
-  };
-
-  const applyBulkAction = async () => {
-    const taskIds = Array.from(selectedTaskIds);
-    if (!taskIds.length) return;
-    if (timerBulkApply) timerBulkApply.disabled = true;
-    try {
-      const payload = await appApi.bulkTaskAction(taskIds, 'start');
-      cachedTasks = mergeTaskPayload(payload);
-      selectedTaskIds.clear();
-      const selectedTasks = taskIds
-        .map((taskId) => cachedTasks.find((task) => String(task.id) === String(taskId)))
-        .filter(Boolean);
-      if (selectedTasks.length) {
-        setStateTasks(state, selectedTasks);
-        state.taskRunning = true;
-        if (taskPicker) {
-          taskPicker.value = selectedTasks.length === 1 ? (selectedTasks[0].name || '') : '';
-        }
-      }
-      saveState(state);
-      updatePomodoroUI(state);
-      renderTasks(cachedTasks, taskPicker ? taskPicker.value : '');
-      showToast(`Started ${taskIds.length} task timer(s).`, 'success');
-    } catch (error) {
-      showToast(error.message || 'Failed to apply bulk timer action', 'error');
-    } finally {
-      updateBulkControls(filterTasks(cachedTasks, taskPicker ? taskPicker.value : ''));
-    }
-  };
-
-  try {
-    const tasksPayload = await appApi.getTasks();
-    cachedTasks = mergeTaskPayload(tasksPayload);
-    const runningTask = cachedTasks.find(
-      (task) => task.is_running && (task.status || 'active') !== 'completed'
-    );
-    if (runningTask && !state.taskIds.length && !state.taskId) {
-      setStateTasks(state, [runningTask]);
-      state.mode = 'work';
-      state.isRunning = true;
-      state.lastTick = Date.now();
-      state.taskRunning = true;
-      updatePomodoroUI(state);
-      startInterval(state);
-    }
-
-    if (state.taskIds.length || state.taskId) {
-      const preferredIds = state.taskIds.length ? state.taskIds : [state.taskId];
-      const selectedTasks = preferredIds
-        .map((taskId) => cachedTasks.find((task) => String(task.id) === String(taskId)))
-        .filter(Boolean);
-      if (selectedTasks.length) {
-        setStateTasks(state, selectedTasks);
-        state.taskRunning = selectedTasks.some((task) => task.is_running);
-        if (taskPicker) {
-          taskPicker.value = selectedTasks.length === 1 ? (selectedTasks[0].name || '') : '';
-        }
-        updatePomodoroUI(state);
-      } else {
-        state.isRunning = false;
-        state.lastTick = null;
-        state.taskId = null;
-        state.taskName = null;
-        state.taskIds = [];
-        state.taskNames = [];
-        state.taskRunning = false;
-        stopInterval();
-        if (taskPicker) taskPicker.value = '';
-        saveState(state);
-        updatePomodoroUI(state);
-      }
-    }
-    renderTasks(cachedTasks, taskPicker ? taskPicker.value : '');
-  } catch (error) {
-    console.error(error);
-    if (taskList) {
-      taskList.innerHTML = '<div class="timer-empty-state">Failed to load tasks.</div>';
-    }
-  }
-
-  timerQuickTaskForm?.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const name = timerQuickTaskName ? timerQuickTaskName.value.trim() : '';
-    if (!name) return;
-    const submitButton = timerQuickTaskForm.querySelector('button[type="submit"]');
-    if (submitButton) submitButton.disabled = true;
-    setQuickTaskFeedback('');
-
-    try {
-      const selectedLabelId = timerQuickTaskLabel && timerQuickTaskLabel.value ? timerQuickTaskLabel.value : '';
-      const payload = await appApi.createTask({
-        name,
-        project_id: timerQuickTaskProject && timerQuickTaskProject.value ? timerQuickTaskProject.value : null,
-        priority: timerQuickTaskPriority && timerQuickTaskPriority.value ? timerQuickTaskPriority.value : 'medium',
-        label_ids: selectedLabelId ? [selectedLabelId] : [],
-        goal_id: null
-      });
-      cachedTasks = mergeTaskPayload(payload);
-      selectedTaskIds.clear();
-      renderTasks(cachedTasks, taskPicker ? taskPicker.value : '');
-      if (timerQuickTaskName) {
-        timerQuickTaskName.value = '';
-        timerQuickTaskName.focus();
-      }
-      if (timerQuickTaskPriority) timerQuickTaskPriority.value = 'medium';
-      if (timerQuickTaskLabel) timerQuickTaskLabel.value = '';
-      setQuickTaskFeedback('Task added.', 'success');
-    } catch (error) {
-      console.error(error);
-      setQuickTaskFeedback(error.message || 'Saving failed.', 'error');
-    } finally {
-      if (submitButton) submitButton.disabled = false;
-    }
-  }, { signal });
-
-  taskPicker?.addEventListener('focus', openDropdown, { signal });
-  taskPicker?.addEventListener('click', openDropdown, { signal });
-  taskPicker?.addEventListener('input', () => {
-    openDropdown();
-    renderTasks(cachedTasks, taskPicker.value);
-  }, { signal });
-  taskPicker?.addEventListener('keydown', (event) => {
-    if (event.key === 'ArrowDown') {
-      event.preventDefault();
-      openDropdown();
-      const firstButton = taskList?.querySelector('.timer-task-pick:not([disabled])');
-      if (firstButton) firstButton.focus();
-    }
-    if (event.key === 'Enter') {
-      const candidates = filterTasks(cachedTasks, taskPicker.value).filter(
-        (task) => (task.status || 'active') !== 'completed'
-      );
-      if (candidates.length) {
-        event.preventDefault();
-        selectTask(candidates[0]);
-      }
-    }
-    if (event.key === 'Escape') {
-      closeDropdown();
-    }
-  }, { signal });
-
-  taskList?.addEventListener('click', (event) => {
-    const target = event.target instanceof HTMLElement ? event.target : null;
-    if (!target) return;
-    const button = target.closest('button.timer-task-pick[data-task-id]');
-    if (!button || button.disabled) return;
-    const selected = cachedTasks.find((task) => String(task.id) === String(button.dataset.taskId));
-    selectTask(selected);
-  }, { signal });
-
-  taskList?.addEventListener('change', (event) => {
-    const target = event.target;
-    if (!(target instanceof HTMLInputElement)) return;
-    if (!target.classList.contains('timer-task-check')) return;
-    const taskId = normalizeTaskIdValue(target.dataset.taskCheckId || target.value);
-    if (!taskId) return;
-    if (target.checked) selectedTaskIds.add(taskId);
-    else selectedTaskIds.delete(taskId);
-    renderTasks(cachedTasks, taskPicker ? taskPicker.value : '');
-  }, { signal });
-
-  timerBulkClear?.addEventListener('click', () => {
-    selectedTaskIds.clear();
-    renderTasks(cachedTasks, taskPicker ? taskPicker.value : '');
-  }, { signal });
-
-  timerBulkApply?.addEventListener('click', () => {
-    applyBulkAction();
-  }, { signal });
 
   content.addEventListener('click', async (event) => {
     const target = event.target instanceof HTMLElement ? event.target : null;
