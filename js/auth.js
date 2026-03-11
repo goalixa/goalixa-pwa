@@ -15,7 +15,7 @@ let authState = {
   isLoading: true
 };
 
-// Token refresh management
+// Token refresh management.
 let refreshPromise = null;
 let refreshAttempts = 0;
 const MAX_REFRESH_ATTEMPTS = 3;
