@@ -1128,4 +1128,13 @@ window.addEventListener('theme-changed', () => {
   updateChartsTheme();
 });
 
+// Handle offset toggle - re-render all charts when offset is toggled
+window.addEventListener('chart-offset-toggled', () => {
+  // The charts will be re-rendered by their respective view modules
+  console.log('[GoalixaCharts] Chart offset toggled');
+});
+
+// Initialize offset button states
+updateOffsetButtons();
+
 console.log('[GoalixaCharts] Enhanced charts module loaded');

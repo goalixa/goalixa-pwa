@@ -474,6 +474,13 @@ function bindOverviewCharts(content, summary, distribution, habits) {
     }, { signal });
   });
 
+  // Handle offset toggle - re-render chart when offset is toggled
+  window.addEventListener('chart-offset-toggled', () => {
+    if (window.GoalixaCharts && normalizedSummary.length > 0) {
+      window.GoalixaCharts.createOverviewTrendChart('[data-overview-trend-canvas]', normalizedSummary, currentMode);
+    }
+  }, { signal });
+
   // Handle date filter with Litepicker
   (async () => {
     const rangeInput = content.querySelector('#overview-range');
@@ -619,9 +626,12 @@ function renderOverview(content, overview, tasksPayload, goalsPayload, reportsPa
         </div>
 
         <div class="overview-trend-panel">
-          <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+          <div class="overview-chart-header" style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
             <div class="overview-trend-canvas" data-overview-trend-canvas style="flex: 1;"></div>
-            ${window.GoalixaCharts.createOffsetButton()}
+            <button class="chart-offset-btn" id="overview-offset-btn" title="Toggle 7-day offset">
+              <i class="chart-offset-icon bi bi-toggle-on"></i>
+              <span class="chart-offset-text">Offset: ON</span>
+            </button>
           </div>
         </div>
 
@@ -1216,6 +1226,183 @@ function paintReportsView(content, state) {
   if (topCategoryEl) topCategoryEl.textContent = topCategory ? `${topCategory.name} (${formatDuration(topCategory.seconds)})` : '-';
 }
 
+function renderReportsCalendar(content, summary, period = 'monthly') {
+  const calendarContainer = content.querySelector('#reports-calendar-container');
+  if (!calendarContainer) return;
+
+  const safeSummary = Array.isArray(summary) ? summary : [];
+  const summaryMap = new Map(
+    safeSummary.map(item => [
+      String(item?.label || item?.date || item?.day || ''),
+      Number(item?.seconds || 0)
+    ])
+  );
+
+  const now = new Date();
+  let days = [];
+  let calendarTitle = '';
+  let weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  if (period === 'daily') {
+    // Show hourly breakdown for today
+    calendarTitle = 'Today - Hourly';
+    const today = now.toISOString().split('T')[0];
+    for (let hour = 0; hour < 24; hour++) {
+      const key = `${today} ${String(hour).padStart(2, '0')}:00`;
+      days.push({
+        label: `${hour}:00`,
+        key: key,
+        seconds: summaryMap.get(key) || 0,
+        isToday: true
+      });
+    }
+  } else if (period === 'weekly') {
+    // Show current week
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay());
+    calendarTitle = `Week of ${startOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(startOfWeek);
+      date.setDate(startOfWeek.getDate() + i);
+      const dateStr = date.toISOString().split('T')[0];
+      const dayName = weekDays[date.getDay()];
+      days.push({
+        label: `${dayName} ${date.getDate()}`,
+        key: dateStr,
+        seconds: summaryMap.get(dateStr) || 0,
+        isToday: date.toDateString() === now.toDateString()
+      });
+    }
+  } else if (period === 'monthly') {
+    // Show current month
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    calendarTitle = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+    for (let day = 1; day <= lastDay.getDate(); day++) {
+      const date = new Date(year, month, day);
+      const dateStr = date.toISOString().split('T')[0];
+      days.push({
+        label: String(day),
+        key: dateStr,
+        seconds: summaryMap.get(dateStr) || 0,
+        isToday: date.toDateString() === now.toDateString(),
+        dayOfWeek: date.getDay()
+      });
+    }
+  } else if (period === 'yearly') {
+    // Show current year months
+    const year = now.getFullYear();
+    calendarTitle = String(year);
+
+    for (let month = 0; month < 12; month++) {
+      const monthStr = `${year}-${String(month + 1).padStart(2, '0')}`;
+      // Sum all days in the month
+      let monthTotal = 0;
+      safeSummary.forEach(item => {
+        const itemDate = String(item?.label || item?.date || item?.day || '');
+        if (itemDate.startsWith(monthStr)) {
+          monthTotal += Number(item?.seconds || 0);
+        }
+      });
+      days.push({
+        label: now.toLocaleDateString('en-US', { month: 'short' }),
+        key: monthStr,
+        seconds: monthTotal,
+        isToday: month === now.getMonth()
+      });
+    }
+  }
+
+  // Calculate max for color scaling
+  const maxSeconds = Math.max(...days.map(d => d.seconds), 1);
+
+  // Get intensity level (0-4)
+  const getIntensity = (seconds) => {
+    if (seconds === 0) return 0;
+    const ratio = seconds / maxSeconds;
+    if (ratio < 0.2) return 1;
+    if (ratio < 0.4) return 2;
+    if (ratio < 0.6) return 3;
+    return 4;
+  };
+
+  // Generate calendar HTML
+  let calendarHTML = '';
+
+  if (period === 'daily') {
+    // Hourly view - simple grid
+    calendarHTML = `
+      <div class="reports-calendar-header">
+        <h4>${calendarTitle}</h4>
+        <span class="reports-calendar-total">${formatDuration(days.reduce((sum, d) => sum + d.seconds, 0))}</span>
+      </div>
+      <div class="reports-calendar-grid reports-calendar-hourly">
+        ${days.map(day => `
+          <div class="calendar-hour-cell intensity-${getIntensity(day.seconds)}" title="${day.label}: ${formatDuration(day.seconds)}">
+            <span class="hour-label">${day.label}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  } else if (period === 'weekly') {
+    calendarHTML = `
+      <div class="reports-calendar-header">
+        <h4>${calendarTitle}</h4>
+        <span class="reports-calendar-total">${formatDuration(days.reduce((sum, d) => sum + d.seconds, 0))}</span>
+      </div>
+      <div class="reports-calendar-grid reports-calendar-week">
+        ${days.map(day => `
+          <div class="calendar-day-cell intensity-${getIntensity(day.seconds)}${day.isToday ? ' is-today' : ''}" title="${day.label}: ${formatDuration(day.seconds)}">
+            <span class="day-label">${day.label}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  } else if (period === 'monthly') {
+    // Monthly calendar grid
+    const firstDayOffset = days[0]?.dayOfWeek || 0;
+    calendarHTML = `
+      <div class="reports-calendar-header">
+        <h4>${calendarTitle}</h4>
+        <span class="reports-calendar-total">${formatDuration(days.reduce((sum, d) => sum + d.seconds, 0))}</span>
+      </div>
+      <div class="reports-calendar-grid reports-calendar-month">
+        <div class="calendar-month-header">
+          ${weekDays.map(d => `<span class="calendar-weekday">${d}</span>`).join('')}
+        </div>
+        <div class="calendar-month-days">
+          ${Array(firstDayOffset).fill('<div class="calendar-empty-cell"></div>').join('')}
+          ${days.map(day => `
+            <div class="calendar-day-cell intensity-${getIntensity(day.seconds)}${day.isToday ? ' is-today' : ''}" title="${day.key}: ${formatDuration(day.seconds)}">
+              <span class="day-number">${day.label}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  } else if (period === 'yearly') {
+    calendarHTML = `
+      <div class="reports-calendar-header">
+        <h4>${calendarTitle}</h4>
+        <span class="reports-calendar-total">${formatDuration(days.reduce((sum, d) => sum + d.seconds, 0))}</span>
+      </div>
+      <div class="reports-calendar-grid reports-calendar-year">
+        ${days.map(day => `
+          <div class="calendar-month-cell intensity-${getIntensity(day.seconds)}${day.isToday ? ' is-today' : ''}" title="${day.label}: ${formatDuration(day.seconds)}">
+            <span class="month-label">${day.label}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  calendarContainer.innerHTML = calendarHTML;
+}
+
 function renderReports(content, report, range) {
   content.innerHTML = `
     <div class="reports-page">
@@ -1242,6 +1429,31 @@ function renderReports(content, report, range) {
         </article>
       </section>
 
+      <section class="app-panel reports-calendar-card">
+        <div class="overview-card-header">
+          <div>
+            <p class="goals-label">Calendar</p>
+            <h3 class="goals-title">Daily activity</h3>
+          </div>
+          <div class="reports-period-controls">
+            <button class="period-btn" data-period="daily" type="button">Day</button>
+            <button class="period-btn" data-period="weekly" type="button">Week</button>
+            <button class="period-btn is-active" data-period="monthly" type="button">Month</button>
+            <button class="period-btn" data-period="yearly" type="button">Year</button>
+          </div>
+        </div>
+        <div id="reports-calendar-container" class="reports-calendar-container">
+          <!-- Calendar will be rendered here -->
+        </div>
+        <div id="reports-calendar-legend" class="reports-calendar-legend">
+          <span class="legend-item"><span class="legend-color legend-0"></span>0h</span>
+          <span class="legend-item"><span class="legend-color legend-1"></span>1-2h</span>
+          <span class="legend-item"><span class="legend-color legend-2"></span>2-4h</span>
+          <span class="legend-item"><span class="legend-color legend-3"></span>4-6h</span>
+          <span class="legend-item"><span class="legend-color legend-4"></span>6h+</span>
+        </div>
+      </section>
+
       <section class="app-panel reports-chart-card">
         <div class="overview-card-header">
           <div>
@@ -1251,8 +1463,11 @@ function renderReports(content, report, range) {
           <div class="mode-switch">
             <button class="mode-button" type="button" data-reports-mode="bar">Bar</button>
             <button class="mode-button is-active" type="button" data-reports-mode="line">Line</button>
-            ${window.GoalixaCharts.createOffsetButton()}
           </div>
+          <button class="chart-offset-btn" id="reports-offset-btn" title="Toggle 7-day offset">
+            <i class="chart-offset-icon bi bi-toggle-on"></i>
+            <span class="chart-offset-text">Offset: ON</span>
+          </button>
         </div>
         <div class="reports-trend-host" data-reports-trend></div>
       </section>
@@ -1319,10 +1534,29 @@ async function bindReportsActions(container, range, initialReport) {
 
   const modeButtons = content.querySelectorAll('[data-reports-mode]');
   const groupSelect = content.querySelector('#reports-group-select');
+  const periodButtons = content.querySelectorAll('[data-period]');
+  let currentPeriod = 'monthly';
 
   const repaint = () => {
     paintReportsView(content, state);
+    renderReportsCalendar(content, state.report.summary || [], currentPeriod);
   };
+
+  // Initial calendar render
+  renderReportsCalendar(content, state.report.summary || [], currentPeriod);
+
+  // Handle period buttons
+  periodButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      const period = button.dataset.period;
+      if (!period) return;
+      currentPeriod = period;
+      periodButtons.forEach((btn) => {
+        btn.classList.toggle('is-active', btn === button);
+      });
+      renderReportsCalendar(content, state.report.summary || [], currentPeriod);
+    }, { signal });
+  });
 
   modeButtons.forEach((button) => {
     button.addEventListener('click', () => {
@@ -1335,6 +1569,11 @@ async function bindReportsActions(container, range, initialReport) {
       repaint();
     }, { signal });
   });
+
+  // Handle offset toggle - re-render chart when offset is toggled
+  window.addEventListener('chart-offset-toggled', () => {
+    repaint();
+  }, { signal });
 
   if (groupSelect) {
     groupSelect.addEventListener('change', async () => {
@@ -4486,7 +4725,10 @@ function renderHabits(content, payload) {
           </div>
           <div style="display: flex; align-items: center; gap: 10px;">
             <span class="habit-chart-note">Last 14 days</span>
-            ${window.GoalixaCharts.createOffsetButton()}
+            <button class="chart-offset-btn" id="habits-offset-btn" title="Toggle 7-day offset">
+              <i class="chart-offset-icon bi bi-toggle-on"></i>
+              <span class="chart-offset-text">Offset: ON</span>
+            </button>
           </div>
         </div>
         <div data-habit-series-chart></div>
@@ -4506,6 +4748,13 @@ async function bindHabitActions(container, currentPath, payload) {
   if (chartHost && window.GoalixaCharts && habitSeries) {
     window.GoalixaCharts.createHabitSeriesChart('[data-habit-series-chart]', habitSeries, habits);
   }
+
+  // Handle offset toggle - re-render chart when offset is toggled
+  window.addEventListener('chart-offset-toggled', () => {
+    if (chartHost && window.GoalixaCharts && habitSeries) {
+      window.GoalixaCharts.createHabitSeriesChart('[data-habit-series-chart]', habitSeries, habits);
+    }
+  });
 
   const habitsRoot = content.querySelector('.habits-page');
   const today = habitsRoot?.dataset.habitsToday || payload.today || new Date().toISOString().slice(0, 10);
