@@ -619,7 +619,10 @@ function renderOverview(content, overview, tasksPayload, goalsPayload, reportsPa
         </div>
 
         <div class="overview-trend-panel">
-          <div class="overview-trend-canvas" data-overview-trend-canvas></div>
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+            <div class="overview-trend-canvas" data-overview-trend-canvas style="flex: 1;"></div>
+            ${window.GoalixaCharts.createOffsetButton()}
+          </div>
         </div>
 
         <div class="overview-time-metrics">
@@ -1239,36 +1242,35 @@ function renderReports(content, report, range) {
         </article>
       </section>
 
-      <section class="reports-duo">
-        <article class="app-panel reports-chart-card">
-          <div class="overview-card-header">
-            <div>
-              <p class="goals-label">Summary</p>
-              <h3 class="goals-title">Time overview</h3>
-            </div>
-            <div class="mode-switch">
-              <button class="mode-button" type="button" data-reports-mode="bar">Bar</button>
-              <button class="mode-button is-active" type="button" data-reports-mode="line">Line</button>
-            </div>
+      <section class="app-panel reports-chart-card">
+        <div class="overview-card-header">
+          <div>
+            <p class="goals-label">Summary</p>
+            <h3 class="goals-title">Time overview</h3>
           </div>
-          <div class="reports-trend-host" data-reports-trend></div>
-        </article>
+          <div class="mode-switch">
+            <button class="mode-button" type="button" data-reports-mode="bar">Bar</button>
+            <button class="mode-button is-active" type="button" data-reports-mode="line">Line</button>
+            ${window.GoalixaCharts.createOffsetButton()}
+          </div>
+        </div>
+        <div class="reports-trend-host" data-reports-trend></div>
+      </section>
 
-        <article class="app-panel reports-distribution-card">
-          <div class="overview-card-header">
-            <div>
-              <p class="goals-label">Distribution</p>
-              <h3 class="goals-title">Breakdown</h3>
-            </div>
-            <select id="reports-group-select">
-              <option value="projects" selected>Projects</option>
-              <option value="labels">Labels</option>
-              <option value="tasks">Tasks</option>
-            </select>
+      <section class="app-panel reports-distribution-card">
+        <div class="overview-card-header">
+          <div>
+            <p class="goals-label">Distribution</p>
+            <h3 class="goals-title">Breakdown</h3>
           </div>
-          <div data-reports-donut></div>
-          <ul class="overview-list reports-distribution-list" data-reports-list></ul>
-        </article>
+          <select id="reports-group-select">
+            <option value="projects" selected>Projects</option>
+            <option value="labels">Labels</option>
+            <option value="tasks">Tasks</option>
+          </select>
+        </div>
+        <div data-reports-donut></div>
+        <ul class="overview-list reports-distribution-list" data-reports-list></ul>
       </section>
 
       <section class="reports-insights-grid">
@@ -4482,7 +4484,10 @@ function renderHabits(content, payload) {
             <p class="goals-label">Progress</p>
             <h3 class="goals-title">Habit completion over time</h3>
           </div>
-          <span class="habit-chart-note">Last 14 days</span>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span class="habit-chart-note">Last 14 days</span>
+            ${window.GoalixaCharts.createOffsetButton()}
+          </div>
         </div>
         <div data-habit-series-chart></div>
       </section>

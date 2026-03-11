@@ -12591,3 +12591,63 @@ footer {
     }
   }
 }
+
+/* ============================================
+   CHART OFFSET BUTTON
+   ============================================ */
+
+.chart-offset-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  cursor: pointer;
+  background: var(--soft);
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.chart-offset-btn:hover {
+  background: var(--card);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.chart-offset-btn.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+.chart-offset-icon {
+  font-size: 1rem;
+}
+
+.chart-offset-text {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+[data-theme="dark"] .chart-offset-btn {
+  background: rgba(22, 33, 55, 0.6);
+  border-color: rgba(42, 54, 80, 0.5);
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .chart-offset-btn:hover {
+  background: rgba(139, 179, 255, 0.12);
+  border-color: rgba(139, 179, 255, 0.4);
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .chart-offset-btn.active {
+  background: linear-gradient(135deg, #5a8dff 0%, #4a7cf0 100%);
+  border-color: transparent;
+  color: white;
+}

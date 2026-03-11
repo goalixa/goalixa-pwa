@@ -6,6 +6,60 @@
 // Chart instance storage for cleanup
 const chartInstances = new Map();
 
+// Offset state - enabled by default, persisted in localStorage
+let offsetEnabled = localStorage.getItem('goalixa-chart-offset') !== 'false';
+
+/**
+ * Toggle offset state
+ */
+function toggleOffset() {
+  offsetEnabled = !offsetEnabled;
+  localStorage.setItem('goalixa-chart-offset', String(offsetEnabled));
+  // Re-render all charts with new offset state
+  chartInstances.forEach((chart, containerId) => {
+    // Trigger chart re-render by dispatching event
+    window.dispatchEvent(new CustomEvent('chart-offset-toggled', {
+      detail: { containerId, enabled: offsetEnabled }
+    }));
+  });
+  updateOffsetButtons();
+}
+
+/**
+ * Update all offset button states
+ */
+function updateOffsetButtons() {
+  document.querySelectorAll('.chart-offset-btn').forEach(btn => {
+    const icon = btn.querySelector('.chart-offset-icon');
+    const text = btn.querySelector('.chart-offset-text');
+    if (offsetEnabled) {
+      btn.classList.add('active');
+      btn.title = 'Disable 7-day offset';
+      if (icon) icon.className = 'chart-offset-icon bi bi-toggle-on';
+      if (text) text.textContent = 'Offset: ON';
+    } else {
+      btn.classList.remove('active');
+      btn.title = 'Enable 7-day offset';
+      if (icon) icon.className = 'chart-offset-icon bi bi-toggle-off';
+      if (text) text.textContent = 'Offset: OFF';
+    }
+  });
+}
+
+/**
+ * Create offset toggle button HTML
+ */
+function createOffsetButton() {
+  return `
+    <button class="btn btn-sm btn-outline-secondary chart-offset-btn ${offsetEnabled ? 'active' : ''}"
+            title="${offsetEnabled ? 'Disable 7-day offset' : 'Enable 7-day offset'}"
+            onclick="window.GoalixaCharts.toggleOffset()">
+      <i class="chart-offset-icon bi bi-${offsetEnabled ? 'toggle-on' : 'toggle-off'}"></i>
+      <span class="chart-offset-text">${offsetEnabled ? 'Offset: ON' : 'Offset: OFF'}</span>
+    </button>
+  `;
+}
+
 /**
  * Add 7-day offset to a date string
  * @param {string} dateString - ISO date string or label
@@ -93,8 +147,8 @@ function createOverviewTrendChart(containerId, data, mode = 'line') {
   const series = data.map(item => Number(item.seconds || 0));
   const categories = data.map(item => {
     const rawLabel = item?.label || item?.date || item?.day || '';
-    // Apply 7-day offset to dates
-    const offsetLabel = formatDateLabelWithOffset(rawLabel, 7);
+    // Apply offset only if enabled
+    const offsetLabel = offsetEnabled ? formatDateLabelWithOffset(rawLabel, 7) : rawLabel;
     // Compact label
     return offsetLabel.length > 8 ? offsetLabel.substring(0, 6) + '..' : offsetLabel;
   });
@@ -391,8 +445,8 @@ function createReportsTrendChart(containerId, data, mode = 'line') {
   const series = data.map(item => Number(item.seconds || 0));
   const categories = data.map(item => {
     const rawLabel = item?.label || item?.date || item?.day || '';
-    // Apply 7-day offset to dates
-    const offsetLabel = formatDateLabelWithOffset(rawLabel, 7);
+    // Apply offset only if enabled
+    const offsetLabel = offsetEnabled ? formatDateLabelWithOffset(rawLabel, 7) : rawLabel;
     return offsetLabel.length > 10 ? offsetLabel.substring(0, 8) + '..' : offsetLabel;
   });
 
@@ -706,9 +760,11 @@ function createHabitSeriesChart(containerId, habitSeries, habits) {
   const seriesData = habitSeries.series || [{ name: 'Completion', data: habitSeries.values || [] }];
 
   const categories = habitSeries.labels.map(label => {
-    // Apply 7-day offset to dates
     const date = new Date(label);
-    date.setDate(date.getDate() + 7);
+    // Apply offset only if enabled
+    if (offsetEnabled) {
+      date.setDate(date.getDate() + 7);
+    }
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   });
 
@@ -1061,7 +1117,10 @@ window.GoalixaCharts = {
   destroyAllCharts,
   updateChartsTheme,
   getChartTheme,
-  formatDuration
+  formatDuration,
+  toggleOffset,
+  createOffsetButton,
+  offsetEnabled: () => offsetEnabled
 };
 
 // Make theme update available globally
