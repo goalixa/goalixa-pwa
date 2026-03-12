@@ -289,9 +289,10 @@ async function cacheFirstStrategy(request, cacheName) {
   }
 }
 
-// Message handling for manual cache updates
+// Message handling for manual cache updates and update control
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
+    console.log('[SW] Received SKIP_WAITING message, activating new service worker...');
     self.skipWaiting();
   }
 
@@ -299,5 +300,10 @@ self.addEventListener('message', (event) => {
     event.waitUntil(
       caches.open(CACHES.PAGES).then((cache) => cache.addAll(event.data.urls))
     );
+  }
+
+  // Respond to ping messages to check if SW is active
+  if (event.data && event.data.type === 'PING') {
+    event.ports[0].postMessage({ type: 'PONG' });
   }
 });
