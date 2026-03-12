@@ -135,6 +135,9 @@ export function registerServiceWorker(options = {}) {
   return navigator.serviceWorker.register(swPath, { scope: '/' })
     .then((registration) => {
       console.log('[PWA] Service Worker registered:', registration.scope);
+      console.log('[PWA] Current SW state:', registration.active?.state);
+      console.log('[PWA] Waiting SW:', registration.waiting?.state);
+      console.log('[PWA] Installing SW:', registration.installing?.state);
 
       // Listen for new service worker installation
       registration.addEventListener('updatefound', () => {
@@ -247,4 +250,30 @@ export async function unregisterServiceWorkers() {
     await Promise.all(cacheNames.map(name => caches.delete(name)));
     console.log('[PWA] All caches cleared');
   }
+}
+
+/**
+ * Debug function to manually trigger the update notification
+ * Call this from browser console: testPWAUpdate()
+ */
+export function testPWAUpdate() {
+  console.log('[PWA DEBUG] Manually triggering update notification...');
+  showUpdateNotification(async () => {
+    console.log('[PWA DEBUG] Update callback executed');
+    // Clear all caches
+    if ('caches' in window) {
+      const cacheNames = await caches.keys();
+      await Promise.all(cacheNames.map(name => caches.delete(name)));
+      console.log('[PWA DEBUG] All caches cleared');
+    }
+    // Hard refresh
+    window.location.reload(true);
+  });
+}
+
+// Expose debug function to window for console testing
+if (typeof window !== 'undefined') {
+  window.testPWAUpdate = testPWAUpdate;
+  window.showPWAUpdate = showUpdateNotification;
+  console.log('[PWA] Debug functions available: testPWAUpdate(), showPWAUpdate()');
 }

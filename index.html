@@ -119,34 +119,135 @@
   <script type="module" src="/js/router.js"></script>
 
   <!-- Service Worker Registration -->
-  <script type="module">
-    import { registerServiceWorker, unregisterServiceWorkers } from '/js/components/pwa-update-modal.js';
+  <script>
+    (function() {
+      'use strict';
 
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', async () => {
-        const host = window.location.hostname;
-        const isLocal = host === 'localhost' || host === '127.0.0.1' || host === '::1';
+      let updateModal = null;
 
-        if (isLocal) {
-          // Prevent stale localhost caches from old builds
-          console.log('[PWA] Development mode detected, cleaning up old service workers...');
-          await unregisterServiceWorkers();
-          return;
-        }
+      function showUpdateNotification(onUpdate) {
+        closeUpdateModal();
 
-        try {
-          // Register service worker with update notification
-          await registerServiceWorker({
-            swPath: '/sw.js',
-            onUpdate: async () => {
-              console.log('[PWA] Preparing to update...');
+        const modal = document.createElement('div');
+        modal.className = 'pwa-update-modal-overlay';
+        modal.id = 'pwa-update-modal';
+        modal.innerHTML = `
+          <div class="pwa-update-modal" role="dialog" aria-modal="true">
+            <div class="pwa-update-modal-icon">
+              <i class="bi bi-arrow-repeat"></i>
+            </div>
+            <div class="pwa-update-modal-content">
+              <h2>New Version Available</h2>
+              <p>A new version of Goalixa is ready to install.</p>
+            </div>
+            <div class="pwa-update-modal-actions">
+              <button type="button" class="btn btn-outline-secondary pwa-update-dismiss-btn">Not Now</button>
+              <button type="button" class="btn btn-primary pwa-update-apply-btn">
+                <i class="bi bi-download"></i> Get New Version
+              </button>
+            </div>
+            <button type="button" class="pwa-update-modal-close" aria-label="Close">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+        `;
+
+        document.body.appendChild(modal);
+        updateModal = modal;
+
+        requestAnimationFrame(() => modal.classList.add('is-visible'));
+
+        modal.querySelector('.pwa-update-apply-btn').addEventListener('click', async () => {
+          const btn = modal.querySelector('.pwa-update-apply-btn');
+          btn.disabled = true;
+          btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Updating...';
+          try {
+            if (typeof onUpdate === 'function') await onUpdate();
+          } catch (error) {
+            console.error('[PWA] Update failed:', error);
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-download"></i> Retry';
+          }
+        });
+
+        modal.querySelector('.pwa-update-dismiss-btn').addEventListener('click', closeUpdateModal);
+        modal.querySelector('.pwa-update-modal-close').addEventListener('click', closeUpdateModal);
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) closeUpdateModal();
+        });
+      }
+
+      function closeUpdateModal() {
+        if (updateModal) {
+          updateModal.classList.remove('is-visible');
+          setTimeout(() => {
+            if (updateModal && updateModal.parentNode) {
+              updateModal.remove();
             }
-          });
-        } catch (error) {
-          console.error('[PWA] Service Worker setup failed:', error);
+            updateModal = null;
+          }, 300);
         }
-      });
-    }
+      }
+
+      window.testPWAUpdate = function() {
+        console.log('[PWA] Testing update notification...');
+        showUpdateNotification(async () => {
+          console.log('[PWA] Clearing caches...');
+          if ('caches' in window) {
+            const keys = await caches.keys();
+            await Promise.all(keys.map(k => caches.delete(k)));
+          }
+          console.log('[PWA] Refreshing...');
+          location.reload(true);
+        });
+      };
+
+      console.log('[PWA] Loaded! Run testPWAUpdate() to test');
+
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', async () => {
+          try {
+            // Clean up first
+            const regs = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(regs.map(r => r.unregister()));
+            const keys = await caches.keys();
+            await Promise.all(keys.map(k => caches.delete(k)));
+            console.log('[PWA] Cleaned up old SW and caches');
+
+            // Register new SW
+            const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+            console.log('[PWA] Service Worker registered');
+
+            reg.addEventListener('updatefound', () => {
+              const newWorker = reg.installing;
+              if (!newWorker) return;
+
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  console.log('[PWA] New version available!');
+                  showUpdateNotification(async () => {
+                    newWorker.postMessage({ type: 'SKIP_WAITING' });
+                    await new Promise(r => {
+                      const h = () => { navigator.serviceWorker.removeEventListener('controllerchange', h); r(); };
+                      navigator.serviceWorker.addEventListener('controllerchange', h);
+                      setTimeout(() => { navigator.serviceWorker.removeEventListener('controllerchange', h); r(); }, 3000);
+                    });
+                    const keys = await caches.keys();
+                    await Promise.all(keys.map(k => caches.delete(k)));
+                    await new Promise(res => setTimeout(res, 100));
+                    location.reload(true);
+                  });
+                }
+              });
+            });
+
+            window.addEventListener('focus', () => reg.update().catch(() => {}));
+          } catch (error) {
+            console.error('[PWA] Setup failed:', error);
+          }
+        });
+      }
+    })();
   </script>
 </body>
 </html>

@@ -844,7 +844,7 @@ function renderOverview(content, overview, tasksPayload, goalsPayload, reportsPa
         </article>
       </section>
 
-      <section class="overview-layout">
+      <section class="overview-row">
         <article class="app-panel overview-time-card">
           <div class="overview-card-header">
             <div>
@@ -939,6 +939,9 @@ function renderOverview(content, overview, tasksPayload, goalsPayload, reportsPa
           </ul>
         </article>
 
+      </section>
+
+      <section class="overview-row">
         <article class="app-panel overview-chart-card">
           <div class="overview-card-header">
             <div>
@@ -1042,6 +1045,9 @@ function renderOverview(content, overview, tasksPayload, goalsPayload, reportsPa
           </div>
         </article>
 
+      </section>
+
+      <section class="overview-row">
         <section class="app-panel goals-card">
           <div class="goals-header">
             <div>
