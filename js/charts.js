@@ -1197,6 +1197,110 @@ function createGoalMomentumChart(containerId, goals) {
   return chart;
 }
 
+/**
+ * Create burnup chart (planned vs logged cumulative)
+ */
+function createBurnupChart(containerId, plannedSeries, actualSeries, categories) {
+  const theme = getChartTheme();
+
+  destroyChart(containerId);
+
+  const options = {
+    series: [
+      {
+        name: 'Planned',
+        data: plannedSeries
+      },
+      {
+        name: 'Logged',
+        data: actualSeries
+      }
+    ],
+    chart: {
+      type: 'line',
+      height: 280,
+      fontFamily: 'Poppins, sans-serif',
+      background: 'transparent',
+      toolbar: { show: false },
+      zoom: { enabled: false },
+      animations: {
+        enabled: true,
+        easing: 'easeinout',
+        speed: 700
+      }
+    },
+    colors: [theme.colors[3], theme.colors[1]],
+    stroke: {
+      curve: 'smooth',
+      width: [2.5, 3.5],
+      dashArray: [8, 0],
+      lineCap: 'round'
+    },
+    markers: {
+      size: 4,
+      strokeWidth: 2,
+      colors: [theme.colors[3], theme.colors[1]],
+      strokeColors: theme.isDark ? '#0f172a' : '#ffffff'
+    },
+    dataLabels: {
+      enabled: false
+    },
+    grid: {
+      borderColor: theme.gridColor,
+      strokeDashArray: 4,
+      yaxis: { lines: { show: true } },
+      padding: { left: 10, right: 0, top: 0, bottom: 0 }
+    },
+    xaxis: {
+      categories,
+      axisBorder: { show: false },
+      axisTicks: { show: false },
+      labels: {
+        style: {
+          colors: theme.textColor,
+          fontSize: '11px',
+          fontFamily: 'Poppins, sans-serif'
+        },
+        rotate: -45,
+        rotateAlways: false
+      }
+    },
+    yaxis: {
+      labels: {
+        formatter: (value) => formatDuration(value),
+        style: {
+          colors: theme.textColor,
+          fontSize: '11px',
+          fontFamily: 'Poppins, sans-serif'
+        }
+      },
+      min: 0
+    },
+    tooltip: {
+      theme: theme.isDark ? 'dark' : 'light',
+      style: {
+        fontSize: '12px',
+        fontFamily: 'Poppins, sans-serif'
+      },
+      y: {
+        formatter: (value) => formatDuration(value)
+      }
+    },
+    legend: {
+      position: 'top',
+      horizontalAlign: 'left',
+      labels: {
+        colors: theme.textColor
+      }
+    }
+  };
+
+  const chart = new ApexCharts(document.querySelector(containerId), options);
+  chart.render();
+  chartInstances.set(containerId, chart);
+  return chart;
+}
+
 // Export functions for use in other modules
 window.GoalixaCharts = {
   createOverviewTrendChart,
@@ -1205,6 +1309,7 @@ window.GoalixaCharts = {
   createHabitStreakChart,
   createHabitSeriesChart,
   createGoalMomentumChart,
+  createBurnupChart,
   destroyChart,
   destroyAllCharts,
   updateChartsTheme,

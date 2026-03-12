@@ -493,12 +493,13 @@ function normalizeOverviewSummary(summary) {
   });
 }
 
-function bindOverviewCharts(content, summary, distribution, habits) {
+function bindOverviewCharts(content, summary, distribution, habits, plannedSeconds = 0) {
   clearOverviewView();
 
   const trendHost = content.querySelector('[data-overview-trend-canvas]');
   const donutHost = content.querySelector('[data-overview-donut]');
   const habitHost = content.querySelector('[data-habit-streak-chart]');
+  const burnupHost = content.querySelector('[data-overview-burnup]');
   const modeButtons = content.querySelectorAll('[data-overview-mode]');
 
   if (!trendHost) {
@@ -582,6 +583,26 @@ function bindOverviewCharts(content, summary, distribution, habits) {
     if (habitsWithStreaks.length > 0) {
       window.GoalixaCharts.createHabitStreakChart('[data-habit-streak-chart]', habitsWithStreaks);
     }
+  }
+
+  // Burnup chart (planned vs logged cumulative)
+  if (burnupHost && normalizedSummary.length > 0 && window.GoalixaCharts) {
+    const days = normalizedSummary.length;
+    const plannedTotal = Math.max(0, Number(plannedSeconds || 0));
+    const plannedPerDay = days > 0 ? plannedTotal / days : 0;
+    let cumulativeActual = 0;
+    const plannedSeries = [];
+    const actualSeries = [];
+    const burnLabels = [];
+
+    normalizedSummary.forEach((item, index) => {
+      cumulativeActual += Number(item.seconds || 0);
+      plannedSeries.push(Math.round(plannedPerDay * (index + 1)));
+      actualSeries.push(Math.round(cumulativeActual));
+      burnLabels.push(item.fullLabel || item.label || `D${index + 1}`);
+    });
+
+    window.GoalixaCharts.createBurnupChart('[data-overview-burnup]', plannedSeries, actualSeries, burnLabels);
   }
 
   // Handle mode switching
@@ -726,13 +747,16 @@ function bindOverviewCharts(content, summary, distribution, habits) {
       window.GoalixaCharts.destroyChart('[data-overview-trend-canvas]');
       window.GoalixaCharts.destroyChart('[data-overview-donut]');
       window.GoalixaCharts.destroyChart('[data-habit-streak-chart]');
+      window.GoalixaCharts.destroyChart('[data-overview-burnup]');
     }
     abortController.abort();
   };
 }
 
 function renderOverview(content, overview, tasksPayload, goalsPayload, reportsPayload, habitsPayload, range) {
-  const recentTasks = Array.isArray(tasksPayload.tasks) ? tasksPayload.tasks.slice(0, 6) : [];
+  const openTasks = Array.isArray(tasksPayload.tasks)
+    ? tasksPayload.tasks.filter((task) => String(task.status || 'active').toLowerCase() !== 'completed').slice(0, 6)
+    : [];
   const goals = Array.isArray(goalsPayload.goals) ? goalsPayload.goals : [];
   const activeGoals = Number(goalsPayload.active_goals_count || 0);
   const totalGoals = goals.length;
@@ -748,6 +772,7 @@ function renderOverview(content, overview, tasksPayload, goalsPayload, reportsPa
   const projectRows = getProjectDistributionRows(distribution);
   const topProjectRows = projectRows.slice(0, 4);
   const habits = Array.isArray(habitsPayload.habits) ? habitsPayload.habits : [];
+  const plannedSeconds = Number(goalsPayload.total_goal_seconds || 0);
   const activeDays = summary.filter((item) => Number(item.seconds || 0) > 0).length;
   const averageDailySeconds = summary.length > 0
     ? Math.round(summary.reduce((acc, item) => acc + Number(item.seconds || 0), 0) / summary.length)
@@ -755,127 +780,143 @@ function renderOverview(content, overview, tasksPayload, goalsPayload, reportsPa
 
   content.innerHTML = `
     <div class="overview-page">
-      <section class="app-panel overview-time-card">
-        <div class="overview-card-header">
-          <div>
-            <h3>Time Summary</h3>
-            <p class="overview-subtitle">Last 7 days of focus tracking.</p>
-          </div>
-          <div class="overview-chart-toolbar">
-            <div class="overview-date-filter">
-              <input
-                class="calendar-input"
-                id="overview-range"
-                type="text"
-                readonly
-                data-start="${escapeHtml(range.start)}"
-                data-end="${escapeHtml(range.end)}"
-              />
-            </div>
-            <div class="mode-switch">
-              <button class="mode-button" type="button" data-overview-mode="bar">
-                <i class="fas fa-chart-bar"></i> Bar
-              </button>
-              <button class="mode-button is-active" type="button" data-overview-mode="line">
-                <i class="fas fa-chart-line"></i> Line
-              </button>
-            </div>
-            <button class="chart-compare-btn" id="overview-offset-btn" title="Compare with last week">
-              <i class="chart-compare-icon bi bi-calendar-week"></i>
-              <span class="chart-compare-text">Last Week</span>
-            </button>
-          </div>
+      <header class="overview-hero">
+        <div>
+          <p class="goals-label">Overview</p>
+          <h2 class="overview-title">Control Center</h2>
+          <p class="overview-subtitle">Manage focus, projects, and habits in one view.</p>
         </div>
+        <div class="overview-hero-actions">
+          <button class="btn btn-secondary btn-sm" type="button" data-route="/app/tasks">Tasks</button>
+          <a class="btn btn-primary btn-sm" href="#overview-pomodoro">Start Focus</a>
+        </div>
+      </header>
 
-        <div class="overview-date-range-display">
-          <span class="overview-range-label">Selected range:</span>
-          <span class="overview-range-dates">${escapeHtml(formatDateRange(range.start, range.end))}</span>
-        </div>
+      <div class="overview-kpi-grid">
+        <article class="overview-kpi">
+          <p class="overview-kpi-label">Range focus</p>
+          <h3 class="overview-kpi-value">${formatDuration(reportsPayload.total_seconds || overview.total_tracked_seconds || 0)}</h3>
+          <span class="overview-kpi-meta">${escapeHtml(formatDateRange(range.start, range.end))}</span>
+        </article>
+        <article class="overview-kpi">
+          <p class="overview-kpi-label">Today</p>
+          <h3 class="overview-kpi-value">${formatDuration(overview.total_tracked_seconds || 0)}</h3>
+          <span class="overview-kpi-meta">${overview.done_today_count} tasks done</span>
+        </article>
+        <article class="overview-kpi">
+          <p class="overview-kpi-label">Active days</p>
+          <h3 class="overview-kpi-value">${activeDays}</h3>
+          <span class="overview-kpi-meta">Avg ${formatDuration(averageDailySeconds)} per day</span>
+        </article>
+        <article class="overview-kpi">
+          <p class="overview-kpi-label">Goals alive</p>
+          <h3 class="overview-kpi-value">${activeGoals}/${totalGoals}</h3>
+          <span class="overview-kpi-meta">Targets: ${Number(goalsPayload.targets_set || 0)}</span>
+        </article>
+      </div>
 
-        <div class="overview-trend-panel">
-          <div class="overview-trend-canvas" data-overview-trend-canvas></div>
-        </div>
-
-        <div class="overview-time-metrics">
-          <div class="overview-metric">
-            <span class="overview-metric-label">Total focus</span>
-            <span class="overview-metric-value">${formatDuration(reportsPayload.total_seconds || overview.total_tracked_seconds || 0)}</span>
-            <span class="overview-metric-meta">Past 7 days</span>
+      <section class="overview-top-split">
+        <article class="app-panel overview-task-panel">
+          <div class="app-panel-header">
+            <h3>Open Tasks</h3>
+            <p>Control timers and completion quickly.</p>
           </div>
-          <div class="overview-metric">
-            <span class="overview-metric-label">Today</span>
-            <span class="overview-metric-value">${formatDuration(overview.total_tracked_seconds || 0)}</span>
-            <span class="overview-metric-meta">${overview.done_today_count} tasks done today</span>
+          <div class="task-list-block">
+            ${openTasks.length === 0 ? '<p class="muted">No active tasks yet.</p>' : ''}
+            ${openTasks.map((task) => `
+              <article class="task-item compact" data-ov-task-card data-task-id="${task.id}">
+                <div>
+                  <h5>${escapeHtml(task.name)}</h5>
+                  <p>${escapeHtml(task.project_name || 'No project')} • ${formatDuration(task.today_seconds)}</p>
+                </div>
+                <div class="task-inline-actions">
+                  <span class="task-state ${task.is_running ? 'running' : 'idle'}" data-task-state>${task.is_running ? 'Running' : 'Idle'}</span>
+                  <button class="btn btn-outline-primary btn-sm" type="button" data-ov-task-action="${task.is_running ? 'stop' : 'start'}" data-task-id="${task.id}">
+                    ${task.is_running ? 'Stop' : 'Start'}
+                  </button>
+                  <button class="btn btn-outline-success btn-sm" type="button" data-ov-task-action="complete" data-task-id="${task.id}">
+                    Complete
+                  </button>
+                </div>
+              </article>
+            `).join('')}
           </div>
-          <div class="overview-metric">
-            <span class="overview-metric-label">Active days</span>
-            <span class="overview-metric-value">${activeDays}</span>
-            <span class="overview-metric-meta">Avg ${formatDuration(averageDailySeconds)} per day</span>
-          </div>
-        </div>
-
-        <div class="overview-grid">
-          ${summary.length === 0 ? '<p class="muted">No activity yet.</p>' : ''}
-          ${summary.map((item) => `
-            <article class="overview-module">
-              <div class="overview-module-header">
-                <h3>${escapeHtml(item.label || '-')}</h3>
-                <span class="overview-inline-meta">${formatDuration(item.seconds || 0)}</span>
-              </div>
-            </article>
-          `).join('')}
-        </div>
+        </article>
       </section>
 
-      <section class="app-panel goals-card">
-        <div class="goals-header">
-          <div>
-            <p class="goals-label">Goals</p>
-            <h3 class="goals-title">Outcome-driven overview</h3>
-          </div>
-        </div>
-
-        <div class="goals-summary">
-          <div class="goal-stat-card">
-            <span class="goal-stat-label">Active goals</span>
-            <span class="goal-stat-value">${activeGoals}</span>
-            <span class="goal-stat-meta">Total goals: ${totalGoals}</span>
-          </div>
-          <div class="goal-stat-card">
-            <span class="goal-stat-label">Focus this week</span>
-            <span class="goal-stat-value">${formatDuration(goalsPayload.total_goal_seconds || 0)}</span>
-            <span class="goal-stat-meta">Across all goals</span>
-          </div>
-          <div class="goal-stat-card">
-            <span class="goal-stat-label">Upcoming deadlines</span>
-            <span class="goal-stat-value">${Number(goalsPayload.targets_set || 0)}</span>
-            <span class="goal-stat-meta">Targets set</span>
-          </div>
-        </div>
-
-        <div class="goal-grid-lite">
-          ${goalsInProgress.length === 0 ? '<p class="muted">No active goals yet.</p>' : ''}
-          ${goalsInProgress.map((goal) => `
-            <article class="goal-lite-card">
-              <header>
-                <h5>${escapeHtml(goal.name)}</h5>
-                <span class="goal-status-lite ${badgeForGoalStatus(goal.status || 'active')}">${escapeHtml(String(goal.status || 'active').replace('_', ' '))}</span>
-              </header>
-              <p>${escapeHtml(goal.description || 'No description')}</p>
-              <div class="overview-goal-progress">
-                <span style="width: ${Number(goal.progress || 0)}%;"></span>
+      <section class="overview-layout">
+        <article class="app-panel overview-time-card">
+          <div class="overview-card-header">
+            <div>
+              <h3>Time Summary</h3>
+              <p class="overview-subtitle">Last 7 days of focus tracking.</p>
+            </div>
+            <div class="overview-chart-toolbar">
+              <div class="overview-date-filter">
+                <input
+                  class="calendar-input"
+                  id="overview-range"
+                  type="text"
+                  readonly
+                  data-start="${escapeHtml(range.start)}"
+                  data-end="${escapeHtml(range.end)}"
+                />
               </div>
-              <div class="goal-metrics-lite">
-                <span>${Number(goal.progress || 0)}% complete</span>
-                <span>${Number(goal.projects_count || 0)} projects</span>
-                <span>${Number(goal.tasks_count || 0)} tasks</span>
+              <div class="mode-switch">
+                <button class="mode-button" type="button" data-overview-mode="bar">
+                  <i class="fas fa-chart-bar"></i> Bar
+                </button>
+                <button class="mode-button is-active" type="button" data-overview-mode="line">
+                  <i class="fas fa-chart-line"></i> Line
+                </button>
               </div>
-            </article>
-          `).join('')}
-        </div>
-      </section>
+              <button class="chart-compare-btn" id="overview-offset-btn" title="Compare with last week">
+                <i class="chart-compare-icon bi bi-calendar-week"></i>
+                <span class="chart-compare-text">Last Week</span>
+              </button>
+            </div>
+          </div>
 
-      <section class="overview-charts">
+          <div class="overview-date-range-display">
+            <span class="overview-range-label">Selected range:</span>
+            <span class="overview-range-dates">${escapeHtml(formatDateRange(range.start, range.end))}</span>
+          </div>
+
+          <div class="overview-trend-panel">
+            <div class="overview-trend-canvas" data-overview-trend-canvas></div>
+          </div>
+
+          <div class="overview-time-metrics">
+            <div class="overview-metric">
+              <span class="overview-metric-label">Total focus</span>
+              <span class="overview-metric-value">${formatDuration(reportsPayload.total_seconds || overview.total_tracked_seconds || 0)}</span>
+              <span class="overview-metric-meta">Past 7 days</span>
+            </div>
+            <div class="overview-metric">
+              <span class="overview-metric-label">Today</span>
+              <span class="overview-metric-value">${formatDuration(overview.total_tracked_seconds || 0)}</span>
+              <span class="overview-metric-meta">${overview.done_today_count} tasks done today</span>
+            </div>
+            <div class="overview-metric">
+              <span class="overview-metric-label">Active days</span>
+              <span class="overview-metric-value">${activeDays}</span>
+              <span class="overview-metric-meta">Avg ${formatDuration(averageDailySeconds)} per day</span>
+            </div>
+          </div>
+
+          <div class="overview-grid">
+            ${summary.length === 0 ? '<p class="muted">No activity yet.</p>' : ''}
+            ${summary.map((item) => `
+              <article class="overview-module">
+                <div class="overview-module-header">
+                  <h3>${escapeHtml(item.label || '-')}</h3>
+                  <span class="overview-inline-meta">${formatDuration(item.seconds || 0)}</span>
+                </div>
+              </article>
+            `).join('')}
+          </div>
+        </article>
+
         <article class="app-panel overview-chart-card">
           <div class="overview-card-header">
             <div>
@@ -896,6 +937,19 @@ function renderOverview(content, overview, tasksPayload, goalsPayload, reportsPa
               </li>
             `).join('')}
           </ul>
+        </article>
+
+        <article class="app-panel overview-chart-card">
+          <div class="overview-card-header">
+            <div>
+              <p class="goals-label">Progress</p>
+              <h3 class="goals-title">Burnup (Planned vs Logged)</h3>
+            </div>
+          </div>
+          <div class="overview-trend-panel">
+            <div class="overview-trend-canvas" data-overview-burnup></div>
+          </div>
+          <p class="muted">Planned uses goal total seconds across selected range.</p>
         </article>
 
         <article class="app-panel overview-chart-card">
@@ -925,7 +979,7 @@ function renderOverview(content, overview, tasksPayload, goalsPayload, reportsPa
           </div>
         </article>
 
-        <article class="app-panel overview-chart-card overview-pomodoro-card" data-pomodoro-root="overview">
+        <article class="app-panel overview-chart-card" id="overview-pomodoro" data-pomodoro-root="overview">
           <div class="overview-card-header">
             <div>
               <p class="goals-label">Focus</p>
@@ -976,7 +1030,7 @@ function renderOverview(content, overview, tasksPayload, goalsPayload, reportsPa
             <div class="pomodoro-compact-picker">
               <select class="pomodoro-task-select" data-pomodoro-task-picker>
                 <option value="">Select task</option>
-                ${recentTasks.map((task) => `
+                ${openTasks.map((task) => `
                   <option value="${task.id}">${escapeHtml(task.name || 'Task')}</option>
                 `).join('')}
               </select>
@@ -987,39 +1041,146 @@ function renderOverview(content, overview, tasksPayload, goalsPayload, reportsPa
             </div>
           </div>
         </article>
-      </section>
 
-      <section class="app-panel">
-        <div class="app-panel-header">
-          <h3>Recent Active Tasks</h3>
-          <p>Quick status of tasks currently in progress.</p>
-        </div>
-        <div class="task-list-block">
-          ${recentTasks.length === 0 ? '<p class="muted">No active tasks yet.</p>' : ''}
-          ${recentTasks.map((task) => `
-            <article class="task-item compact">
-              <div>
-                <h5>${escapeHtml(task.name)}</h5>
-                <p>${escapeHtml(task.project_name || 'No project')} • ${formatDuration(task.today_seconds)}</p>
-              </div>
-              <span class="task-state ${task.is_running ? 'running' : 'idle'}">${task.is_running ? 'Running' : 'Idle'}</span>
-            </article>
-          `).join('')}
-        </div>
+        <section class="app-panel goals-card">
+          <div class="goals-header">
+            <div>
+              <p class="goals-label">Goals</p>
+              <h3 class="goals-title">Outcome-driven overview</h3>
+            </div>
+          </div>
+
+          <div class="goals-summary">
+            <div class="goal-stat-card">
+              <span class="goal-stat-label">Active goals</span>
+              <span class="goal-stat-value">${activeGoals}</span>
+              <span class="goal-stat-meta">Total goals: ${totalGoals}</span>
+            </div>
+            <div class="goal-stat-card">
+              <span class="goal-stat-label">Focus this week</span>
+              <span class="goal-stat-value">${formatDuration(goalsPayload.total_goal_seconds || 0)}</span>
+              <span class="goal-stat-meta">Across all goals</span>
+            </div>
+            <div class="goal-stat-card">
+              <span class="goal-stat-label">Upcoming deadlines</span>
+              <span class="goal-stat-value">${Number(goalsPayload.targets_set || 0)}</span>
+              <span class="goal-stat-meta">Targets set</span>
+            </div>
+          </div>
+
+          <div class="goal-grid-lite">
+            ${goalsInProgress.length === 0 ? '<p class="muted">No active goals yet.</p>' : ''}
+            ${goalsInProgress.map((goal) => `
+              <article class="goal-lite-card">
+                <header>
+                  <h5>${escapeHtml(goal.name)}</h5>
+                  <span class="goal-status-lite ${badgeForGoalStatus(goal.status || 'active')}">${escapeHtml(String(goal.status || 'active').replace('_', ' '))}</span>
+                </header>
+                <p>${escapeHtml(goal.description || 'No description')}</p>
+                <div class="overview-goal-progress">
+                  <span style="width: ${Number(goal.progress || 0)}%;"></span>
+                </div>
+                <div class="goal-metrics-lite">
+                  <span>${Number(goal.progress || 0)}% complete</span>
+                  <span>${Number(goal.projects_count || 0)} projects</span>
+                  <span>${Number(goal.tasks_count || 0)} tasks</span>
+                </div>
+              </article>
+            `).join('')}
+          </div>
+        </section>
+
+        <section class="app-panel overview-task-panel">
+          <div class="app-panel-header">
+            <h3>Recent Active Tasks</h3>
+            <p>Quick status of tasks currently in progress.</p>
+          </div>
+          <div class="task-list-block">
+            ${openTasks.length === 0 ? '<p class="muted">No active tasks yet.</p>' : ''}
+            ${openTasks.map((task) => `
+              <article class="task-item compact" data-ov-task-card data-task-id="${task.id}">
+                <div>
+                  <h5>${escapeHtml(task.name)}</h5>
+                  <p>${escapeHtml(task.project_name || 'No project')} • ${formatDuration(task.today_seconds)}</p>
+                </div>
+                <div class="task-inline-actions">
+                  <span class="task-state ${task.is_running ? 'running' : 'idle'}" data-task-state>${task.is_running ? 'Running' : 'Idle'}</span>
+                  <button class="btn btn-outline-primary btn-sm" type="button" data-ov-task-action="${task.is_running ? 'stop' : 'start'}" data-task-id="${task.id}">
+                    ${task.is_running ? 'Stop' : 'Start'}
+                  </button>
+                  <button class="btn btn-outline-success btn-sm" type="button" data-ov-task-action="complete" data-task-id="${task.id}">
+                    Complete
+                  </button>
+                </div>
+              </article>
+            `).join('')}
+          </div>
+        </section>
       </section>
     </div>
   `;
 
-  bindOverviewCharts(content, summary, distribution, habits);
+  bindOverviewCharts(content, summary, distribution, habits, plannedSeconds);
 
   const overviewPomodoroCleanup = createPomodoroController({
     root: content.querySelector('[data-pomodoro-root="overview"]'),
     appApi,
     showToast,
-    initialTasks: recentTasks,
+    initialTasks: openTasks,
     getTasks: () => appApi.getTasks(),
     mode: 'compact'
   });
+
+  // Quick actions for recent tasks (start/stop)
+  const actionsAbort = new AbortController();
+  const { signal: actionsSignal } = actionsAbort;
+
+  content.addEventListener('click', async (event) => {
+    const target = event.target instanceof HTMLElement ? event.target : null;
+    if (!target) return;
+    const button = target.closest('button[data-ov-task-action][data-task-id]');
+    if (!button) return;
+    const action = button.dataset.ovTaskAction;
+    const taskId = button.dataset.taskId;
+    if (!action || !taskId) return;
+
+    button.disabled = true;
+    try {
+      if (action === 'start') {
+        await appApi.startTask(taskId);
+        showToast('Task timer started', 'success');
+      } else if (action === 'stop') {
+        await appApi.stopTask(taskId);
+        showToast('Task timer stopped', 'success');
+      } else if (action === 'complete') {
+        await appApi.completeTask(taskId);
+        showToast('Task completed', 'success');
+        const card = button.closest('[data-ov-task-card]');
+        const listBlock = content.querySelector('.overview-task-panel .task-list-block');
+        if (card) card.remove();
+        if (listBlock && listBlock.children.length === 0) {
+          listBlock.innerHTML = '<p class="muted">No active tasks yet.</p>';
+        }
+        return;
+      }
+      // Optimistic UI toggle
+      const stateBadge = button.parentElement?.querySelector('[data-task-state]');
+      const isStart = action === 'start';
+      if (stateBadge) {
+        stateBadge.textContent = isStart ? 'Running' : 'Idle';
+        stateBadge.classList.toggle('running', isStart);
+        stateBadge.classList.toggle('idle', !isStart);
+      }
+      button.dataset.ovTaskAction = isStart ? 'stop' : 'start';
+      button.textContent = isStart ? 'Stop' : 'Start';
+      button.classList.toggle('btn-outline-primary', !isStart);
+      button.classList.toggle('btn-outline-danger', isStart);
+    } catch (error) {
+      showToast(error.message || 'Task update failed', 'error');
+    } finally {
+      button.disabled = false;
+    }
+  }, { signal: actionsSignal });
 
   const previousCleanup = overviewViewCleanup;
   overviewViewCleanup = () => {
@@ -1029,6 +1190,7 @@ function renderOverview(content, overview, tasksPayload, goalsPayload, reportsPa
     if (typeof overviewPomodoroCleanup === 'function') {
       overviewPomodoroCleanup();
     }
+    actionsAbort.abort();
   };
 }
 
