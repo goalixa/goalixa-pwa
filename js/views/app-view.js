@@ -753,6 +753,888 @@ function bindOverviewCharts(content, summary, distribution, habits, plannedSecon
   };
 }
 
+/**
+ * Renders the new functional dashboard HTML as a string.
+ * Returns HTML string for all dashboard cards with data attributes for event binding.
+ */
+function renderOverviewDashboardHTML(data) {
+  const {
+    overview,
+    tasksPayload,
+    goalsPayload,
+    reportsPayload,
+    habitsPayload,
+    todosPayload,
+    projectsPayload,
+    range,
+    openTasks = [],
+    activeProjects = [],
+    activeTodos = [],
+    activeHabits = [],
+    summary = [],
+    projectRows = [],
+    habits = [],
+    activeDays = 0,
+    averageDailySeconds = 0,
+    activeGoals = 0,
+    totalGoals = 0,
+    goalsInProgress = [],
+    topProjectRows = []
+  } = data;
+
+  const totalFocusSeconds = reportsPayload?.total_seconds || overview?.total_tracked_seconds || 0;
+  const todayFocusSeconds = overview?.total_tracked_seconds || 0;
+  const doneTodayCount = overview?.done_today_count || 0;
+  const totalGoalSeconds = goalsPayload?.total_goal_seconds || 0;
+  const targetsSet = Number(goalsPayload?.targets_set || 0);
+  const completedHabits = Number(habitsPayload?.completed_habits || 0);
+  const totalHabitsCount = Number(habitsPayload?.total_habits || 0);
+  const bestStreak = Number(habitsPayload?.best_streak || 0);
+  const focusWindow = escapeHtml(habitsPayload?.focus_window || 'Anytime');
+
+  // Running task check
+  const runningTask = openTasks.find((t) => t.is_running) || null;
+
+  return `
+    <div class="dashboard-page">
+      <!-- Hero Section -->
+      <header class="dashboard-hero">
+        <div class="dashboard-hero-header">
+          <div class="dashboard-hero-title">
+            <h2>Welcome back!</h2>
+            <p class="dashboard-hero-subtitle">Here's what's happening today</p>
+          </div>
+          <div class="dashboard-hero-actions">
+            <button class="btn btn-secondary btn-sm" type="button" data-dashboard-refresh>
+              <i class="bi bi-arrow-clockwise"></i> Refresh
+            </button>
+          </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="dashboard-kpi-grid">
+          <article class="dashboard-kpi">
+            <p class="dashboard-kpi-label">Range focus</p>
+            <h3 class="dashboard-kpi-value">${formatDuration(totalFocusSeconds)}</h3>
+            <span class="dashboard-kpi-meta">${escapeHtml(formatDateRange(range.start, range.end))}</span>
+          </article>
+          <article class="dashboard-kpi">
+            <p class="dashboard-kpi-label">Today</p>
+            <h3 class="dashboard-kpi-value">${formatDuration(todayFocusSeconds)}</h3>
+            <span class="dashboard-kpi-meta">${doneTodayCount} tasks done</span>
+          </article>
+          <article class="dashboard-kpi">
+            <p class="dashboard-kpi-label">Active days</p>
+            <h3 class="dashboard-kpi-value">${activeDays}</h3>
+            <span class="dashboard-kpi-meta">Avg ${formatDuration(averageDailySeconds)}/day</span>
+          </article>
+          <article class="dashboard-kpi">
+            <p class="dashboard-kpi-label">Goals alive</p>
+            <h3 class="dashboard-kpi-value">${activeGoals}/${totalGoals}</h3>
+            <span class="dashboard-kpi-meta">${targetsSet} targets set</span>
+          </article>
+        </div>
+      </header>
+
+      <!-- Dashboard Grid -->
+      <div class="dashboard-grid">
+        <!-- Time Chart Card (Full Width with Offset) -->
+        <article class="dashboard-card dashboard-card-chart-top" data-dashboard-chart-root>
+          <div class="dashboard-card-header">
+            <div class="dashboard-card-title">
+              <h3>Focus Trend</h3>
+              <p>Your focus time over the selected period</p>
+            </div>
+            <div class="dashboard-card-actions">
+              <button class="btn btn-outline-secondary btn-sm" type="button" data-dashboard-chart-offset title="Compare with last week">
+                <i class="bi bi-calendar-week"></i>
+                <span>Last Week</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="dashboard-time-chart-content">
+            <div class="dashboard-chart-canvas" data-dashboard-trend-canvas></div>
+
+            <div class="dashboard-chart-metrics">
+              <div class="dashboard-chart-metric">
+                <div class="dashboard-chart-metric-label">This week</div>
+                <div class="dashboard-chart-metric-value">${formatDuration(totalFocusSeconds)}</div>
+              </div>
+              <div class="dashboard-chart-metric">
+                <div class="dashboard-chart-metric-label">Today</div>
+                <div class="dashboard-chart-metric-value">${formatDuration(todayFocusSeconds)}</div>
+              </div>
+              <div class="dashboard-chart-metric">
+                <div class="dashboard-chart-metric-label">Best streak</div>
+                <div class="dashboard-chart-metric-value">${bestStreak}d</div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Pomodoro Card (2x2) - Redesigned -->
+        <article class="dashboard-card dashboard-card-pomodoro" data-pomodoro-root="dashboard">
+          <div class="dashboard-pomodoro-wrapper">
+            <!-- Timer Section -->
+            <div class="dashboard-pomodoro-timer">
+              <div class="pomodoro-ring" data-pomodoro-ring>
+                <div class="pomodoro-dial" data-pomodoro-display>25:00</div>
+                <span class="pomodoro-caption">Remaining</span>
+              </div>
+              <div class="pomodoro-compact-meta">
+                <h4 class="pomodoro-mode" data-pomodoro-mode>Focus</h4>
+                <p class="pomodoro-task" data-pomodoro-task>No task selected</p>
+                <p class="pomodoro-meta" data-pomodoro-meta>Session 1 of 4</p>
+                <div class="pomodoro-dots">
+                  <span data-session-dot="1"></span>
+                  <span data-session-dot="2"></span>
+                  <span data-session-dot="3"></span>
+                  <span data-session-dot="4"></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Controls Section -->
+            <div class="dashboard-pomodoro-controls-section">
+              <div class="pomodoro-compact-actions pomodoro-controls">
+                <button class="btn btn-primary btn-sm" type="button" data-pomodoro-toggle>
+                  <i class="bi bi-play-fill" data-pomodoro-toggle-icon></i>
+                  <span data-pomodoro-toggle-text>Start</span>
+                </button>
+                <button class="btn btn-outline-secondary btn-sm" type="button" data-pomodoro-skip>
+                  <i class="bi bi-skip-forward-fill"></i> Skip
+                </button>
+                <button class="btn btn-outline-success btn-sm" type="button" data-pomodoro-done>
+                  <i class="bi bi-check2-circle"></i> Done
+                </button>
+              </div>
+
+              <div class="pomodoro-presets pomodoro-presets--compact">
+                <button class="btn btn-light btn-sm" type="button" data-pomodoro-mode="work">25</button>
+                <button class="btn btn-light btn-sm" type="button" data-pomodoro-mode="short">5</button>
+                <button class="btn btn-light btn-sm" type="button" data-pomodoro-mode="long">15</button>
+              </div>
+            </div>
+
+            <!-- Task Picker Section -->
+            <div class="dashboard-pomodoro-task-section">
+              <div class="pomodoro-task-label">
+                <i class="bi bi-list-task"></i> Select Task
+              </div>
+              <div class="pomodoro-compact-picker">
+                <select class="pomodoro-task-select" data-pomodoro-task-picker>
+                  <option value="">Select task</option>
+                  ${openTasks.slice(0, 8).map((task) => `
+                    <option value="${task.id}">${escapeHtml(task.name || 'Task')}</option>
+                  `).join('')}
+                </select>
+                <button class="btn btn-outline-secondary btn-sm" type="button" data-pomodoro-task-clear>
+                  <i class="bi bi-x-circle"></i> Clear
+                </button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Quick Tasks Card (1x2 stacked) -->
+        <article class="dashboard-card dashboard-card-tasks">
+          <div class="dashboard-card-header">
+            <div class="dashboard-card-title">
+              <h3>Quick Tasks</h3>
+              <p>Manage your active tasks</p>
+            </div>
+            <a href="/app/tasks" class="btn btn-secondary btn-sm" data-route>View All</a>
+          </div>
+
+          ${runningTask ? `
+            <div class="dashboard-list-item running" style="margin-bottom: 12px;">
+              <div class="dashboard-list-content">
+                <div class="dashboard-list-title">
+                  <i class="bi bi-clock-fill" style="color: var(--primary);"></i>
+                  ${escapeHtml(runningTask.name)}
+                </div>
+                <div class="dashboard-list-meta">
+                  <span class="dashboard-progress-badge">
+                    <i class="bi bi-play-circle"></i> Running • ${formatDuration(runningTask.today_seconds)}
+                  </span>
+                </div>
+              </div>
+              <div class="dashboard-list-actions">
+                <button class="btn btn-sm btn-outline-danger" type="button" data-dashboard-task-action="stop" data-task-id="${runningTask.id}">
+                  Stop
+                </button>
+              </div>
+            </div>
+          ` : ''}
+
+          <div class="dashboard-quick-form">
+            <input type="text" class="dashboard-quick-input" data-dashboard-quick-task placeholder="New task name..." />
+            <select class="dashboard-quick-select" data-dashboard-quick-task-project>
+              <option value="">No project</option>
+              ${activeProjects.slice(0, 6).map((p) => `
+                <option value="${p.id}">${escapeHtml(p.name)}</option>
+              `).join('')}
+            </select>
+            <button class="dashboard-quick-btn" type="button" data-dashboard-quick-task-submit>
+              <i class="bi bi-plus-lg"></i>
+            </button>
+          </div>
+
+          <div class="dashboard-list">
+            ${openTasks.slice(0, 6).map((task) => `
+              <div class="dashboard-list-item ${task.is_running ? 'running' : ''}" data-task-id="${task.id}">
+                <div class="dashboard-list-content">
+                  <div class="dashboard-list-title">${escapeHtml(task.name)}</div>
+                  <div class="dashboard-list-meta">
+                    <span>${escapeHtml(task.project_name || 'No project')}</span>
+                    <span>•</span>
+                    <span>${formatDuration(task.today_seconds || 0)}</span>
+                  </div>
+                </div>
+                <div class="dashboard-list-actions">
+                  ${task.is_running ? `
+                    <button class="btn btn-sm btn-outline-danger" type="button" data-dashboard-task-action="stop" data-task-id="${task.id}">
+                      Stop
+                    </button>
+                  ` : `
+                    <button class="btn btn-sm btn-outline-primary" type="button" data-dashboard-task-action="start" data-task-id="${task.id}">
+                      Start
+                    </button>
+                  `}
+                  <button class="btn btn-sm btn-outline-success" type="button" data-dashboard-task-action="complete" data-task-id="${task.id}">
+                    <i class="bi bi-check2"></i>
+                  </button>
+                </div>
+              </div>
+            `).join('')}
+            ${openTasks.length === 0 ? '<div class="dashboard-empty"><i class="bi bi-inbox"></i><p>No active tasks</p></div>' : ''}
+          </div>
+        </article>
+
+        <!-- Todos Card (1x1) -->
+        <article class="dashboard-card dashboard-card-todos">
+          <div class="dashboard-card-header">
+            <div class="dashboard-card-title">
+              <h3>Todos</h3>
+              <p>Quick checklist items</p>
+            </div>
+          </div>
+
+          <div class="dashboard-quick-form">
+            <input type="text" class="dashboard-quick-input" data-dashboard-quick-todo placeholder="Add todo (press Enter)..." />
+            <button class="dashboard-quick-btn" type="button" data-dashboard-quick-todo-submit>
+              <i class="bi bi-plus-lg"></i>
+            </button>
+          </div>
+
+          <div class="dashboard-list">
+            ${activeTodos.slice(0, 5).map((todo) => `
+              <div class="dashboard-list-item ${todo.done ? 'done' : ''}" data-todo-id="${todo.id}">
+                <div class="dashboard-list-checkbox ${todo.done ? 'checked' : ''}" data-dashboard-todo-toggle="${todo.id}" role="checkbox" aria-checked="${todo.done}" tabindex="0"></div>
+                <div class="dashboard-list-content">
+                  <div class="dashboard-list-title">${escapeHtml(todo.name)}</div>
+                </div>
+                <button class="btn btn-sm btn-outline-danger" type="button" data-dashboard-todo-delete="${todo.id}" aria-label="Delete todo">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            `).join('')}
+            ${activeTodos.length === 0 ? '<div class="dashboard-empty"><i class="bi bi-check2-square"></i><p>No todos yet</p></div>' : ''}
+          </div>
+        </article>
+
+        <!-- Habits Card (1x1) -->
+        <article class="dashboard-card dashboard-card-habits">
+          <div class="dashboard-card-header">
+            <div class="dashboard-card-title">
+              <h3>Habits</h3>
+              <p>Daily habit tracking</p>
+            </div>
+            <div class="dashboard-progress-badge">
+              ${completedHabits}/${totalHabitsCount} done
+            </div>
+          </div>
+
+          <div class="dashboard-quick-form">
+            <input type="text" class="dashboard-quick-input" data-dashboard-quick-habit placeholder="New habit..." />
+            <button class="dashboard-quick-btn" type="button" data-dashboard-quick-habit-submit>
+              <i class="bi bi-plus-lg"></i>
+            </button>
+          </div>
+
+          <div class="dashboard-list">
+            ${activeHabits.slice(0, 5).map((habit) => {
+              const isDone = habit.days_done?.includes(new Date().toISOString().split('T')[0]);
+              const streak = habit.streak_count || 0;
+              return `
+                <div class="dashboard-list-item ${isDone ? 'done' : ''}" data-habit-id="${habit.id}">
+                  <div class="dashboard-list-checkbox ${isDone ? 'checked' : ''}" data-dashboard-habit-toggle="${habit.id}" role="checkbox" aria-checked="${isDone}" tabindex="0"></div>
+                  <div class="dashboard-list-content">
+                    <div class="dashboard-list-title">${escapeHtml(habit.name)}</div>
+                    <div class="dashboard-list-meta">
+                      ${streak > 0 ? `<span class="dashboard-streak-badge"><i class="bi bi-fire"></i> ${streak}</span>` : ''}
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+            ${activeHabits.length === 0 ? '<div class="dashboard-empty"><i class="bi bi-calendar-check"></i><p>No habits yet</p></div>' : ''}
+          </div>
+        </article>
+              </div>
+              <div class="dashboard-chart-metric">
+                <div class="dashboard-chart-metric-label">Today</div>
+                <div class="dashboard-chart-metric-value">${formatDuration(todayFocusSeconds)}</div>
+              </div>
+              <div class="dashboard-chart-metric">
+                <div class="dashboard-chart-metric-label">Best streak</div>
+                <div class="dashboard-chart-metric-value">${bestStreak}d</div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Projects Card (Full Width) -->
+        <article class="dashboard-card dashboard-card-projects">
+          <div class="dashboard-card-header">
+            <div class="dashboard-card-title">
+              <h3>Projects</h3>
+              <p>Quick access to your projects</p>
+            </div>
+            <a href="/app/projects" class="btn btn-secondary btn-sm" data-route>View All</a>
+          </div>
+
+          <div class="dashboard-quick-form">
+            <input type="text" class="dashboard-quick-input" data-dashboard-quick-project placeholder="New project..." />
+            <button class="dashboard-quick-btn" type="button" data-dashboard-quick-project-submit>
+              <i class="bi bi-plus-lg"></i>
+            </button>
+          </div>
+
+          <div class="dashboard-projects-grid">
+            ${activeProjects.slice(0, 8).map((project) => {
+              const focusSeconds = projectRows.find((r) => r.name.toLowerCase() === project.name.toLowerCase())?.seconds || 0;
+              return `
+                <div class="dashboard-project-card">
+                  <div class="dashboard-project-icon">
+                    <i class="bi bi-folder"></i>
+                  </div>
+                  <div class="dashboard-project-content">
+                    <div class="dashboard-project-title">${escapeHtml(project.name)}</div>
+                    <div class="dashboard-project-meta">
+                      <span>${project.task_count || 0} tasks</span>
+                      ${focusSeconds > 0 ? `<span>•</span><span>${formatDuration(focusSeconds)}</span>` : ''}
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+            ${activeProjects.length === 0 ? '<div class="dashboard-empty"><i class="bi bi-folder"></i><p>No projects yet</p></div>' : ''}
+          </div>
+        </article>
+
+        <!-- Goals Progress (Full Width) -->
+        <article class="dashboard-card dashboard-card-goals">
+          <div class="dashboard-card-header">
+            <div class="dashboard-card-title">
+              <h3>Goals Progress</h3>
+              <p>Track your outcome-driven goals</p>
+            </div>
+          </div>
+
+          ${goalsInProgress.length > 0 ? `
+            <div class="dashboard-list" style="max-height: none;">
+              ${goalsInProgress.map((goal) => `
+                <div class="dashboard-list-item">
+                  <div class="dashboard-list-content">
+                    <div class="dashboard-list-title">${escapeHtml(goal.name)}</div>
+                    <div class="dashboard-list-meta">
+                      <span class="goal-status-lite ${badgeForGoalStatus(goal.status || 'active')}">${escapeHtml(String(goal.status || 'active').replace('_', ' '))}</span>
+                      <span>•</span>
+                      <span>${Number(goal.progress || 0)}% complete</span>
+                      <span>•</span>
+                      <span>${Number(goal.projects_count || 0)} projects</span>
+                    </div>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          ` : '<div class="dashboard-empty"><i class="bi bi-flag"></i><p>No active goals</p></div>'}
+        </article>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Binds all event handlers for the dashboard using data attributes.
+ * Centralized event handling for quick-create forms, toggle actions, task actions, and refresh.
+ * @param {HTMLElement} content - The dashboard container element
+ * @param {Object} appApi - API client instance
+ * @param {Function} showToast - Toast notification function
+ * @param {Object} data - Dashboard data containing all payloads
+ * @param {AbortSignal} signal - AbortSignal for cleanup
+ * @returns {Function} Cleanup function
+ */
+function bindDashboardActions(content, appApi, showToast, data, signal) {
+  const { tasksPayload, projectsPayload, todosPayload, habitsPayload, range } = data;
+
+  // Quick Task Create
+  const quickTaskInput = content.querySelector('[data-dashboard-quick-task]');
+  const quickTaskProjectSelect = content.querySelector('[data-dashboard-quick-task-project]');
+  const quickTaskSubmit = content.querySelector('[data-dashboard-quick-task-submit]');
+
+  const handleQuickTaskSubmit = async () => {
+    const name = quickTaskInput?.value?.trim();
+    const projectId = quickTaskProjectSelect?.value || '';
+    if (!name) {
+      showToast('Please enter a task name', 'warning');
+      return;
+    }
+
+    quickTaskSubmit.disabled = true;
+    try {
+      const taskData = { name };
+      if (projectId) taskData.project_id = Number(projectId);
+      await appApi.createTask(taskData);
+      showToast('Task created successfully', 'success');
+      quickTaskInput.value = '';
+      // Trigger dashboard refresh
+      content.dispatchEvent(new CustomEvent('dashboard-refresh-needed', { bubbles: true }));
+    } catch (error) {
+      showToast(error.message || 'Failed to create task', 'error');
+    } finally {
+      quickTaskSubmit.disabled = false;
+    }
+  };
+
+  quickTaskSubmit?.addEventListener('click', handleQuickTaskSubmit, { signal });
+  quickTaskInput?.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') handleQuickTaskSubmit();
+  }, { signal });
+
+  // Quick Project Create
+  const quickProjectInput = content.querySelector('[data-dashboard-quick-project]');
+  const quickProjectSubmit = content.querySelector('[data-dashboard-quick-project-submit]');
+
+  const handleQuickProjectSubmit = async () => {
+    const name = quickProjectInput?.value?.trim();
+    if (!name) {
+      showToast('Please enter a project name', 'warning');
+      return;
+    }
+
+    quickProjectSubmit.disabled = true;
+    try {
+      await appApi.createProject(name);
+      showToast('Project created successfully', 'success');
+      quickProjectInput.value = '';
+      content.dispatchEvent(new CustomEvent('dashboard-refresh-needed', { bubbles: true }));
+    } catch (error) {
+      showToast(error.message || 'Failed to create project', 'error');
+    } finally {
+      quickProjectSubmit.disabled = false;
+    }
+  };
+
+  quickProjectSubmit?.addEventListener('click', handleQuickProjectSubmit, { signal });
+  quickProjectInput?.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') handleQuickProjectSubmit();
+  }, { signal });
+
+  // Quick Todo Create
+  const quickTodoInput = content.querySelector('[data-dashboard-quick-todo]');
+  const quickTodoSubmit = content.querySelector('[data-dashboard-quick-todo-submit]');
+
+  const handleQuickTodoSubmit = async () => {
+    const name = quickTodoInput?.value?.trim();
+    if (!name) {
+      showToast('Please enter a todo name', 'warning');
+      return;
+    }
+
+    quickTodoSubmit.disabled = true;
+    try {
+      await appApi.createTodo(name);
+      showToast('Todo created successfully', 'success');
+      quickTodoInput.value = '';
+      content.dispatchEvent(new CustomEvent('dashboard-refresh-needed', { bubbles: true }));
+    } catch (error) {
+      showToast(error.message || 'Failed to create todo', 'error');
+    } finally {
+      quickTodoSubmit.disabled = false;
+    }
+  };
+
+  quickTodoSubmit?.addEventListener('click', handleQuickTodoSubmit, { signal });
+  quickTodoInput?.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') handleQuickTodoSubmit();
+  }, { signal });
+
+  // Quick Habit Create
+  const quickHabitInput = content.querySelector('[data-dashboard-quick-habit]');
+  const quickHabitSubmit = content.querySelector('[data-dashboard-quick-habit-submit]');
+
+  const handleQuickHabitSubmit = async () => {
+    const name = quickHabitInput?.value?.trim();
+    if (!name) {
+      showToast('Please enter a habit name', 'warning');
+      return;
+    }
+
+    quickHabitSubmit.disabled = true;
+    try {
+      await appApi.createHabit({ name });
+      showToast('Habit created successfully', 'success');
+      quickHabitInput.value = '';
+      content.dispatchEvent(new CustomEvent('dashboard-refresh-needed', { bubbles: true }));
+    } catch (error) {
+      showToast(error.message || 'Failed to create habit', 'error');
+    } finally {
+      quickHabitSubmit.disabled = false;
+    }
+  };
+
+  quickHabitSubmit?.addEventListener('click', handleQuickHabitSubmit, { signal });
+  quickHabitInput?.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') handleQuickHabitSubmit();
+  }, { signal });
+
+  // Todo Toggle (Checkbox and Enter key)
+  content.addEventListener('click', async (event) => {
+    const target = event.target;
+    const checkbox = target.closest('[data-dashboard-todo-toggle]');
+    if (!checkbox) return;
+
+    const todoId = checkbox.dataset.dashboardTodoToggle;
+    const listItem = checkbox.closest('[data-todo-id]');
+    const isCurrentlyDone = listItem?.classList.contains('done') || false;
+
+    // Optimistic UI update
+    const wasChecked = checkbox.classList.contains('checked');
+    checkbox.classList.toggle('checked', !wasChecked);
+    listItem?.classList.toggle('done', !wasChecked);
+
+    try {
+      await appApi.toggleTodo(todoId, !isCurrentlyDone);
+      showToast(!isCurrentlyDone ? 'Todo completed' : 'Todo uncompleted', 'success');
+    } catch (error) {
+      // Rollback on error
+      checkbox.classList.toggle('checked', wasChecked);
+      listItem?.classList.toggle('done', wasChecked);
+      showToast(error.message || 'Failed to update todo', 'error');
+    }
+  }, { signal });
+
+  // Todo Delete
+  content.addEventListener('click', async (event) => {
+    const target = event.target;
+    const button = target.closest('[data-dashboard-todo-delete]');
+    if (!button) return;
+
+    const todoId = button.dataset.dashboardTodoDelete;
+    const listItem = button.closest('[data-todo-id]');
+
+    button.disabled = true;
+    try {
+      await appApi.deleteTodo(todoId);
+      showToast('Todo deleted', 'success');
+      listItem?.remove();
+    } catch (error) {
+      showToast(error.message || 'Failed to delete todo', 'error');
+      button.disabled = false;
+    }
+  }, { signal });
+
+  // Habit Toggle
+  content.addEventListener('click', async (event) => {
+    const target = event.target;
+    const checkbox = target.closest('[data-dashboard-habit-toggle]');
+    if (!checkbox) return;
+
+    const habitId = checkbox.dataset.dashboardHabitToggle;
+    const listItem = checkbox.closest('[data-habit-id]');
+    const isCurrentlyDone = listItem?.classList.contains('done') || false;
+    const today = new Date().toISOString().split('T')[0];
+
+    // Optimistic UI update
+    const wasChecked = checkbox.classList.contains('checked');
+    checkbox.classList.toggle('checked', !wasChecked);
+    listItem?.classList.toggle('done', !wasChecked);
+
+    try {
+      await appApi.toggleHabit(habitId, { date: today });
+      showToast(!isCurrentlyDone ? 'Habit completed!' : 'Habit uncompleted', 'success');
+    } catch (error) {
+      // Rollback on error
+      checkbox.classList.toggle('checked', wasChecked);
+      listItem?.classList.toggle('done', wasChecked);
+      showToast(error.message || 'Failed to update habit', 'error');
+    }
+  }, { signal });
+
+  // Task Actions (Start/Stop/Complete)
+  content.addEventListener('click', async (event) => {
+    const target = event.target;
+    const button = target.closest('[data-dashboard-task-action]');
+    if (!button) return;
+
+    const action = button.dataset.dashboardTaskAction;
+    const taskId = button.dataset.taskId;
+    if (!action || !taskId) return;
+
+    button.disabled = true;
+    try {
+      if (action === 'start') {
+        await appApi.startTask(taskId);
+        showToast('Task timer started', 'success');
+        // Optimistic UI update
+        const listItem = button.closest('[data-task-id]');
+        const stateBadge = listItem?.querySelector('.dashboard-progress-badge');
+        if (stateBadge && listItem) {
+          listItem.classList.add('running');
+          stateBadge.innerHTML = '<i class="bi bi-play-circle"></i> Running';
+        }
+      } else if (action === 'stop') {
+        await appApi.stopTask(taskId);
+        showToast('Task timer stopped', 'success');
+        const listItem = button.closest('[data-task-id]');
+        const stateBadge = listItem?.querySelector('.dashboard-progress-badge');
+        if (stateBadge && listItem) {
+          listItem.classList.remove('running');
+        }
+      } else if (action === 'complete') {
+        await appApi.completeTask(taskId);
+        showToast('Task completed', 'success');
+        const listItem = button.closest('[data-task-id]');
+        listItem?.remove();
+        return; // Don't re-enable button after removal
+      }
+      // Refresh dashboard after action
+      content.dispatchEvent(new CustomEvent('dashboard-refresh-needed', { bubbles: true }));
+    } catch (error) {
+      showToast(error.message || 'Task update failed', 'error');
+    } finally {
+      button.disabled = false;
+    }
+  }, { signal });
+
+  // Refresh Button
+  content.addEventListener('click', (event) => {
+    const target = event.target;
+    const button = target.closest('[data-dashboard-refresh]');
+    if (!button) return;
+
+    content.dispatchEvent(new CustomEvent('dashboard-refresh-needed', { bubbles: true }));
+  }, { signal });
+
+  // Chart Offset Button
+  let chartOffsetEnabled = false;
+  let previousWeekData = null;
+
+  content.addEventListener('click', async (event) => {
+    const target = event.target;
+    const button = target.closest('[data-dashboard-chart-offset]');
+    if (!button) return;
+
+    chartOffsetEnabled = !chartOffsetEnabled;
+    button.classList.toggle('btn-active', chartOffsetEnabled);
+
+    // Fetch previous week data if needed
+    if (chartOffsetEnabled && !previousWeekData) {
+      try {
+        const today = new Date();
+        const lastWeekStart = new Date(today);
+        lastWeekStart.setDate(today.getDate() - 14);
+        const lastWeekEnd = new Date(today);
+        lastWeekEnd.setDate(today.getDate() - 8);
+
+        const prevRange = {
+          start: lastWeekStart.toISOString().split('T')[0],
+          end: lastWeekEnd.toISOString().split('T')[0]
+        };
+
+        const prevData = await appApi.getReportsSummary(prevRange);
+        previousWeekData = Array.isArray(prevData.summary) ? prevData.summary.map((item, index) => ({
+          label: compactOverviewLabel(item?.label || item?.date || item?.day, `D${index + 1}`),
+          seconds: Number(item.seconds || 0),
+          fullLabel: String(item?.label || item?.date || item?.day || `Day ${index + 1}`)
+        })) : [];
+      } catch (error) {
+        console.error('[Dashboard] Failed to fetch previous week data:', error);
+        previousWeekData = [];
+      }
+    }
+
+    // Recreate chart with offset
+    if (window.GoalixaCharts) {
+      const summary = data.summary || [];
+      const normalizedSummary = summary.map((item, index) => ({
+        label: compactOverviewLabel(item?.label || item?.date || item?.day, `D${index + 1}`),
+        seconds: Number(item.seconds || 0),
+        fullLabel: String(item?.label || item?.date || item?.day || `Day ${index + 1}`)
+      }));
+
+      if (chartOffsetEnabled && previousWeekData) {
+        window.GoalixaCharts.createOverviewTrendChart('[data-dashboard-trend-canvas]', normalizedSummary, 'line', previousWeekData);
+      } else {
+        window.GoalixaCharts.createOverviewTrendChart('[data-dashboard-trend-canvas]', normalizedSummary, 'line');
+      }
+    }
+  }, { signal });
+
+  // Refresh Button
+  return () => {
+    // Event listeners are automatically cleaned up by AbortSignal
+  };
+}
+
+/**
+ * Prepares dashboard data from API responses for rendering.
+ * Normalizes and structures data for the dashboard HTML template.
+ */
+function prepareDashboardData(overview, tasksPayload, goalsPayload, reportsPayload, habitsPayload, todosPayload, projectsPayload, range) {
+  const openTasks = Array.isArray(tasksPayload?.tasks)
+    ? tasksPayload.tasks.filter((task) => String(task.status || 'active').toLowerCase() !== 'completed').slice(0, 8)
+    : [];
+
+  const goals = Array.isArray(goalsPayload?.goals) ? goalsPayload.goals : [];
+  const activeGoals = Number(goalsPayload?.active_goals_count || 0);
+  const totalGoals = goals.length;
+  const goalsInProgress = goals
+    .filter((goal) => {
+      const status = String(goal.status || '').toLowerCase();
+      return status === 'active' || status === 'at_risk' || status === '';
+    })
+    .slice(0, 3);
+
+  const summary = Array.isArray(reportsPayload?.summary) ? reportsPayload.summary : [];
+  const distribution = Array.isArray(reportsPayload?.distribution) ? reportsPayload.distribution.slice(0, 5) : [];
+  const projectRows = getProjectDistributionRows(distribution);
+  const topProjectRows = projectRows.slice(0, 4);
+
+  const habits = Array.isArray(habitsPayload?.habits) ? habitsPayload.habits : [];
+  const activeHabits = habits.filter((h) => String(h.status || 'active').toLowerCase() === 'active').slice(0, 5);
+
+  const todos = Array.isArray(todosPayload?.todos) ? todosPayload.todos : [];
+  const activeTodos = todos.filter((t) => !t.done).slice(0, 5);
+
+  const projects = Array.isArray(projectsPayload?.projects) ? projectsPayload.projects : [];
+  const activeProjects = projects.filter((p) => String(p.status || 'active').toLowerCase() === 'active').slice(0, 8);
+
+  const plannedSeconds = Number(goalsPayload?.total_goal_seconds || 0);
+  const activeDays = summary.filter((item) => Number(item.seconds || 0) > 0).length;
+  const averageDailySeconds = summary.length > 0
+    ? Math.round(summary.reduce((acc, item) => acc + Number(item.seconds || 0), 0) / summary.length)
+    : 0;
+
+  // Add is_running flag to tasks
+  const tasksWithRunning = openTasks.map((task) => ({
+    ...task,
+    is_running: String(task.status || '').toLowerCase() === 'running'
+  }));
+
+  return {
+    overview,
+    tasksPayload,
+    goalsPayload,
+    reportsPayload,
+    habitsPayload,
+    todosPayload,
+    projectsPayload,
+    range,
+    openTasks: tasksWithRunning,
+    activeProjects,
+    activeTodos,
+    activeHabits,
+    summary,
+    projectRows,
+    habits,
+    activeDays,
+    averageDailySeconds,
+    activeGoals,
+    totalGoals,
+    goalsInProgress,
+    topProjectRows
+  };
+}
+
+/**
+ * Renders the functional dashboard view with all interactive elements.
+ * This replaces the old overview with a fully functional dashboard hub.
+ */
+async function renderDashboard(content, appApi, showToast, overview, tasksPayload, goalsPayload, reportsPayload, habitsPayload, todosPayload, projectsPayload, range) {
+  // Prepare data for dashboard
+  const data = prepareDashboardData(overview, tasksPayload, goalsPayload, reportsPayload, habitsPayload, todosPayload, projectsPayload, range);
+
+  // Render HTML
+  content.innerHTML = renderOverviewDashboardHTML(data);
+
+  // Create AbortController for cleanup
+  const abortController = new AbortController();
+  const { signal } = abortController;
+
+  // Bind all dashboard actions
+  const dashboardActionsCleanup = bindDashboardActions(content, appApi, showToast, data, signal);
+
+  // Initialize Pomodoro controller
+  const pomodoroCleanup = createPomodoroController({
+    root: content.querySelector('[data-pomodoro-root="dashboard"]'),
+    appApi,
+    showToast,
+    signal,
+    mode: 'compact',
+    initialTasks: data.openTasks,
+    getTasks: () => appApi.getTasks()
+  });
+
+  // Initialize trend chart if data available
+  if (data.summary.length > 0 && window.GoalixaCharts) {
+    const normalizedSummary = data.summary.map((item, index) => ({
+      label: compactOverviewLabel(item?.label || item?.date || item?.day, `D${index + 1}`),
+      seconds: Number(item.seconds || 0),
+      fullLabel: String(item?.label || item?.date || item?.day || `Day ${index + 1}`)
+    }));
+    window.GoalixaCharts.createOverviewTrendChart('[data-dashboard-trend-canvas]', normalizedSummary, 'line');
+  }
+
+  // Handle refresh event
+  content.addEventListener('dashboard-refresh-needed', async () => {
+    try {
+      const [freshOverview, freshTasks, freshGoals, freshReports, freshHabits, freshTodos, freshProjects] = await Promise.all([
+        appApi.getOverview(),
+        appApi.getTasks(),
+        appApi.getGoals().catch(() => goalsPayload),
+        appApi.getReportsSummary({ start: range.start, end: range.end }).catch(() => reportsPayload),
+        appApi.getHabits().catch(() => habitsPayload),
+        appApi.getTodos().catch(() => todosPayload || { todos: [] }),
+        appApi.getProjects().catch(() => projectsPayload || { projects: [] })
+      ]);
+
+      // Re-render dashboard with fresh data
+      await renderDashboard(content, appApi, showToast, freshOverview, freshTasks, freshGoals, freshReports, freshHabits, freshTodos, freshProjects, range);
+      showToast('Dashboard refreshed', 'success');
+    } catch (error) {
+      showToast('Failed to refresh dashboard', 'error');
+    }
+  }, { signal, once: true });
+
+  // Return cleanup function
+  return () => {
+    abortController.abort();
+    if (typeof dashboardActionsCleanup === 'function') {
+      dashboardActionsCleanup();
+    }
+    if (typeof pomodoroCleanup === 'function') {
+      pomodoroCleanup();
+    }
+    if (window.GoalixaCharts) {
+      window.GoalixaCharts.destroyChart('[data-dashboard-trend-canvas]');
+    }
+  };
+}
+
 function renderOverview(content, overview, tasksPayload, goalsPayload, reportsPayload, habitsPayload, range) {
   const openTasks = Array.isArray(tasksPayload.tasks)
     ? tasksPayload.tasks.filter((task) => String(task.status || 'active').toLowerCase() !== 'completed').slice(0, 6)
@@ -6616,7 +7498,7 @@ async function renderSection(container, section, currentPath) {
         range = lastSevenDaysRange();
       }
 
-      const [overview, tasks, goals, reports, habits] = await Promise.all([
+      const [overview, tasks, goals, reports, habits, todos, projects] = await Promise.all([
         appApi.getOverview(),
         appApi.getTasks(),
         appApi.getGoals().catch(() => ({
@@ -6636,9 +7518,22 @@ async function renderSection(container, section, currentPath) {
           completed_habits: 0,
           best_streak: 0,
           focus_window: 'Anytime'
-        }))
+        })),
+        appApi.getTodos().catch(() => ({ todos: [] })),
+        appApi.getProjects().catch(() => ({ projects: [] }))
       ]);
-      renderOverview(content, overview, tasks, goals, reports, habits, range);
+
+      const dashboardCleanup = await renderDashboard(content, appApi, showToast, overview, tasks, goals, reports, habits, todos, projects, range);
+
+      const previousCleanup = overviewViewCleanup;
+      overviewViewCleanup = () => {
+        if (typeof previousCleanup === 'function') {
+          previousCleanup();
+        }
+        if (typeof dashboardCleanup === 'function') {
+          dashboardCleanup();
+        }
+      };
       return;
     }
 

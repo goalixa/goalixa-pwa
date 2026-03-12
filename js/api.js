@@ -405,6 +405,10 @@ export const appApi = {
     return apiRequest(buildUrl('/app/planner'));
   },
 
+  async getTodos() {
+    return apiRequest(buildUrl('/app/todos'));
+  },
+
   async createTodo(name) {
     return apiRequest(buildUrl('/app/todos'), {
       method: 'POST',

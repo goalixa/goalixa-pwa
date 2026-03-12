@@ -14319,6 +14319,13 @@ footer {
   max-width: 1400px;
   margin: 0 auto;
   padding: 20px;
+  box-sizing: border-box;
+}
+
+.dashboard-page,
+.dashboard-page > *,
+.dashboard-page * {
+  box-sizing: border-box;
 }
 
 .dashboard-hero {
@@ -14354,6 +14361,7 @@ footer {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
+  box-sizing: border-box;
 }
 
 .dashboard-kpi {
@@ -14362,6 +14370,7 @@ footer {
   border-radius: 14px;
   padding: 18px;
   transition: all 0.2s ease;
+  box-sizing: border-box;
 }
 
 .dashboard-kpi:hover {
@@ -14394,8 +14403,11 @@ footer {
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: minmax(280px, auto);
   gap: 16px;
   margin-top: 24px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .dashboard-card {
@@ -14406,24 +14418,72 @@ footer {
   transition: all 0.2s ease;
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .dashboard-card:hover {
   box-shadow: var(--shadow);
+  transform: translateY(-2px);
 }
 
-/* Grid Spans */
-.dashboard-pomodoro {
+/* Grid Spans - Desktop Layout (> 1024px) */
+.dashboard-card-chart-top {
+  grid-column: span 4;
+  grid-row: span 1;
+  min-height: 280px;
+}
+
+.dashboard-card-pomodoro {
   grid-column: span 2;
   grid-row: span 2;
+  min-height: 520px;
 }
 
-.dashboard-time-chart {
+.dashboard-card-tasks {
   grid-column: span 2;
+  grid-row: span 2;
+  min-height: 520px;
 }
 
-.dashboard-charts-full {
+.dashboard-card-todos {
+  grid-column: span 2;
+  grid-row: span 1;
+  min-height: 280px;
+}
+
+.dashboard-card-habits {
+  grid-column: span 2;
+  grid-row: span 1;
+  min-height: 280px;
+}
+
+.dashboard-card-projects {
   grid-column: span 4;
+  grid-row: span 1;
+}
+
+.dashboard-card-goals {
+  grid-column: span 4;
+  grid-row: span 1;
+}
+
+/* Card Actions */
+.dashboard-card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.dashboard-card-actions .btn-sm {
+  padding: 6px 12px;
+  font-size: 0.8rem;
+}
+
+.dashboard-card-actions .btn-active {
+  background: var(--primary);
+  color: var(--white);
+  border-color: var(--primary);
 }
 
 /* Card Header */
@@ -14635,89 +14695,110 @@ footer {
   font-weight: 600;
 }
 
-/* Pomodoro Card */
-.dashboard-pomodoro-content {
+/* Pomodoro Card - Redesigned */
+.dashboard-pomodoro-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
   height: 100%;
+  padding: 4px;
 }
 
-.dashboard-pomodoro-main {
+.dashboard-pomodoro-timer {
   display: flex;
   align-items: center;
-  gap: 20px;
+  justify-content: center;
+  gap: 24px;
+  padding: 18px 20px;
+  background: linear-gradient(135deg, rgba(46, 139, 87, 0.08) 0%, rgba(46, 139, 87, 0.03) 100%);
+  border-radius: 14px;
+  border: 1px solid rgba(46, 139, 87, 0.2);
+  box-shadow: 0 4px 16px rgba(46, 139, 87, 0.1);
 }
 
-.dashboard-pomodoro-ring {
-  flex-shrink: 0;
-  width: 140px;
-  height: 140px;
+.dashboard-pomodoro-controls-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
-.dashboard-pomodoro-meta {
+.pomodoro-compact-actions {
+  justify-content: center;
+}
+
+.pomodoro-presets--compact {
+  justify-content: center;
+}
+
+.pomodoro-presets--compact .btn {
+  min-width: 60px;
+  font-weight: 600;
+}
+
+.dashboard-pomodoro-task-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  background: var(--field);
+  border-radius: 12px;
   flex: 1;
 }
 
-.dashboard-pomodoro-mode {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--dark);
-  margin-bottom: 4px;
-}
-
-.dashboard-pomodoro-task {
-  font-size: 0.9rem;
-  color: var(--gray);
-  margin-bottom: 8px;
-}
-
-.dashboard-pomodoro-sessions {
+.pomodoro-task-label {
   display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--gray);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pomodoro-task-label i {
+  font-size: 0.9rem;
+  color: var(--primary);
+}
+
+/* Improved Pomodoro Ring for Dashboard */
+.dashboard-card-pomodoro .pomodoro-ring {
+  flex-shrink: 0;
+}
+
+.dashboard-card-pomodoro .pomodoro-compact-meta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
   gap: 6px;
 }
 
-.dashboard-pomodoro-session {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--light-gray);
-  transition: all 0.2s ease;
-}
-
-.dashboard-pomodoro-session.active {
-  background: var(--primary);
-}
-
-.dashboard-pomodoro-session.completed {
-  background: var(--success);
-}
-
-.dashboard-pomodoro-controls {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.dashboard-pomodoro-presets {
-  display: flex;
-  gap: 8px;
-}
-
-.dashboard-pomodoro-task-picker {
-  display: flex;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.dashboard-pomodoro-task-picker select {
-  flex: 1;
-  padding: 8px 12px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  font-size: 0.9rem;
-  background: var(--field);
+.dashboard-card-pomodoro .pomodoro-mode {
+  font-size: 1.75rem;
+  font-weight: 700;
   color: var(--dark);
+  margin: 0;
+}
+
+.dashboard-card-pomodoro .pomodoro-task {
+  font-size: 0.9rem;
+  color: var(--gray);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.dashboard-card-pomodoro .pomodoro-meta {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+.dashboard-card-pomodoro .pomodoro-dots {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
 }
 
 /* Time Chart Card */
@@ -14759,6 +14840,64 @@ footer {
   padding: 12px;
 }
 
+/* Projects Grid */
+.dashboard-projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.dashboard-project-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--field);
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.dashboard-project-card:hover {
+  background: var(--light-gray);
+  transform: translateX(4px);
+}
+
+.dashboard-project-icon {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary);
+  color: var(--white);
+  border-radius: 8px;
+  font-size: 1.2rem;
+}
+
+.dashboard-project-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.dashboard-project-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dashboard-project-meta {
+  font-size: 0.8rem;
+  color: var(--gray);
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
 /* Empty State */
 .dashboard-empty {
   text-align: center;
@@ -14773,21 +14912,47 @@ footer {
   opacity: 0.5;
 }
 
-/* Responsive - Tablet */
-@media (max-width: 1024px) {
+/* Responsive - Tablet (768px - 1024px) */
+@media (max-width: 1024px) and (min-width: 769px) {
   .dashboard-grid {
     grid-template-columns: repeat(2, 1fr);
+    grid-auto-rows: minmax(260px, auto);
   }
 
-  .dashboard-pomodoro {
+  .dashboard-card-chart-top {
     grid-column: span 2;
+    grid-row: span 1;
+    min-height: 280px;
   }
 
-  .dashboard-time-chart {
+  .dashboard-card-pomodoro {
     grid-column: span 2;
+    grid-row: span 1;
+    min-height: auto;
   }
 
-  .dashboard-charts-full {
+  .dashboard-pomodoro-timer {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .dashboard-pomodoro-wrapper {
+    gap: 12px;
+  }
+
+  .dashboard-card-tasks {
+    grid-column: span 1;
+    grid-row: span 1;
+  }
+
+  .dashboard-card-todos,
+  .dashboard-card-habits {
+    grid-column: span 1;
+    grid-row: span 1;
+  }
+
+  .dashboard-card-projects,
+  .dashboard-card-goals {
     grid-column: span 2;
   }
 
@@ -14795,8 +14960,13 @@ footer {
     grid-template-columns: repeat(2, 1fr);
   }
 
+  .dashboard-projects-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
+
   .dashboard-hero-header {
     flex-direction: column;
+    gap: 12px;
   }
 
   .dashboard-hero-actions {
@@ -14808,7 +14978,7 @@ footer {
   }
 }
 
-/* Responsive - Mobile */
+/* Responsive - Mobile (< 768px) */
 @media (max-width: 768px) {
   .dashboard-page {
     padding: 12px;
@@ -14816,17 +14986,25 @@ footer {
 
   .dashboard-grid {
     grid-template-columns: 1fr;
+    grid-auto-rows: minmax(240px, auto);
+    gap: 14px;
   }
 
-  .dashboard-pomodoro,
-  .dashboard-time-chart,
-  .dashboard-charts-full {
+  .dashboard-card-pomodoro,
+  .dashboard-card-tasks,
+  .dashboard-card-todos,
+  .dashboard-card-habits,
+  .dashboard-card-chart,
+  .dashboard-card-projects,
+  .dashboard-card-goals {
     grid-column: span 1;
+    grid-row: span 1;
+    min-height: auto;
   }
 
   .dashboard-kpi-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+    gap: 10px;
   }
 
   .dashboard-kpi {
@@ -14843,42 +15021,117 @@ footer {
 
   .dashboard-quick-form {
     flex-direction: column;
+    gap: 10px;
   }
 
+  .dashboard-quick-input,
   .dashboard-quick-select {
     width: 100%;
   }
 
-  .dashboard-pomodoro-main {
-    flex-direction: column;
-    text-align: center;
-  }
-
   .dashboard-chart-metrics {
     grid-template-columns: 1fr;
+    gap: 10px;
   }
 
   .dashboard-list {
-    max-height: 240px;
+    max-height: 280px;
+  }
+
+  .dashboard-projects-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-pomodoro-timer {
+    flex-direction: column;
+    text-align: center;
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .dashboard-pomodoro-wrapper {
+    gap: 12px;
+  }
+
+  .dashboard-hero-header {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .dashboard-hero-actions {
+    width: 100%;
+  }
+
+  .dashboard-hero-actions .btn {
+    flex: 1;
   }
 }
 
+/* Responsive - Small Mobile (< 480px) */
 @media (max-width: 480px) {
+  .dashboard-page {
+    padding: 10px;
+  }
+
+  .dashboard-grid {
+    gap: 12px;
+  }
+
   .dashboard-kpi-grid {
     grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .dashboard-kpi {
+    padding: 12px;
+  }
+
+  .dashboard-card {
+    padding: 12px;
   }
 
   .dashboard-hero-title h2 {
     font-size: 1.5rem;
   }
 
-  .dashboard-pomodoro-ring {
-    width: 120px;
-    height: 120px;
+  .dashboard-card-title h3 {
+    font-size: 1rem;
   }
 
-  .dashboard-pomodoro-mode {
-    font-size: 1.25rem;
+  .dashboard-card-title p {
+    font-size: 0.75rem;
+  }
+
+  .dashboard-list-item {
+    padding: 8px;
+  }
+
+  .dashboard-project-card {
+    padding: 10px;
+  }
+
+  .dashboard-project-icon {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    font-size: 1rem;
+  }
+
+  .dashboard-quick-btn {
+    padding: 10px 16px;
+  }
+
+  .dashboard-list-checkbox {
+    width: 18px;
+    height: 18px;
+  }
+
+  .dashboard-pomodoro-task-section {
+    padding: 10px;
+  }
+
+  .pomodoro-task-label {
+    font-size: 0.75rem;
   }
 }
 
@@ -14893,7 +15146,8 @@ footer {
 [data-theme="dark"] .dashboard-card-title h3,
 [data-theme="dark"] .dashboard-list-title,
 [data-theme="dark"] .dashboard-pomodoro-mode,
-[data-theme="dark"] .dashboard-chart-metric-value {
+[data-theme="dark"] .dashboard-chart-metric-value,
+[data-theme="dark"] .dashboard-project-title {
   color: var(--text);
 }
 
@@ -14923,6 +15177,46 @@ footer {
 
 [data-theme="dark"] .dashboard-progress-badge {
   background: rgba(90, 141, 255, 0.15);
+  color: #5a8dff;
+}
+
+[data-theme="dark"] .dashboard-project-card {
+  background: rgba(26, 38, 57, 0.4);
+}
+
+[data-theme="dark"] .dashboard-project-card:hover {
+  background: rgba(26, 38, 57, 0.6);
+}
+
+[data-theme="dark"] .dashboard-project-icon {
+  background: linear-gradient(135deg, #5a8dff, #4a7dee);
+}
+
+[data-theme="dark"] .dashboard-card-actions .btn-active {
+  background: linear-gradient(135deg, #5a8dff, #4a7dee);
+  border-color: #5a8dff;
+}
+
+[data-theme="dark"] .dashboard-pomodoro-timer {
+  background: linear-gradient(135deg, rgba(90, 141, 255, 0.08) 0%, rgba(90, 141, 255, 0.03) 100%);
+  border-color: rgba(90, 141, 255, 0.2);
+}
+
+[data-theme="dark"] .dashboard-pomodoro-task-section {
+  background: rgba(26, 38, 57, 0.4);
+}
+
+[data-theme="dark"] .dashboard-pomodoro-timer {
+  background: linear-gradient(135deg, rgba(90, 141, 255, 0.12) 0%, rgba(90, 141, 255, 0.04) 100%);
+  border-color: rgba(90, 141, 255, 0.25);
+  box-shadow: 0 4px 16px rgba(90, 141, 255, 0.15);
+}
+
+[data-theme="dark"] .dashboard-card-pomodoro .pomodoro-mode {
+  color: var(--text);
+}
+
+[data-theme="dark"] .pomodoro-task-label i {
   color: #5a8dff;
 }
 
