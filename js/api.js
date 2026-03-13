@@ -35,6 +35,7 @@ const API_CONFIG = {
 
 let isRefreshing = false;
 let refreshSubscribers = [];
+let refreshPromise = null; // Shared promise for concurrent refresh attempts
 
 // Track failed retries to prevent infinite loops
 const failedRefreshUrls = new Map(); // url -> timestamp of last failure
@@ -154,7 +155,9 @@ async function handle401Error(originalUrl, originalOptions) {
     throw error;
   }
 
-  if (isRefreshing) {
+  // If a refresh is already in progress, return the existing promise
+  // This prevents race conditions when multiple 401s occur simultaneously
+  if (refreshPromise) {
     console.log(`[Auth] Refresh already in progress, queuing request for ${originalUrl}`);
     return new Promise((resolve, reject) => {
       subscribeToRefresh(async () => {
@@ -168,58 +171,64 @@ async function handle401Error(originalUrl, originalOptions) {
     });
   }
 
+  // Start a new refresh and store the promise
   isRefreshing = true;
   console.log(`[Auth] Starting token refresh for 401 at ${originalUrl}`);
 
-  try {
-    const { refreshToken, report401AfterRefresh } = await import('./auth.js');
-    const refreshResult = await refreshToken();
+  refreshPromise = (async () => {
+    try {
+      const { refreshToken, report401AfterRefresh } = await import('./auth.js');
+      const refreshResult = await refreshToken();
 
-    if (refreshResult.success) {
-      onRefreshed();
-      console.log(`[Auth] Token refreshed successfully, retrying ${originalUrl}`);
+      if (refreshResult.success) {
+        onRefreshed();
+        console.log(`[Auth] Token refreshed successfully, retrying ${originalUrl}`);
 
-      // Add a small delay to ensure cookies are properly set
-      await new Promise(resolve => setTimeout(resolve, 100));
+        // Add a small delay to ensure cookies are properly set
+        await new Promise(resolve => setTimeout(resolve, 100));
 
-      try {
-        const result = await apiRequest(originalUrl, originalOptions);
+        try {
+          const result = await apiRequest(originalUrl, originalOptions);
 
-        // Clear the cooldown if the retry succeeded
-        failedRefreshUrls.delete(originalUrl);
-        console.log(`[Auth] Retry succeeded for ${originalUrl}`);
+          // Clear the cooldown if the retry succeeded
+          failedRefreshUrls.delete(originalUrl);
+          console.log(`[Auth] Retry succeeded for ${originalUrl}`);
 
-        return result;
-      } catch (retryError) {
-        // If the retry fails with 401, add this URL to cooldown
-        // and report it to auth module for tracking
-        if (retryError.status === 401) {
-          console.error(`[Auth] Retry after refresh still returned 401 for ${originalUrl}. Adding to cooldown.`);
-          failedRefreshUrls.set(originalUrl, Date.now());
+          return result;
+        } catch (retryError) {
+          // If the retry fails with 401, add this URL to cooldown
+          // and report it to auth module for tracking
+          if (retryError.status === 401) {
+            console.error(`[Auth] Retry after refresh still returned 401 for ${originalUrl}. Adding to cooldown.`);
+            failedRefreshUrls.set(originalUrl, Date.now());
 
-          // Report this to the auth module - if too many occur, it will logout
-          const authStillValid = report401AfterRefresh();
-          if (!authStillValid) {
-            // User was logged out due to too many failed retries
-            console.error('[Auth] Too many 401s after refresh, logging out');
-            const logoutError = new Error('Session expired. Please login again.');
-            logoutError.status = 401;
-            throw logoutError;
+            // Report this to the auth module - if too many occur, it will logout
+            const authStillValid = report401AfterRefresh();
+            if (!authStillValid) {
+              // User was logged out due to too many failed retries
+              console.error('[Auth] Too many 401s after refresh, logging out');
+              const logoutError = new Error('Session expired. Please login again.');
+              logoutError.status = 401;
+              throw logoutError;
+            }
           }
+          throw retryError;
         }
-        throw retryError;
       }
-    }
 
-    onRefreshed();
-    console.error('[Auth] Token refresh failed:', refreshResult.error);
-    throw new Error(refreshResult.error || 'Session expired');
-  } catch (error) {
-    onRefreshed();
-    throw error;
-  } finally {
-    isRefreshing = false;
-  }
+      onRefreshed();
+      console.error('[Auth] Token refresh failed:', refreshResult.error);
+      throw new Error(refreshResult.error || 'Session expired');
+    } catch (error) {
+      onRefreshed();
+      throw error;
+    } finally {
+      isRefreshing = false;
+      refreshPromise = null; // Clear the promise so new refreshes can start
+    }
+  })();
+
+  return refreshPromise;
 }
 
 export const authApi = {
