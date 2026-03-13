@@ -41,6 +41,20 @@ let refreshPromise = null; // Shared promise for concurrent refresh attempts
 const failedRefreshUrls = new Map(); // url -> timestamp of last failure
 const FAILED_RETRY_COOLDOWN = 60000; // 1 minute cooldown after failed retry
 
+// Track in-flight requests for deduplication
+const pendingRequests = new Map(); // request_key -> promise
+
+// Generate a unique key for a request based on URL and options
+function getRequestKey(url, options = {}) {
+  const { method = 'GET', body } = options;
+  // For GET requests, URL is sufficient
+  if (method === 'GET' || !method) {
+    return url;
+  }
+  // For POST/PUT/DELETE, include method and body in the key
+  return `${url}:${method}:${JSON.stringify(body || '')}`;
+}
+
 function buildUrl(path) {
   if (!API_CONFIG.api) {
     return path;
@@ -66,27 +80,57 @@ async function apiRequest(url, options = {}) {
     timeout = 30000
   } = options;
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
+  // Check if this request is already in flight (deduplication)
+  const requestKey = getRequestKey(url, { method, body });
 
-  const defaultHeaders = {
-    'Content-Type': 'application/json',
-    Accept: 'application/json'
-  };
+  // Skip deduplication for mutations (POST, PUT, DELETE, PATCH)
+  const isMutation = method && method !== 'GET';
 
-  try {
-    const response = await fetch(url, {
-      method,
-      headers: { ...defaultHeaders, ...headers },
-      body: body ? JSON.stringify(body) : null,
-      credentials,
-      signal: controller.signal
-    });
+  if (!isMutation && pendingRequests.has(requestKey)) {
+    console.log(`[API] Deduplicating request: ${requestKey}`);
+    return pendingRequests.get(requestKey);
+  }
 
-    clearTimeout(timeoutId);
+  // Create the request promise
+  const requestPromise = (async () => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-    const contentType = response.headers.get('content-type');
-    if (!contentType || !contentType.includes('application/json')) {
+    const defaultHeaders = {
+      'Content-Type': 'application/json',
+      Accept: 'application/json'
+    };
+
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: { ...defaultHeaders, ...headers },
+        body: body ? JSON.stringify(body) : null,
+        credentials,
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        if (!response.ok) {
+          // Don't trigger refresh for login, register, or refresh endpoints
+          if (response.status === 401 &&
+              !url.includes('/auth/refresh') &&
+              !url.includes('/auth/login') &&
+              !url.includes('/auth/register')) {
+            return handle401Error(url, options);
+          }
+          const nonJsonError = new Error(`HTTP ${response.status}`);
+          nonJsonError.status = response.status;
+          throw nonJsonError;
+        }
+        return response;
+      }
+
+      const data = await response.json();
+
       if (!response.ok) {
         // Don't trigger refresh for login, register, or refresh endpoints
         if (response.status === 401 &&
@@ -95,36 +139,32 @@ async function apiRequest(url, options = {}) {
             !url.includes('/auth/register')) {
           return handle401Error(url, options);
         }
-        const nonJsonError = new Error(`HTTP ${response.status}`);
-        nonJsonError.status = response.status;
-        throw nonJsonError;
+        const error = new Error(data.message || data.error || `HTTP ${response.status}`);
+        error.status = response.status;
+        throw error;
       }
-      return response;
-    }
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      // Don't trigger refresh for login, register, or refresh endpoints
-      if (response.status === 401 &&
-          !url.includes('/auth/refresh') &&
-          !url.includes('/auth/login') &&
-          !url.includes('/auth/register')) {
-        return handle401Error(url, options);
+      return data;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        throw new Error('Request timeout');
       }
-      const error = new Error(data.message || data.error || `HTTP ${response.status}`);
-      error.status = response.status;
       throw error;
+    } finally {
+      // Remove from pending requests map when done (only for GET requests)
+      if (!isMutation && pendingRequests.has(requestKey)) {
+        pendingRequests.delete(requestKey);
+      }
     }
+  })();
 
-    return data;
-  } catch (error) {
-    clearTimeout(timeoutId);
-    if (error.name === 'AbortError') {
-      throw new Error('Request timeout');
-    }
-    throw error;
+  // Store the promise for deduplication (only for GET requests)
+  if (!isMutation) {
+    pendingRequests.set(requestKey, requestPromise);
   }
+
+  return requestPromise;
 }
 
 async function apiRequestWithFallback(urls, options = {}) {
