@@ -485,6 +485,8 @@ export async function bindTasksSection(container, initialPayload = {}, projects 
     stopLiveTimer();
     abortController.abort();
     closeTaskEditModal();
+    // Clear taskTimeState to prevent memory leaks
+    taskTimeState.clear();
   };
 
   let tasksPayload = normalizeTaskCollections(initialPayload);
