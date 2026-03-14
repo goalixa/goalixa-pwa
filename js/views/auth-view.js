@@ -270,6 +270,9 @@ function getFooterHTML(mode) {
 }
 
 function initAuthView(container, mode, params) {
+  // Initialize form validation helpers
+  initFormValidation(container, mode);
+
   container.querySelectorAll('[data-password-toggle]').forEach((toggle) => {
     toggle.addEventListener('click', () => {
       const input = container.querySelector(`#${toggle.dataset.passwordToggle}`);
@@ -299,10 +302,28 @@ function initAuthView(container, mode, params) {
   if (loginForm) {
     loginForm.addEventListener('submit', async (event) => {
       event.preventDefault();
+      clearFormErrors(container);
 
-      const email = container.querySelector('#email')?.value || '';
-      const password = container.querySelector('#password')?.value || '';
+      const emailInput = container.querySelector('#email');
+      const passwordInput = container.querySelector('#password');
+      const email = emailInput?.value || '';
+      const password = passwordInput?.value || '';
       const button = loginForm.querySelector('button[type="submit"]');
+
+      // Client-side validation
+      let hasError = false;
+      if (!email) {
+        showFieldError(emailInput, 'Email is required');
+        hasError = true;
+      } else if (!isValidEmail(email)) {
+        showFieldError(emailInput, 'Please enter a valid email address');
+        hasError = true;
+      }
+      if (!password) {
+        showFieldError(passwordInput, 'Password is required');
+        hasError = true;
+      }
+      if (hasError) return;
 
       setButtonLoading(button, true);
       const result = await login(email, password);
@@ -334,22 +355,49 @@ function initAuthView(container, mode, params) {
   if (signupForm) {
     signupForm.addEventListener('submit', async (event) => {
       event.preventDefault();
+      clearFormErrors(container);
 
-      const fullName = container.querySelector('#fullName')?.value || '';
-      const email = container.querySelector('#signupEmail')?.value || '';
-      const password = container.querySelector('#signupPassword')?.value || '';
-      const confirmPassword = container.querySelector('#confirmPassword')?.value || '';
-      const termsChecked = Boolean(container.querySelector('#terms')?.checked);
+      const fullNameInput = container.querySelector('#fullName');
+      const emailInput = container.querySelector('#signupEmail');
+      const passwordInput = container.querySelector('#signupPassword');
+      const confirmPasswordInput = container.querySelector('#confirmPassword');
+      const termsInput = container.querySelector('#terms');
 
+      const fullName = fullNameInput?.value || '';
+      const email = emailInput?.value || '';
+      const password = passwordInput?.value || '';
+      const confirmPassword = confirmPasswordInput?.value || '';
+      const termsChecked = Boolean(termsInput?.checked);
+
+      // Client-side validation
+      let hasError = false;
+      if (!fullName || fullName.trim().length < 2) {
+        showFieldError(fullNameInput, 'Please enter your full name');
+        hasError = true;
+      }
+      if (!email) {
+        showFieldError(emailInput, 'Email is required');
+        hasError = true;
+      } else if (!isValidEmail(email)) {
+        showFieldError(emailInput, 'Please enter a valid email address');
+        hasError = true;
+      }
+      if (!password) {
+        showFieldError(passwordInput, 'Password is required');
+        hasError = true;
+      } else if (password.length < 8) {
+        showFieldError(passwordInput, 'Password must be at least 8 characters');
+        hasError = true;
+      }
+      if (password !== confirmPassword) {
+        showFieldError(confirmPasswordInput, 'Passwords do not match');
+        hasError = true;
+      }
       if (!termsChecked) {
         showToast('You must agree to Terms and Privacy Policy.', 'error');
-        return;
+        hasError = true;
       }
-
-      if (password !== confirmPassword) {
-        showToast('Passwords do not match.', 'error');
-        return;
-      }
+      if (hasError) return;
 
       const button = signupForm.querySelector('button[type="submit"]');
       setButtonLoading(button, true);
@@ -375,9 +423,21 @@ function initAuthView(container, mode, params) {
   if (resetForm) {
     resetForm.addEventListener('submit', async (event) => {
       event.preventDefault();
+      clearFormErrors(container);
 
-      const email = container.querySelector('#resetEmail')?.value || '';
+      const emailInput = container.querySelector('#resetEmail');
+      const email = emailInput?.value || '';
       const button = resetForm.querySelector('button[type="submit"]');
+
+      let hasError = false;
+      if (!email) {
+        showFieldError(emailInput, 'Email is required');
+        hasError = true;
+      } else if (!isValidEmail(email)) {
+        showFieldError(emailInput, 'Please enter a valid email address');
+        hasError = true;
+      }
+      if (hasError) return;
 
       setButtonLoading(button, true);
       const result = await requestPasswordReset(email);
@@ -397,18 +457,31 @@ function initAuthView(container, mode, params) {
   if (newPasswordForm) {
     newPasswordForm.addEventListener('submit', async (event) => {
       event.preventDefault();
+      clearFormErrors(container);
+
+      const passwordInput = container.querySelector('#newPassword');
+      const confirmPasswordInput = container.querySelector('#confirmNewPassword');
+
+      const password = passwordInput?.value || '';
+      const confirmPassword = confirmPasswordInput?.value || '';
+
+      let hasError = false;
+      if (!password) {
+        showFieldError(passwordInput, 'Password is required');
+        hasError = true;
+      } else if (password.length < 8) {
+        showFieldError(passwordInput, 'Password must be at least 8 characters');
+        hasError = true;
+      }
+      if (password !== confirmPassword) {
+        showFieldError(confirmPasswordInput, 'Passwords do not match');
+        hasError = true;
+      }
+      if (hasError) return;
 
       const token = params.token || params.t;
       if (!token) {
         showToast('Reset token is missing.', 'error');
-        return;
-      }
-
-      const password = container.querySelector('#newPassword')?.value || '';
-      const confirmPassword = container.querySelector('#confirmNewPassword')?.value || '';
-
-      if (password !== confirmPassword) {
-        showToast('Passwords do not match.', 'error');
         return;
       }
 
@@ -425,6 +498,103 @@ function initAuthView(container, mode, params) {
       }
     });
   }
+}
+
+/**
+ * Initialize form validation helpers
+ */
+function initFormValidation(container, mode) {
+  // Clear errors on input
+  container.querySelectorAll('.form-input').forEach(input => {
+    input.addEventListener('input', () => {
+      clearFieldError(input);
+    });
+
+    // Real-time email validation
+    if (input.type === 'email' && input.id !== 'resetEmail') {
+      input.addEventListener('blur', () => {
+        if (input.value && !isValidEmail(input.value)) {
+          showFieldError(input, 'Please enter a valid email address');
+        }
+      });
+    }
+
+    // Real-time password strength for signup
+    if (mode === 'signup' && input.id === 'signupPassword') {
+      input.addEventListener('blur', () => {
+        if (input.value && input.value.length < 8) {
+          showFieldError(input, 'Password must be at least 8 characters');
+        }
+      });
+    }
+
+    // Real-time confirm password validation
+    if (input.id === 'confirmPassword' || input.id === 'confirmNewPassword') {
+      input.addEventListener('blur', () => {
+        const passwordField = container.querySelector(
+          input.id === 'confirmPassword' ? '#signupPassword' : '#newPassword'
+        );
+        if (input.value && passwordField && input.value !== passwordField.value) {
+          showFieldError(input, 'Passwords do not match');
+        }
+      });
+    }
+  });
+}
+
+/**
+ * Validate email format
+ */
+function isValidEmail(email) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
+/**
+ * Show field-level error
+ */
+function showFieldError(input, message) {
+  if (!input) return;
+
+  // Remove existing error
+  clearFieldError(input);
+
+  // Add error class to input
+  input.classList.add('is-invalid');
+
+  // Create error message element
+  const wrapper = input.closest('.input-wrapper');
+  if (wrapper) {
+    const error = document.createElement('div');
+    error.className = 'field-error';
+    error.textContent = message;
+    wrapper.style.position = 'relative';
+    wrapper.appendChild(error);
+  }
+}
+
+/**
+ * Clear field-level error
+ */
+function clearFieldError(input) {
+  if (!input) return;
+
+  input.classList.remove('is-invalid');
+
+  const wrapper = input.closest('.input-wrapper');
+  if (wrapper) {
+    const error = wrapper.querySelector('.field-error');
+    if (error) error.remove();
+  }
+}
+
+/**
+ * Clear all form errors
+ */
+function clearFormErrors(container) {
+  container.querySelectorAll('.form-input').forEach(input => {
+    clearFieldError(input);
+  });
 }
 
 function setButtonLoading(button, isLoading) {
