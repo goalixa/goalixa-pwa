@@ -7,6 +7,28 @@
 const chartInstances = new Map();
 
 /**
+ * Sanitize data to remove NaN, null, and undefined values
+ * Replaces invalid values with 0 to prevent ApexCharts errors
+ */
+function sanitizeChartData(data) {
+  if (!Array.isArray(data)) return [];
+  return data.map(item =>
+    typeof item === 'number' && !isNaN(item) && isFinite(item) ? item : 0
+  );
+}
+
+/**
+ * Sanitize array of data points (for series data)
+ */
+function sanitizeSeriesData(series) {
+  if (!Array.isArray(series)) return [];
+  return series.map(item => ({
+    x: item.x || 0,
+    y: (typeof item.y === 'number' && !isNaN(item.y) && isFinite(item.y)) ? item.y : 0
+  }));
+}
+
+/**
  * Get chart offset state from global (managed by app-view.js)
  */
 function getOffsetEnabled() {
@@ -160,14 +182,14 @@ function createOverviewTrendChart(containerId, currentData, mode = 'line', previ
     return rawLabel.length > 8 ? rawLabel.substring(0, 6) + '..' : rawLabel;
   });
 
-  // Build series data
+  // Build series data with sanitization
   let chartSeries = [];
   let chartColors = [];
 
   if (isComparison) {
     // Comparison mode: show both current and previous week
-    const currentSeries = currentData.map(item => Number(item.seconds || 0));
-    const previousSeries = previousData.map(item => Number(item.seconds || 0));
+    const currentSeries = sanitizeChartData(currentData.map(item => Number(item.seconds) || 0));
+    const previousSeries = sanitizeChartData(previousData.map(item => Number(item.seconds) || 0));
 
     chartSeries = [
       {
@@ -182,7 +204,7 @@ function createOverviewTrendChart(containerId, currentData, mode = 'line', previ
     chartColors = [theme.colors[4], theme.colors[0]]; // Red for previous, Indigo for current
   } else {
     // Single series mode
-    const series = currentData.map(item => Number(item.seconds || 0));
+    const series = sanitizeChartData(currentData.map(item => Number(item.seconds) || 0));
     chartSeries = [{
       name: 'Focus Time',
       data: series

@@ -3373,7 +3373,7 @@ async function ensureLitepickerAssets() {
   if (!stylesheet) {
     stylesheet = document.createElement('link');
     stylesheet.rel = 'stylesheet';
-    stylesheet.href = 'https://cdn.jsdelivr.net/npm/litepicker@2.0.12/dist/css/litepicker.css';
+    stylesheet.href = 'https://unpkg.com/litepicker@2.0.12/dist/css/litepicker.css';
     stylesheet.dataset.goalixaLitepicker = '1';
     document.head.appendChild(stylesheet);
   }
@@ -3381,7 +3381,7 @@ async function ensureLitepickerAssets() {
   let script = document.querySelector('script[data-goalixa-litepicker="1"]');
   if (!script) {
     script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/litepicker@2.0.12/dist/js/litepicker.js';
+    script.src = 'https://unpkg.com/litepicker@2.0.12/dist/js/litepicker.js';
     script.async = true;
     script.dataset.goalixaLitepicker = '1';
     document.head.appendChild(script);
