@@ -22,11 +22,12 @@ function escapeHtml(value) {
  * @param {Object} project - The project object to edit
  * @param {Object} options - Options for the modal
  * @param {Array} options.labels - List of available labels
+ * @param {Array} options.goals - List of available goals
  * @param {Function} options.onSave - Callback when project is saved
  * @param {Function} options.onCancel - Callback when modal is cancelled
  */
 export function openProjectEditModal(project, options = {}) {
-  const { labels = [], onSave, onCancel } = options;
+  const { labels = [], goals = [], onSave, onCancel } = options;
 
   // Close any existing modal
   closeProjectEditModal();
@@ -42,6 +43,9 @@ export function openProjectEditModal(project, options = {}) {
 
   const projectLabels = Array.isArray(project.labels) ? project.labels : [];
   const selectedLabelIds = new Set(projectLabels.map(l => l.id || l.label_id));
+
+  const projectGoals = Array.isArray(project.goals) ? project.goals : [];
+  const selectedGoalIds = new Set(projectGoals.map(g => g.id || g.goal_id));
 
   modal.innerHTML = `
     <div class="project-edit-modal" role="dialog" aria-labelledby="project-edit-modal-title" aria-modal="true">
@@ -85,6 +89,28 @@ export function openProjectEditModal(project, options = {}) {
                 </label>
               `).join('') : '<p class="project-edit-no-labels">No labels available</p>'}
             </div>
+          </div>
+
+          <div class="project-edit-field">
+            <label class="project-edit-field-label">Goals <span class="required-indicator">*</span></label>
+            <div class="project-edit-goals-list">
+              ${goals.length ? goals.map(g => `
+                <label class="project-edit-goal-item" for="edit-project-goal-${g.id}">
+                  <input
+                    type="checkbox"
+                    id="edit-project-goal-${g.id}"
+                    name="goal_ids"
+                    value="${g.id}"
+                    ${selectedGoalIds.has(String(g.id)) || selectedGoalIds.has(Number(g.id)) ? 'checked' : ''}
+                  />
+                  <span class="project-edit-goal-info">
+                    <span class="project-edit-goal-name">${escapeHtml(g.name || '')}</span>
+                    ${g.description ? `<span class="project-edit-goal-description">${escapeHtml(g.description || '')}</span>` : ''}
+                  </span>
+                </label>
+              `).join('') : '<p class="project-edit-no-goals">No goals available. Please create a goal first.</p>'}
+            </div>
+            <small class="project-edit-field-hint">At least one goal is required</small>
           </div>
         </div>
 
@@ -131,9 +157,24 @@ export function openProjectEditModal(project, options = {}) {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData(form);
+
+    // Get selected goals and validate
+    const goalIds = formData.getAll('goal_ids').map(id => parseInt(id, 10)).filter(id => !isNaN(id));
+    if (goalIds.length === 0) {
+      const existingError = modal.querySelector('.project-edit-error');
+      if (existingError) existingError.remove();
+
+      const errorEl = document.createElement('div');
+      errorEl.className = 'project-edit-error';
+      errorEl.textContent = 'Please select at least one goal';
+      form.insertBefore(errorEl, form.firstChild);
+      return;
+    }
+
     const projectData = {
       name: formData.get('name') || '',
-      label_ids: formData.getAll('label_ids').map(id => parseInt(id, 10)).filter(id => !isNaN(id))
+      label_ids: formData.getAll('label_ids').map(id => parseInt(id, 10)).filter(id => !isNaN(id)),
+      goal_ids: goalIds
     };
 
     const submitBtn = form.querySelector('.project-edit-save-btn');

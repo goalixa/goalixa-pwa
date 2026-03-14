@@ -1284,17 +1284,10 @@ function bindDashboardActions(content, appApi, showToast, data, signal) {
       return;
     }
 
-    quickProjectSubmit.disabled = true;
-    try {
-      await appApi.createProject(name);
-      showToast('Project created successfully', 'success');
-      quickProjectInput.value = '';
-      content.dispatchEvent(new CustomEvent('dashboard-refresh-needed', { bubbles: true }));
-    } catch (error) {
-      showToast(error.message || 'Failed to create project', 'error');
-    } finally {
-      quickProjectSubmit.disabled = false;
-    }
+    // Projects require goals - direct users to the full form
+    showToast('Please use the full project form to select required goals', 'info');
+    quickProjectInput.value = '';
+    navigate('/app/projects');
   };
 
   quickProjectSubmit?.addEventListener('click', handleQuickProjectSubmit, { signal });
@@ -2160,6 +2153,7 @@ function normalizeProjectLabels(labels) {
 function buildProjectsDashboardData(payload) {
   const projects = Array.isArray(payload?.projects?.projects) ? payload.projects.projects : [];
   const labels = Array.isArray(payload?.labels?.labels) ? payload.labels.labels : [];
+  const goals = Array.isArray(payload?.goals?.goals) ? payload.goals.goals : [];
   const tasksPayload = payload?.tasks || {};
   const report = payload?.reports || {};
   const allTasks = [
@@ -2195,11 +2189,14 @@ function buildProjectsDashboardData(payload) {
     const key = name.toLowerCase();
     const taskStats = tasksByProjectName.get(key) || { total: 0, active: 0 };
     const projectLabels = normalizeProjectLabels(project?.labels);
+    const projectGoals = Array.isArray(project?.goals) ? project.goals : [];
     return {
       id: project?.id,
       name,
       labels: projectLabels,
       labelsCount: projectLabels.length,
+      goals: projectGoals,
+      goalsCount: projectGoals.length,
       tasksCount: taskStats.total,
       activeTasksCount: taskStats.active,
       focusSeconds: Math.max(0, Number(focusByName.get(key) || 0))
@@ -2214,6 +2211,7 @@ function buildProjectsDashboardData(payload) {
   return {
     rows,
     labels: normalizeProjectLabels(labels),
+    goals,
     stats: {
       totalProjects: rows.length,
       activeTaskCount,
@@ -2340,6 +2338,12 @@ function renderProjects(content, payload) {
               <option value="${label.id}">${escapeHtml(label.name)}</option>
             `).join('')}
           </select>
+          <select id="project-goals" multiple required>
+            ${data.goals.map((goal) => `
+              <option value="${goal.id}">${escapeHtml(goal.name)}</option>
+            `).join('')}
+          </select>
+          <small class="project-form-hint">At least one goal is required</small>
           <button class="btn btn-primary" type="submit">Create</button>
         </form>
       </section>
@@ -2395,6 +2399,7 @@ async function bindProjectActions(container, currentPath, initialPayload) {
       event.preventDefault();
       const nameInput = content.querySelector('#project-name');
       const labelsInput = content.querySelector('#project-labels');
+      const goalsInput = content.querySelector('#project-goals');
       const name = nameInput ? nameInput.value.trim() : '';
       if (!name) return;
 
@@ -2402,8 +2407,17 @@ async function bindProjectActions(container, currentPath, initialPayload) {
         ? Array.from(labelsInput.selectedOptions).map((option) => option.value).filter(Boolean)
         : [];
 
+      const goalIds = goalsInput instanceof HTMLSelectElement
+        ? Array.from(goalsInput.selectedOptions).map((option) => option.value).filter(Boolean)
+        : [];
+
+      if (goalIds.length === 0) {
+        showToast('Please select at least one goal', 'warning');
+        return;
+      }
+
       try {
-        await appApi.createProject(name, labelIds);
+        await appApi.createProject(name, labelIds, goalIds);
         showToast('Project created', 'success');
         await render(container, currentPath, {});
       } catch (error) {
@@ -2435,8 +2449,10 @@ async function bindProjectActions(container, currentPath, initialPayload) {
         return;
       }
       const labels = Array.isArray(initialPayload?.labels?.labels) ? initialPayload.labels.labels : [];
+      const goals = Array.isArray(initialPayload?.goals?.goals) ? initialPayload.goals.goals : [];
       openProjectEditModal(projectToEdit, {
         labels: labels,
+        goals: goals,
         onSave: async (response) => {
           showToast('Project updated', 'success');
           await render(container, currentPath, {});
@@ -7610,16 +7626,17 @@ async function renderSection(container, section, currentPath) {
 
     if (section === 'projects') {
       const range = lastSevenDaysRange();
-      const [projects, labels, tasks, reports] = await Promise.all([
+      const [projects, labels, goals, tasks, reports] = await Promise.all([
         appApi.getProjects(),
         appApi.getLabels().catch(() => ({ labels: [] })),
+        appApi.getGoals().catch(() => ({ goals: [] })),
         appApi.getTasks().catch(() => ({ tasks: [], done_today_tasks: [], completed_tasks: [] })),
         appApi.getReportsSummary({ start: range.start, end: range.end, group: 'projects' }).catch(() => ({
           distribution: [],
           total_seconds: 0
         }))
       ]);
-      const payload = { projects, labels, tasks, reports };
+      const payload = { projects, labels, goals, tasks, reports };
       renderProjects(content, payload);
       await bindProjectActions(container, currentPath, payload);
       return;

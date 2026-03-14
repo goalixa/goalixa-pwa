@@ -14037,6 +14037,88 @@ footer {
   padding: 12px 0;
 }
 
+/* Goals Selection */
+.project-edit-goals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.project-edit-goal-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--card);
+}
+
+.project-edit-goal-item:hover {
+  background: var(--soft);
+  border-color: var(--primary);
+}
+
+.project-edit-goal-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  cursor: pointer;
+  accent-color: var(--primary);
+}
+
+.project-edit-goal-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.project-edit-goal-name {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.project-edit-goal-description {
+  font-size: 0.8rem;
+  color: var(--muted);
+  line-height: 1.3;
+}
+
+.project-edit-no-goals {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-style: italic;
+  padding: 12px 0;
+}
+
+.project-edit-field-hint {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+.required-indicator {
+  color: var(--danger);
+  font-weight: bold;
+}
+
+/* Project Form */
+.project-form-hint {
+  display: block;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
 /* Modal Footer */
 .project-edit-modal-footer {
   display: flex;

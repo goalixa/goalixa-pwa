@@ -399,10 +399,10 @@ export const appApi = {
     return apiRequest(buildUrl('/app/projects'));
   },
 
-  async createProject(name, labelIds = []) {
+  async createProject(name, labelIds = [], goalIds = []) {
     return apiRequest(buildUrl('/app/projects'), {
       method: 'POST',
-      body: { name, label_ids: labelIds }
+      body: { name, label_ids: labelIds, goal_ids: goalIds }
     });
   },
 
