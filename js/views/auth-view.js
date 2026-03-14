@@ -8,16 +8,10 @@ import {
   register,
   isAuthenticated,
   requestPasswordReset,
-  resetPasswordWithToken,
-  enableLocalDevBypass
+  resetPasswordWithToken
 } from '../auth.js';
 import { showToast } from '../utils.js';
 import { navigate, redirectAfterLogin } from '../router.js';
-
-function isLocalhost() {
-  const host = window.location.hostname;
-  return host === 'localhost' || host === '127.0.0.1' || host === '::1';
-}
 
 /**
  * Render auth view
@@ -234,13 +228,6 @@ function getFormHTML(mode) {
             <span class="btn-text">Sign In</span>
             <i class="fas fa-spinner fa-spin" style="display: none;"></i>
           </button>
-
-          ${isLocalhost() ? `
-            <button type="button" class="social-button" id="localDevBypassButton">
-              <i class="fas fa-flask"></i>
-              Local Dev: Skip Login
-            </button>
-          ` : ''}
         </form>
 
         <div class="social-divider">
@@ -335,19 +322,6 @@ function initAuthView(container, mode, params) {
       } else {
         showToast(result.error || 'Login failed', 'error');
       }
-    });
-  }
-
-  const bypassButton = container.querySelector('#localDevBypassButton');
-  if (bypassButton) {
-    bypassButton.addEventListener('click', () => {
-      const enabled = enableLocalDevBypass();
-      if (!enabled) {
-        showToast('Bypass is available only on localhost.', 'error');
-        return;
-      }
-      showToast('Local bypass enabled. Redirecting...', 'success');
-      redirectAfterLogin();
     });
   }
 

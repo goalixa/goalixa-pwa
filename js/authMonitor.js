@@ -46,10 +46,8 @@ class AuthMonitor {
         break;
     }
 
-    // Log to console in development
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      console.log(`[AuthMonitor] ${type}:`, data);
-    }
+    // Log to console for debugging
+    console.log(`[AuthMonitor] ${type}:`, data);
   }
 
   /**
@@ -153,8 +151,8 @@ eventBus.on('auth:logout', (data) => authMonitor.logEvent('auth:logout', data));
 eventBus.on('auth:refresh', (data) => authMonitor.logEvent('auth:refresh', data));
 eventBus.on('auth:error', (data) => authMonitor.logEvent('auth:error', data));
 
-// Expose to window for debugging (development only)
-if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+// Expose to window for debugging
+if (typeof window !== 'undefined') {
   window.authMonitor = authMonitor;
   console.log('[AuthMonitor] Debug mode enabled. Access via window.authMonitor');
 }

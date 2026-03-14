@@ -102,17 +102,6 @@
   <!-- Toast Container -->
   <div id="toast-container" class="toast-container"></div>
 
-  <!-- Runtime config -->
-  <script>
-    (() => {
-      const host = window.location.hostname;
-      const isLocal = host === 'localhost' || host === '127.0.0.1' || host === '::1';
-      if (isLocal) {
-        // For local development, use relative URLs (nginx proxy handles routing)
-        window.__GOALIXA_API_BASE__ = '';
-      }
-    })();
-  </script>
 
   <!-- Scripts -->
   <!-- Load router as module - it will import dependencies -->

@@ -3,18 +3,8 @@
  */
 
 function getDefaultCookieDomain() {
-  if (typeof window === 'undefined') return '.goalixa.com';
-  const host = window.location.hostname;
-  if (host === 'localhost' || host === '127.0.0.1' || host === '::1') {
-    return null;
-  }
+  // Production: Always use goalixa.com domain
   return '.goalixa.com';
-}
-
-function isLocalhost() {
-  if (typeof window === 'undefined') return false;
-  const host = window.location.hostname;
-  return host === 'localhost' || host === '127.0.0.1' || host === '::1';
 }
 
 /**
