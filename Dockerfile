@@ -1,9 +1,15 @@
-# Basic static site image for Goalixa PWA
+# Production static site image for Goalixa PWA
 FROM nginx:alpine
 
-# Accept build arguments
-ARG BUILD_HASH=dev
-ARG BUILD_TIME=unknown
+# Accept build arguments - MUST be provided during build
+ARG BUILD_HASH
+ARG BUILD_TIME
+
+# Fail if build arguments are not provided
+RUN if [ -z "$BUILD_HASH" ] || [ -z "$BUILD_TIME" ]; then \
+      echo "ERROR: BUILD_HASH and BUILD_TIME must be provided during build"; \
+      exit 1; \
+    fi
 
 # Remove default site
 RUN rm /usr/share/nginx/html/*

@@ -327,6 +327,22 @@ export const authApi = {
       method: 'POST',
       body: { token }
     });
+  },
+
+  async getSessions() {
+    return apiRequest(buildUrl('/auth/sessions'));
+  },
+
+  async revokeSession(tokenId) {
+    return apiRequest(buildUrl(`/auth/sessions/${tokenId}/revoke`), {
+      method: 'POST'
+    });
+  },
+
+  async revokeAllSessions() {
+    return apiRequest(buildUrl('/auth/sessions/revoke-all'), {
+      method: 'POST'
+    });
   }
 };
 

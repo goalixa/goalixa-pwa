@@ -31,7 +31,8 @@ const routes = {
   '/app/planner': { view: 'app', title: 'Goalixa - Planner', auth: true },
   '/app/reminders': { view: 'app', title: 'Goalixa - Reminders', auth: true },
   '/app/labels': { view: 'app', title: 'Goalixa - Labels', auth: true },
-  '/app/account': { view: 'app', title: 'Goalixa - Account', auth: true }
+  '/app/account': { view: 'app', title: 'Goalixa - Account', auth: true },
+  '/app/sessions': { view: 'sessions', title: 'Goalixa - Sessions', auth: true }
 };
 
 // External route redirects are intentionally disabled while auth/app UI
@@ -41,7 +42,8 @@ const externalRoutes = {};
 // View modules registry
 const viewModules = {
   auth: null,
-  app: null
+  app: null,
+  sessions: null
 };
 
 // Current route state
@@ -65,6 +67,12 @@ async function loadViewModule(viewName) {
       const appModule = await import('./views/app-view.js');
       viewModules.app = appModule.default || appModule;
       return viewModules.app;
+    }
+
+    if (viewName === 'sessions') {
+      const sessionsModule = await import('./views/sessions-view.js');
+      viewModules.sessions = sessionsModule.default || sessionsModule;
+      return viewModules.sessions;
     }
   } catch (err) {
     console.error(`Failed to load ${viewName} view:`, err);

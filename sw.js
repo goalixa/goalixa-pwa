@@ -1,45 +1,24 @@
-// Build: a13ed1cb6e14addf3649420a66f5e3e8b2b35e76 (2026-03-13T19:56:43Z)
-
-// Build: ec3ce9fd80dcbe2bb3e9a638b868ac9cc5359242 (2026-03-12T13:50:20Z)
-
-// Build: 9f7b774d860f3f4e4da748c1bec7ab69dced4fdd (2026-03-12T08:10:21Z)
-
-// Build: 08d2cca2e9382920dc51b4a5783be0f2206f0a2b (2026-03-12T07:52:52Z)
-
-// Build: ea21fe499e45bae53b0ef2b8be449c18808e5d09 (2026-03-11T20:16:36Z)
-
-// Build: 0346638468bcc856369ecc799bc86998514890fd (2026-03-11T20:09:02Z)
-
-// Build: 804f44a48a0523839e511f60ad870f1a0c75cadb (2026-03-11T19:28:46Z)
-
-// Build: 9815fab093bf58a96c20fd3dabb333c9732d4bb5 (2026-03-11T18:33:51Z)
-
-// Build: 74a9656bf3797c18aec21d066685dd7aa109bbe2 (2026-03-11T12:10:26Z)
-
-// Build: 0a96a739b705d70298b093da084b7084a2579b25 (2026-03-06T18:44:38Z)
-
-// Build: aa22e1a530497d8bb3f44ea87dd205c325118182 (2026-03-06T17:17:02Z)
-
-// Build: e274d7182f2872bf9c386448d183bcccfe4c2393 (2026-03-06T17:04:02Z)
-
-// Build: 9e8da5ca6bab2f539310036970a65dcab4d56a02 (2026-03-06T15:08:26Z)
-
-// Build: 465d46c10ba6b3a1d3df4230f3d4aa7340bc358a (2026-02-27T10:13:57Z)
-
-// Build: 43c16c86d7a82dd83927e7105612acc7eea01f70 (2026-02-27T09:23:00Z)
-
 // Build: __BUILD_HASH__
 // Build Time: __BUILD_TIME__
 
 /**
- * Unified PWA Service Worker for Goalixa
- * Handles caching for auth and app views
- * DEVELOPMENT MODE: Network-first for all local files to see changes immediately
+ * Production PWA Service Worker for Goalixa
+ * Handles intelligent caching with automatic invalidation on deployments
+ *
+ * Cache Strategy:
+ * - Core assets (HTML, CSS, JS): Cache-first for instant loading
+ * - Static assets (images, fonts): Cache-first with long TTL
+ * - API requests: Network-first with cache fallback
+ * - Navigation: Network-first with offline fallback
+ *
+ * Cache Invalidation:
+ * - BUILD_HASH changes on every deployment
+ * - Old caches automatically cleaned on service worker activation
+ * - No manual cache clearing required
  */
 
 const CACHE_VERSION = '__BUILD_HASH__';
 const CACHE_PREFIX = 'goalixa-pwa';
-const DEV_MODE = true; // Set to false for production
 
 // Cache names for different strategies
 const CACHES = {
@@ -49,8 +28,8 @@ const CACHES = {
   PAGES: `${CACHE_PREFIX}-pages-${CACHE_VERSION}`
 };
 
-// Core assets to cache immediately (only cache in production)
-const CORE_ASSETS = DEV_MODE ? [] : [
+// Core assets to cache immediately on install
+const CORE_ASSETS = [
   '/',
   '/index.html',
   '/offline.html',
@@ -165,12 +144,6 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // DEVELOPMENT MODE: Always use network-first for local JS/CSS files
-  if (DEV_MODE && isLocalDevFile(url)) {
-    event.respondWith(networkFirstStrategy(request, CACHES.PAGES));
-    return;
-  }
-
   // Handle API requests - network first, fallback to cache
   if (isApiRequest(url)) {
     event.respondWith(networkFirstStrategy(request, CACHES.API));
@@ -198,17 +171,6 @@ self.addEventListener('fetch', (event) => {
  */
 function isApiRequest(url) {
   return API_PATTERNS.some(pattern => pattern.test(url.pathname || url.href));
-}
-
-/**
- * Check if request is for local development file (JS/CSS)
- * In dev mode, these should always be fetched from network
- */
-function isLocalDevFile(url) {
-  const pathname = url.pathname || '';
-  // Check for local JS and CSS files (not CDN)
-  return (pathname.startsWith('/js/') || pathname.startsWith('/css/')) &&
-    !pathname.includes('node_modules');
 }
 
 /**

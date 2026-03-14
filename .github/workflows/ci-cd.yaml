@@ -6,7 +6,6 @@ on:
       - main
     paths-ignore:
       - 'k8s/kustomization.yaml'
-      - 'sw.js'
       - '.github/**'
       - '**.md'
       - '.argo/**'
@@ -15,7 +14,6 @@ on:
       - main
     paths-ignore:
       - 'k8s/kustomization.yaml'
-      - 'sw.js'
       - '.github/**'
       - '**.md'
       - '.argo/**'
@@ -37,7 +35,7 @@ jobs:
       - name: Inject build info into Service Worker
         run: |
           # Add commit SHA to service worker to force cache invalidation
-          BUILD_INFO="// Build: ${{ github.sha }} ($(date -u +%Y-%m-%dT%H:%M:%SZ))\n"
+          BUILD_INFO="// Build: ${{ github.sha }}\n// Build Time: $(date -u +%Y-%m-%dT%H:%M:%SZ)\n"
           echo -e "$BUILD_INFO" | cat - sw.js > sw.js.tmp && mv sw.js.tmp sw.js
           echo "Service worker updated with build info: ${{ github.sha }}"
 
@@ -72,6 +70,9 @@ jobs:
           platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          build-args: |
+            BUILD_HASH=${{ github.sha }}
+            BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
           labels: |
             org.opencontainers.image.source=${{ github.repositoryUrl }}
             org.opencontainers.image.revision=${{ github.sha }}

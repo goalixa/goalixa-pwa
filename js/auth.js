@@ -274,6 +274,64 @@ export async function resetPasswordWithToken(token, newPassword) {
 }
 
 /**
+ * Get all active sessions for the current user
+ */
+export async function getActiveSessions() {
+  try {
+    const response = await authApi.getSessions();
+    if (response && response.sessions) {
+      return { success: true, sessions: response.sessions };
+    }
+    return { success: false, error: 'Failed to fetch sessions' };
+  } catch (error) {
+    console.error('Get sessions failed:', error);
+    return {
+      success: false,
+      error: error.message || 'Could not fetch sessions.'
+    };
+  }
+}
+
+/**
+ * Revoke a specific session
+ */
+export async function revokeSession(tokenId) {
+  try {
+    const response = await authApi.revokeSession(tokenId);
+    return {
+      success: Boolean(response && response.success),
+      message: (response && response.message) || 'Session revoked successfully.'
+    };
+  } catch (error) {
+    console.error('Revoke session failed:', error);
+    return {
+      success: false,
+      error: error.message || 'Could not revoke session.'
+    };
+  }
+}
+
+/**
+ * Revoke all other sessions (except current)
+ */
+export async function revokeAllOtherSessions() {
+  try {
+    const response = await authApi.revokeAllSessions();
+    return {
+      success: Boolean(response && response.success),
+      message: (response && response.message) || 'Sessions revoked successfully.',
+      revokedCount: response && response.revoked_count
+    };
+  } catch (error) {
+    console.error('Revoke all sessions failed:', error);
+    return {
+      success: false,
+      error: error.message || 'Could not revoke sessions.'
+    };
+  }
+}
+
+/**
  * Logout user
  */
 export async function logout() {
