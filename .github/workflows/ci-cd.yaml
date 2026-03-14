@@ -32,13 +32,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Inject build info into Service Worker
-        run: |
-          # Add commit SHA to service worker to force cache invalidation
-          BUILD_INFO="// Build: ${{ github.sha }}\n// Build Time: $(date -u +%Y-%m-%dT%H:%M:%SZ)\n"
-          echo -e "$BUILD_INFO" | cat - sw.js > sw.js.tmp && mv sw.js.tmp sw.js
-          echo "Service worker updated with build info: ${{ github.sha }}"
-
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -92,7 +85,7 @@ jobs:
           IMAGE_TAG="${GITHUB_SHA:0:7}"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add k8s/kustomization.yaml sw.js
+          git add k8s/kustomization.yaml
           git commit -m "chore: update image tag to ${IMAGE_TAG} [skip ci]"
           git push origin main
           echo "✓ Pushed changes - ArgoCD will now deploy the new image"

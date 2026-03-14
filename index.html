@@ -128,10 +128,13 @@
       function showUpdateNotification(onUpdate) {
         closeUpdateModal();
 
-        const modal = document.createElement('div');
-        modal.className = 'pwa-update-modal-overlay';
-        modal.id = 'pwa-update-modal';
-        modal.innerHTML = `
+        // Wait for styles to be loaded before showing modal
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            const modal = document.createElement('div');
+            modal.className = 'pwa-update-modal-overlay';
+            modal.id = 'pwa-update-modal';
+            modal.innerHTML = `
           <div class="pwa-update-modal" role="dialog" aria-modal="true">
             <div class="pwa-update-modal-icon">
               <i class="bi bi-arrow-repeat"></i>
@@ -152,28 +155,30 @@
           </div>
         `;
 
-        document.body.appendChild(modal);
-        updateModal = modal;
+            document.body.appendChild(modal);
+            updateModal = modal;
 
-        requestAnimationFrame(() => modal.classList.add('is-visible'));
+            requestAnimationFrame(() => modal.classList.add('is-visible'));
 
-        modal.querySelector('.pwa-update-apply-btn').addEventListener('click', async () => {
-          const btn = modal.querySelector('.pwa-update-apply-btn');
-          btn.disabled = true;
-          btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Updating...';
-          try {
-            if (typeof onUpdate === 'function') await onUpdate();
-          } catch (error) {
-            console.error('[PWA] Update failed:', error);
-            btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-download"></i> Retry';
-          }
-        });
+            modal.querySelector('.pwa-update-apply-btn').addEventListener('click', async () => {
+            const btn = modal.querySelector('.pwa-update-apply-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Updating...';
+            try {
+              if (typeof onUpdate === 'function') await onUpdate();
+            } catch (error) {
+              console.error('[PWA] Update failed:', error);
+              btn.disabled = false;
+              btn.innerHTML = '<i class="bi bi-download"></i> Retry';
+            }
+          });
 
-        modal.querySelector('.pwa-update-dismiss-btn').addEventListener('click', closeUpdateModal);
-        modal.querySelector('.pwa-update-modal-close').addEventListener('click', closeUpdateModal);
-        modal.addEventListener('click', (e) => {
-          if (e.target === modal) closeUpdateModal();
+          modal.querySelector('.pwa-update-dismiss-btn').addEventListener('click', closeUpdateModal);
+          modal.querySelector('.pwa-update-modal-close').addEventListener('click', closeUpdateModal);
+          modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeUpdateModal();
+          });
+          });
         });
       }
 
@@ -192,12 +197,8 @@
       window.testPWAUpdate = function() {
         console.log('[PWA] Testing update notification...');
         showUpdateNotification(async () => {
-          console.log('[PWA] Clearing caches...');
-          if ('caches' in window) {
-            const keys = await caches.keys();
-            await Promise.all(keys.map(k => caches.delete(k)));
-          }
-          console.log('[PWA] Refreshing...');
+          // Just reload - service worker will handle cache
+          console.log('[PWA] Reloading page...');
           location.reload(true);
         });
       };
@@ -207,14 +208,7 @@
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', async () => {
           try {
-            // Clean up first
-            const regs = await navigator.serviceWorker.getRegistrations();
-            await Promise.all(regs.map(r => r.unregister()));
-            const keys = await caches.keys();
-            await Promise.all(keys.map(k => caches.delete(k)));
-            console.log('[PWA] Cleaned up old SW and caches');
-
-            // Register new SW
+            // Register new SW (skipWaiting is handled by SW itself)
             const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
             console.log('[PWA] Service Worker registered');
 
@@ -226,15 +220,15 @@
                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                   console.log('[PWA] New version available!');
                   showUpdateNotification(async () => {
+                    // Tell the new SW to activate
                     newWorker.postMessage({ type: 'SKIP_WAITING' });
+                    // Wait for controller change
                     await new Promise(r => {
                       const h = () => { navigator.serviceWorker.removeEventListener('controllerchange', h); r(); };
                       navigator.serviceWorker.addEventListener('controllerchange', h);
                       setTimeout(() => { navigator.serviceWorker.removeEventListener('controllerchange', h); r(); }, 3000);
                     });
-                    const keys = await caches.keys();
-                    await Promise.all(keys.map(k => caches.delete(k)));
-                    await new Promise(res => setTimeout(res, 100));
+                    // Reload - the new SW will handle cache cleanup
                     location.reload(true);
                   });
                 }
