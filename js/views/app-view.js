@@ -199,7 +199,7 @@ function getNavMarkup(activeSection) {
   return NAV_ITEMS.map((item) => {
     const active = item.key === activeSection ? 'active' : '';
     return `
-      <button class="app-nav-btn ${active}" data-route="/app/${item.key}" type="button">
+      <button class="app-nav-btn ${active}" data-route="/app/${item.key}" data-tooltip="${item.label}" type="button">
         <span class="app-nav-icon" aria-hidden="true">
           <i class="fas ${item.icon}"></i>
         </span>
@@ -249,12 +249,17 @@ function renderShell(container, section) {
       <div class="mobile-nav-overlay" data-action="close-menu"></div>
 
       <div class="app-shell-main">
-        <aside class="app-shell-nav">
+        <aside class="app-shell-nav" id="app-shell-nav">
           <div class="app-nav-head">
-            <span>Navigation</span>
-            <button class="mobile-nav-close" data-action="close-menu" type="button" aria-label="Close menu">
-              <i class="fas fa-times"></i>
-            </button>
+            <span class="app-nav-title">Navigation</span>
+            <div class="app-nav-actions">
+              <button class="desktop-nav-collapse" data-action="collapse-nav" type="button" aria-label="Collapse sidebar" title="Collapse sidebar">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <button class="mobile-nav-close" data-action="close-menu" type="button" aria-label="Close menu">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
           </div>
           ${getNavMarkup(section)}
         </aside>
@@ -319,6 +324,60 @@ function renderShell(container, section) {
       closeMobileMenu();
     }
   });
+
+  // Desktop sidebar collapse functionality
+  const collapseButton = container.querySelector('[data-action="collapse-nav"]');
+  const shellMain = container.querySelector('.app-shell-main');
+
+  // Load sidebar state from localStorage
+  const loadSidebarState = () => {
+    try {
+      const isCollapsed = localStorage.getItem('goalixa-sidebar-collapsed') === 'true';
+      if (isCollapsed && shellMain) {
+        shellMain.classList.add('sidebar-collapsed');
+      }
+      updateCollapseButton(collapseButton, isCollapsed);
+    } catch (e) {
+      console.warn('Failed to load sidebar state:', e);
+    }
+  };
+
+  // Update collapse button icon and tooltip
+  const updateCollapseButton = (button, isCollapsed) => {
+    if (!button) return;
+    const icon = button.querySelector('i');
+    if (icon) {
+      icon.className = isCollapsed ? 'fas fa-chevron-right' : 'fas fa-chevron-left';
+    }
+    button.setAttribute('aria-label', isCollapsed ? 'Expand sidebar' : 'Collapse sidebar');
+    button.setAttribute('title', isCollapsed ? 'Expand sidebar' : 'Collapse sidebar');
+  };
+
+  // Toggle sidebar collapsed state
+  const toggleSidebarCollapse = () => {
+    if (!shellMain) return;
+
+    const isCurrentlyCollapsed = shellMain.classList.contains('sidebar-collapsed');
+
+    if (isCurrentlyCollapsed) {
+      shellMain.classList.remove('sidebar-collapsed');
+      localStorage.setItem('goalixa-sidebar-collapsed', 'false');
+      updateCollapseButton(collapseButton, false);
+    } else {
+      shellMain.classList.add('sidebar-collapsed');
+      localStorage.setItem('goalixa-sidebar-collapsed', 'true');
+      updateCollapseButton(collapseButton, true);
+    }
+  };
+
+  // Initialize sidebar state and add event listener
+  loadSidebarState();
+  if (collapseButton) {
+    collapseButton.addEventListener('click', toggleSidebarCollapse);
+  }
+
+  // Expose close function for navigation
+  container._closeMobileMenu = closeMobileMenu;
 
   // Swipe gesture support for mobile drawer
   let touchStartX = 0;

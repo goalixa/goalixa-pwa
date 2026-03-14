@@ -529,6 +529,135 @@ a:hover {
   min-width: 0;
 }
 
+/* ============================================
+   SIDEBAR COLLAPSE STATE
+   ============================================ */
+
+/* Collapsed sidebar grid layout */
+.app-shell-main.sidebar-collapsed {
+  grid-template-columns: 60px minmax(0, 1fr);
+  transition: grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Collapsed sidebar styling */
+.app-shell-main.sidebar-collapsed .app-shell-nav {
+  width: 60px;
+  padding: 10px 6px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Hide navigation title when collapsed */
+.app-shell-main.sidebar-collapsed .app-nav-title {
+  display: none;
+}
+
+/* Collapse button container */
+.app-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+/* Collapse button (desktop only) */
+.desktop-nav-collapse {
+  display: none;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #6b7c98;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.desktop-nav-collapse:hover {
+  background: rgba(107, 124, 152, 0.1);
+  color: #2a3a59;
+}
+
+/* Show collapse button on desktop (≥769px) */
+@media (min-width: 769px) {
+  .desktop-nav-collapse {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .desktop-nav-collapse i {
+    font-size: 0.75rem;
+  }
+
+  /* Dark mode collapse button */
+  [data-theme="dark"] .desktop-nav-collapse {
+    color: #8fa4c7;
+  }
+
+  [data-theme="dark"] .desktop-nav-collapse:hover {
+    background: rgba(143, 164, 199, 0.15);
+    color: #d6e3ff;
+  }
+}
+
+/* Navigation buttons in collapsed state */
+.app-shell-main.sidebar-collapsed .app-nav-btn {
+  justify-content: center;
+  padding: 10px 6px;
+}
+
+/* Hide nav text when collapsed */
+.app-shell-main.sidebar-collapsed .app-nav-text {
+  display: none;
+}
+
+/* Nav icons in collapsed state */
+.app-shell-main.sidebar-collapsed .app-nav-icon {
+  width: 32px;
+  height: 32px;
+  margin: 0;
+}
+
+/* Show tooltips on hover in collapsed state */
+.app-shell-main.sidebar-collapsed .app-nav-btn {
+  position: relative;
+}
+
+.app-shell-main.sidebar-collapsed .app-nav-btn::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: 10px;
+  padding: 6px 10px;
+  background: var(--dark-blue, #2a3a59);
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 500;
+  white-space: nowrap;
+  border-radius: 6px;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: all 0.2s ease;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.app-shell-main.sidebar-collapsed .app-nav-btn:hover::after {
+  opacity: 1;
+  visibility: visible;
+  left: calc(100% + 4px);
+}
+
+[data-theme="dark"] .app-shell-main.sidebar-collapsed .app-nav-btn::after {
+  background: rgba(30, 41, 59, 0.95);
+  backdrop-filter: blur(8px);
+}
+
 .app-panel {
   background: var(--white);
   border-radius: 16px;
@@ -4616,7 +4745,6 @@ footer {
   outline: none;
   border-color: var(--primary);
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-}
   font-size: 0.9rem;
 }
 
@@ -11096,6 +11224,25 @@ footer {
   .app-shell .btn {
     font-size: 0.82rem;
     padding: 8px 12px;
+  }
+
+  /* Sidebar collapsed state on tablets */
+  .app-shell-main.sidebar-collapsed {
+    grid-template-columns: 56px minmax(0, 1fr);
+  }
+
+  .app-shell-main.sidebar-collapsed .app-shell-nav {
+    width: 56px;
+    padding: 8px 4px;
+  }
+
+  .app-shell-main.sidebar-collapsed .app-nav-btn {
+    padding: 8px 4px;
+  }
+
+  .app-shell-main.sidebar-collapsed .app-nav-icon {
+    width: 30px;
+    height: 30px;
   }
 }
 
