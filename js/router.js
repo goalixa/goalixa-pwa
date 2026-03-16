@@ -144,22 +144,27 @@ export async function initRouter() {
 async function handleRoute() {
   // Get current path (with hash fallback for backward compatibility)
   let path = window.location.pathname || '/';
+  let queryString = '';
 
   // If using hash-based routing (backward compatibility), get path from hash
   if (path === '/' && window.location.hash && window.location.hash.startsWith('#/')) {
-    path = window.location.hash.slice(1);
-  } else if (path === '/') {
-    path = '/';
+    const hashPath = window.location.hash.slice(1);
+    const [hashPathname, hashQueryString] = hashPath.split('?');
+    path = hashPathname || '/';
+    queryString = hashQueryString || '';
+  } else {
+    // For standard URLs, check window.location.search for query parameters
+    queryString = window.location.search ? window.location.search.slice(1) : '';
   }
 
-  const [pathname, queryString] = path.split('?');
+  const pathname = path;
 
   // Parse query parameters
   currentParams = {};
   if (queryString) {
     queryString.split('&').forEach(pair => {
       const [key, value] = pair.split('=');
-      currentParams[decodeURIComponent(key)] = decodeURIComponent(value);
+      currentParams[decodeURIComponent(key)] = decodeURIComponent(value || '');
     });
   }
 
