@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pwa
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    {{- include "goalixa-pwa.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "goalixa-pwa.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "goalixa-pwa.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - name: pwa
+        image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        ports:
+        - containerPort: 80

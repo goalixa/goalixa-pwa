@@ -1,0 +1,4 @@
+apiVersion: v2
+name: goalixa-pwa
+description: Goalixa Progressive Web Application
+version: 1.0.0
