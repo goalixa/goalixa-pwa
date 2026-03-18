@@ -10,5 +10,12 @@ service:
   type: ClusterIP
   port: 80
 
+ingress:
+  enabled: true
+  host: "app.goalixa.com"
+  tlsSecret: "app-goalixa-tls"
+  tls: true
+  annotations: {}
+
 namespace:
   name: goalixa-pwa
