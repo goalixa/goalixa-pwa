@@ -6,6 +6,7 @@
 import {
   login,
   register,
+  loginWithGoogle,
   isAuthenticated,
   requestPasswordReset,
   resetPasswordWithToken
@@ -20,6 +21,19 @@ export async function render(container, path, params) {
   if (isAuthenticated()) {
     redirectAfterLogin();
     return;
+  }
+
+  // Check for OAuth error in query parameters
+  if (params && params.auth_error) {
+    const errorMessages = {
+      'google_oauth_error': 'Google login was cancelled or failed.',
+      'google_token_exchange_failed': 'Failed to complete Google login.',
+      'google_userinfo_failed': 'Failed to get your Google account information.',
+      'access_denied': 'You declined the Google login request.'
+    };
+    const errorMessage = errorMessages[params.auth_error] ||
+      'Authentication failed. Please try again.';
+    showToast(errorMessage, 'error');
   }
 
   let mode = 'login';
@@ -142,6 +156,17 @@ function getFormHTML(mode) {
             <i class="fas fa-spinner fa-spin" style="display: none;"></i>
           </button>
         </form>
+
+        <div class="social-divider">
+          <span>Or continue with</span>
+        </div>
+
+        <div class="social-buttons">
+          <button type="button" class="social-button google" data-action="google-login">
+            <i class="fab fa-google"></i>
+            Continue with Google
+          </button>
+        </div>
       `;
 
     case 'forgot-password':
@@ -280,8 +305,12 @@ function initAuthView(container, mode, params) {
 
   const googleButton = container.querySelector('[data-action="google-login"]');
   if (googleButton) {
-    googleButton.addEventListener('click', () => {
-      showToast('Google login is not configured in PWA yet.', 'warning');
+    googleButton.addEventListener('click', async () => {
+      const result = await loginWithGoogle();
+      if (!result.success) {
+        showToast(result.error || 'Google login failed', 'error');
+      }
+      // If successful, we'll be redirected to Google
     });
   }
 

@@ -325,6 +325,32 @@ export const authApi = {
     return apiRequest(buildUrl('/auth/sessions/revoke-all'), {
       method: 'POST'
     });
+  },
+
+  async getGoogleOAuthUrl(returnTo = null) {
+    const params = returnTo ? `?return_to=${encodeURIComponent(returnTo)}` : '';
+    const url = buildUrl(`/auth/google${params}`);
+
+    // We need to get the redirect URL from the response
+    // The auth service returns a 302 redirect, so we need to follow it manually
+    const response = await fetch(url, {
+      method: 'GET',
+      credentials: 'include',
+      redirect: 'manual' // Don't follow redirect automatically
+    });
+
+    if (response.status === 302 || response.status === 301) {
+      return response.headers.get('Location');
+    }
+
+    // If the response is JSON (error), throw it
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      const data = await response.json();
+      throw new Error(data.error || 'Google OAuth is not available');
+    }
+
+    throw new Error('Google OAuth is not available');
   }
 };
 
