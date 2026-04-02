@@ -1,7 +1,7 @@
 image:
   registry: harbor.goalixa.com
   repository: goalixa-pwa/pwa
-  tag: "latest"
+  tag: "ed873fd"
   pullPolicy: Always
 
 replicaCount: 1
