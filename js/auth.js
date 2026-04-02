@@ -102,8 +102,6 @@ export async function login(email, password) {
     // Backend sets HttpOnly cookies (goalixa_access, goalixa_refresh)
     // No need to manually set cookies
     if (response.success || response.user) {
-      disableLocalDevBypass();
-
       // Update state
       authState.isAuthenticated = true;
       authState.user = response.user;
@@ -144,8 +142,6 @@ export async function register(userData) {
 
     // Backend sets HttpOnly cookies
     if (response.success || response.user) {
-      disableLocalDevBypass();
-
       authState.isAuthenticated = true;
       authState.user = response.user;
       authState.token = null;
