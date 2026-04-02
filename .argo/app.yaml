@@ -9,10 +9,6 @@ spec:
     repoURL: https://github.com/goalixa/goalixa-pwa.git
     targetRevision: main
     path: helm
-    helm:
-      parameters:
-        - name: image.tag
-          value: latest
   destination:
     server: https://kubernetes.default.svc
     namespace: goalixa-pwa
