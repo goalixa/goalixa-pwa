@@ -4,26 +4,27 @@ on:
   push:
     branches:
       - main
+      - staging
     paths-ignore:
-      - 'helm/values.yaml'
       - '.github/**'
       - '**.md'
       - '.argo/**'
+      - 'helm/**'
   pull_request:
     branches:
       - main
+      - staging
     paths-ignore:
-      - 'helm/values.yaml'
       - '.github/**'
       - '**.md'
       - '.argo/**'
+      - 'helm/**'
 
 permissions:
   contents: write
 
 env:
   REGISTRY: harbor.goalixa.com
-  IMAGE_REPOSITORY: goalixa-pwa/pwa
 
 jobs:
   build-and-deploy:
@@ -31,6 +32,29 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Set image repository and deployment config
+        id: config
+        run: |
+          # Determine environment based on branch
+          if [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
+            # Staging deployment - always use latest
+            echo "repository=goalixa-pwa-staging/pwa" >> $GITHUB_OUTPUT
+            echo "image_tag=latest" >> $GITHUB_OUTPUT
+            echo "environment=staging" >> $GITHUB_OUTPUT
+            echo "app_name=goalixa-pwa-staging" >> $GITHUB_OUTPUT
+            echo "branch_name=staging" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            # Production deployment - always use latest
+            echo "repository=goalixa-pwa/pwa" >> $GITHUB_OUTPUT
+            echo "image_tag=latest" >> $GITHUB_OUTPUT
+            echo "environment=production" >> $GITHUB_OUTPUT
+            echo "app_name=goalixa-pwa" >> $GITHUB_OUTPUT
+            echo "branch_name=main" >> $GITHUB_OUTPUT
+          else
+            echo "Unsupported branch"
+            exit 1
+          fi
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -49,18 +73,17 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_REPOSITORY }}
+          images: ${{ env.REGISTRY }}/${{ steps.config.outputs.repository }}
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=sha,prefix=
+            type=raw,value=latest
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
           platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
@@ -70,30 +93,73 @@ jobs:
             org.opencontainers.image.source=${{ github.repositoryUrl }}
             org.opencontainers.image.revision=${{ github.sha }}
 
-      - name: Update Helm image tag
+      - name: Setup kubectl
         run: |
-          # Get the short SHA without prefix (matches Docker metadata tag format)
-          IMAGE_TAG="${GITHUB_SHA:0:7}"
-          # Update the Helm values file with the new image tag
-          sed -i.bak "s/tag: \".*\"/tag: \"${IMAGE_TAG}\"/" helm/values.yaml
-          rm -f helm/values.yaml.bak
-          echo "✓ Updated helm/values.yaml with tag: ${IMAGE_TAG}"
-          grep "tag:" helm/values.yaml
+          if [ -n "${{ secrets.KUBE_CONFIG }}" ]; then
+            echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > /tmp/kubeconfig
+            echo "KUBECONFIG=/tmp/kubeconfig" >> $GITHUB_ENV
+            echo "HAS_KUBE_CONFIG=true" >> $GITHUB_ENV
+          else
+            echo "HAS_KUBE_CONFIG=false" >> $GITHUB_ENV
+          fi
 
-      - name: Commit and push Helm changes
+      - name: Update ArgoCD application
+        if: env.HAS_KUBE_CONFIG == 'true'
         run: |
-          IMAGE_TAG="${GITHUB_SHA:0:7}"
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add helm/values.yaml
-          git commit -m "chore: update image tag to ${IMAGE_TAG} [skip ci]"
-          git push origin main
-          echo "✓ Pushed changes - ArgoCD will now deploy the new image"
+          IMAGE_TAG="${{ steps.config.outputs.image_tag }}"
+          APP_NAME="${{ steps.config.outputs.app_name }}"
+          ENVIRONMENT="${{ steps.config.outputs.environment }}"
+
+          echo "🔄 Updating ArgoCD application '${APP_NAME}' (${ENVIRONMENT}) with image tag: ${IMAGE_TAG}"
+
+          # Patch ArgoCD app with new Helm parameter
+          kubectl patch application ${APP_NAME} \
+            -n argocd \
+            --type='merge' \
+            -p="{
+              \"spec\": {
+                \"source\": {
+                  \"helm\": {
+                    \"parameters\": [
+                      {
+                        \"name\": \"image.tag\",
+                        \"value\": \"${IMAGE_TAG}\"
+                      }
+                    ]
+                  }
+                }
+              }
+            }"
+
+          # Trigger immediate sync
+          kubectl annotate application ${APP_NAME} \
+            -n argocd \
+            "force-sync-at=$(date +%s)" \
+            --overwrite
+
+          echo "✅ ArgoCD application '${APP_NAME}' updated for ${ENVIRONMENT}"
 
       - name: Summary
         run: |
-          echo "## ✅ Build & Deploy Complete" >> $GITHUB_STEP_SUMMARY
+          ENVIRONMENT="${{ steps.config.outputs.environment }}"
+          IMAGE_TAG="${{ steps.config.outputs.image_tag }}"
+          echo "## ✅ Build & Deploy Complete (${ENVIRONMENT})" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Image Tag:** \`${GITHUB_SHA:0:7}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Registry:** \`${{ env.REGISTRY }}/${{ env.IMAGE_REPOSITORY }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **ArgoCD:** Syncing..." >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment:** \`${ENVIRONMENT}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image Tag:** \`${IMAGE_TAG}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Full Image:** \`${{ env.REGISTRY }}/${{ steps.config.outputs.repository }}:${IMAGE_TAG}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Registry:** \`${{ env.REGISTRY }}/${{ steps.config.outputs.repository }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **ArgoCD App:** \`${{ steps.config.outputs.app_name }\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL:** \`${ENVIRONMENT}.goalixa.com\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ env.HAS_KUBE_CONFIG }}" = "true" ]; then
+            echo "- **Deployment Method:** Helm (ArgoCD - Auto-sync)" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### 🔄 ArgoCD will now:" >> $GITHUB_STEP_SUMMARY
+            echo "1. Detect Helm parameter change for \`${{ steps.config.outputs.app_name }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "2. Render Helm chart with image tag: \`${IMAGE_TAG}\`" >> $GITHUB_STEP_SUMMARY
+            echo "3. Deploy to Kubernetes namespace: \`${ENVIRONMENT}\`" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- **Deployment Method:** Helm (Manual sync required)" >> $GITHUB_STEP_SUMMARY
+          fi

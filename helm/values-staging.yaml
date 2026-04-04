@@ -1,6 +1,6 @@
 image:
   registry: harbor.goalixa.com
-  repository: goalixa-pwa/pwa
+  repository: goalixa-pwa-staging/pwa
   tag: "latest"
   pullPolicy: Always
 
@@ -12,12 +12,12 @@ service:
 
 ingress:
   enabled: true
-  host: "app.goalixa.com"
-  tlsSecret: "app-goalixa-tls"
+  host: "staging.goalixa.com"
+  tlsSecret: "staging-goalixa-pwa-tls"
   tls: true
   annotations: {}
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
     traefik.ingress.kubernetes.io/router.middlewares: "traefik-https-redirect@kubernetescrd"
 
 namespace:
-  name: goalixa-pwa
+  name: goalixa-pwa-staging
