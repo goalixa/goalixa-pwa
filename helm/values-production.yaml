@@ -15,7 +15,7 @@ ingress:
   host: "app.goalixa.com"
   tlsSecret: "app-goalixa-tls"
   tls: true
-  annotations: {}
+  annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
     traefik.ingress.kubernetes.io/router.middlewares: "traefik-https-redirect@kubernetescrd"
 

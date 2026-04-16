@@ -99,7 +99,7 @@ export async function login(email, password) {
   try {
     const response = await authApi.login(email, password);
 
-    // Backend sets HttpOnly cookies (goalixa_access, goalixa_refresh)
+    // Backend sets HttpOnly cookies (goalixa_access, goalixa_refresh).
     // No need to manually set cookies
     if (response.success || response.user) {
       // Update state
