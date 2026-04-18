@@ -15,9 +15,6 @@ ingress:
   host: "staging.goalixa.com"
   tlsSecret: "staging-goalixa-pwa-tls"
   tls: true
-  annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
-    traefik.ingress.kubernetes.io/router.middlewares: "traefik-https-redirect@kubernetescrd"
 
 namespace:
   name: pwa-staging
