@@ -1,6 +1,6 @@
 image:
   registry: harbor.goalixa.com
-  repository: goalixa-pwa-staging/pwa
+  repository: pwa-staging/pwa
   tag: "latest"
   pullPolicy: Always
 
@@ -20,4 +20,4 @@ ingress:
     traefik.ingress.kubernetes.io/router.middlewares: "traefik-https-redirect@kubernetescrd"
 
 namespace:
-  name: goalixa-pwa-staging
+  name: pwa-staging
