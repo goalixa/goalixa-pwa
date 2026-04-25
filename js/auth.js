@@ -105,7 +105,7 @@ export async function login(email, password) {
       // Update state
       authState.isAuthenticated = true;
       authState.user = response.user;
-      authState.token = null; // Token is in HttpOnly cookie
+      authState.token = null; // Token is in HttpOnly cookie.
 
       // Store in localStorage as backup (without sensitive token)
       storage.set('auth', {
