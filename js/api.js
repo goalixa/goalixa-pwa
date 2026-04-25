@@ -327,30 +327,11 @@ export const authApi = {
     });
   },
 
-  async getGoogleOAuthUrl(returnTo = null) {
+  getGoogleOAuthUrl(returnTo = null) {
+    // Build the Google OAuth URL and return it directly
+    // The browser will redirect to this URL, which will then redirect to Google
     const params = returnTo ? `?return_to=${encodeURIComponent(returnTo)}` : '';
-    const url = buildUrl(`/auth/google${params}`);
-
-    // We need to get the redirect URL from the response
-    // The auth service returns a 302 redirect, so we need to follow it manually
-    const response = await fetch(url, {
-      method: 'GET',
-      credentials: 'include',
-      redirect: 'manual' // Don't follow redirect automatically
-    });
-
-    if (response.status === 302 || response.status === 301) {
-      return response.headers.get('Location');
-    }
-
-    // If the response is JSON (error), throw it
-    const contentType = response.headers.get('content-type');
-    if (contentType && contentType.includes('application/json')) {
-      const data = await response.json();
-      throw new Error(data.error || 'Google OAuth is not available');
-    }
-
-    throw new Error('Google OAuth is not available');
+    return buildUrl(`/auth/google${params}`);
   }
 };
 

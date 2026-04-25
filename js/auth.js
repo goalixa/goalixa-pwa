@@ -175,22 +175,19 @@ export async function register(userData) {
  * Login with Google OAuth
  * Redirects the user to Google's OAuth page
  */
-export async function loginWithGoogle(returnTo = null) {
+export function loginWithGoogle(returnTo = null) {
   try {
     // Build the return URL - where Google should redirect after authentication
     const baseUrl = window.location.origin + window.location.pathname;
     const returnUrl = returnTo || baseUrl;
 
-    // Get the Google OAuth URL from the backend
-    const googleUrl = await authApi.getGoogleOAuthUrl(returnUrl);
+    // Get the Google OAuth URL and redirect directly
+    // The BFF endpoint returns a 302 redirect to Google
+    const googleUrl = authApi.getGoogleOAuthUrl(returnUrl);
 
-    if (googleUrl) {
-      // Redirect to Google OAuth page
-      window.location.href = googleUrl;
-      return { success: true };
-    }
-
-    return { success: false, error: 'Google OAuth is not available' };
+    // Redirect to the BFF endpoint which will redirect to Google
+    window.location.href = googleUrl;
+    return { success: true };
   } catch (error) {
     console.error('Google OAuth failed:', error);
     return {
