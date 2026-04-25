@@ -328,10 +328,10 @@ export const authApi = {
   },
 
   getGoogleOAuthUrl(returnTo = null) {
-    // Build the Google OAuth URL and return it directly
-    // The browser will redirect to this URL, which will then redirect to Google
+    // Redirect directly to auth service via /api route (not through BFF)
+    // This preserves session cookies needed for OAuth token exchange
     const params = returnTo ? `?return_to=${encodeURIComponent(returnTo)}` : '';
-    return buildUrl(`/auth/google${params}`);
+    return `${window.location.origin}/api/oauth/google/start${params}`;
   }
 };
 
