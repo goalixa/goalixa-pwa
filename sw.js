@@ -63,10 +63,12 @@ const ASSET_URLS = [
   'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Montserrat:wght@800;900&display=swap'
 ];
 
-// API base URLs - use network first
+// API base URLs - use network first (bypass SW caching for these)
 const API_PATTERNS = [
   /\/bff\//,
-  /https:\/\/app\.goalixa\.com\/bff\//
+  /\/api\//,
+  /https:\/\/app\.goalixa\.com\/bff\//,
+  /https:\/\/app\.goalixa\.com\/api\//
 ];
 
 // Install event - cache core assets
@@ -141,6 +143,11 @@ self.addEventListener('fetch', (event) => {
 
   // Ignore non-GET requests and different protocols
   if (!url.protocol.startsWith('http')) {
+    return;
+  }
+
+  // Bypass service worker completely for OAuth routes - let browser handle natively
+  if (url.pathname.startsWith('/api/oauth/') || url.pathname.startsWith('/api/oauth')) {
     return;
   }
 
