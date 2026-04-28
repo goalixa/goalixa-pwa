@@ -5,14 +5,13 @@ metadata:
   name: pwa
   namespace: {{ .Values.namespace.name }}
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
     {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
   labels:
     {{- include "goalixa-pwa.labels" . | nindent 4 }}
 spec:
-  ingressClassName: traefik
+  ingressClassName: nginx
   rules:
     - host: {{ .Values.ingress.host | quote }}
       http:
