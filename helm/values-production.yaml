@@ -17,6 +17,7 @@ ingress:
   tls: true
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
 
 namespace:
   name: goalixa-pwa
