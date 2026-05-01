@@ -16,6 +16,8 @@ ingress:
   host: "staging.goalixa.com"
   tlsSecret: "staging-goalixa-pwa-tls"
   tls: true
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
 
 namespace:
   name: pwa-staging
