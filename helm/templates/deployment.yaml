@@ -15,8 +15,11 @@ spec:
       labels:
         {{- include "goalixa-pwa.selectorLabels" . | nindent 8 }}
     spec:
+      imagePullSecrets:
+      - name: {{ .Values.image.pullSecret | default "harbor-pull" }}
       containers:
       - name: pwa
         image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
         ports:
         - containerPort: 8080

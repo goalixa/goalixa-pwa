@@ -3,6 +3,7 @@ image:
   repository: pwa-staging/pwa
   tag: "latest"
   pullPolicy: Always
+  pullSecret: harbor-pull
 
 replicaCount: 1
 
