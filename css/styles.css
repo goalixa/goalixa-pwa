@@ -16862,3 +16862,528 @@ footer {
     flex: 1;
   }
 }
+
+/* ============================================
+   PHASE 4: ADVANCED FEATURES
+   ============================================ */
+
+/* === COMMAND PALETTE (Cmd+K) === */
+
+.command-palette-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 15vh;
+  animation: fadeIn 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.command-palette {
+  width: 90%;
+  max-width: 640px;
+  max-height: 60vh;
+  background: var(--surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
+  animation: commandPaletteEnter 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes commandPaletteEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.command-palette-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: var(--space-5);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.command-palette-search-icon {
+  position: absolute;
+  left: var(--space-5);
+  color: var(--text-tertiary);
+  font-size: var(--text-lg);
+  pointer-events: none;
+}
+
+.command-palette-input {
+  flex: 1;
+  padding: var(--space-2) var(--space-10) var(--space-2) var(--space-8);
+  border: none;
+  background: transparent;
+  font-size: var(--text-lg);
+  font-family: var(--font-sans);
+  color: var(--text-primary);
+  outline: none;
+}
+
+.command-palette-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.command-palette-shortcut {
+  position: absolute;
+  right: var(--space-5);
+  padding: var(--space-1) var(--space-2);
+  background: var(--background-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+  font-weight: var(--font-medium);
+}
+
+.command-palette-results {
+  max-height: calc(60vh - 80px);
+  overflow-y: auto;
+  padding: var(--space-2);
+}
+
+.command-palette-section {
+  margin-bottom: var(--space-4);
+}
+
+.command-palette-section:last-child {
+  margin-bottom: 0;
+}
+
+.command-palette-section-label {
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-tertiary);
+}
+
+.command-palette-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+}
+
+.command-palette-item:hover,
+.command-palette-item.selected {
+  background: var(--background-subtle);
+}
+
+.command-palette-item.selected {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+}
+
+.command-palette-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-light);
+  color: var(--primary);
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+  font-size: var(--text-base);
+}
+
+.command-palette-icon.action-icon {
+  background: var(--accent-purple);
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%);
+  color: var(--accent-purple);
+}
+
+.command-palette-icon.nav-icon {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
+  color: var(--primary);
+}
+
+.command-palette-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.command-palette-title {
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.command-palette-description {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  margin-top: var(--space-1);
+}
+
+.command-palette-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.command-palette-badge {
+  padding: var(--space-1) var(--space-2);
+  background: var(--background-subtle);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+
+.command-palette-kbd {
+  padding: var(--space-1) var(--space-2);
+  background: var(--background-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+  font-weight: var(--font-medium);
+}
+
+.command-palette-empty {
+  padding: var(--space-16) var(--space-8);
+  text-align: center;
+}
+
+.command-palette-empty-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto var(--space-4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--background-subtle);
+  border-radius: var(--radius-full);
+  color: var(--text-tertiary);
+  font-size: var(--text-2xl);
+}
+
+.command-palette-empty-title {
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-1);
+}
+
+.command-palette-empty-description {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .command-palette-overlay {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+[data-theme="dark"] .command-palette {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5),
+              0 8px 10px -6px rgba(0, 0, 0, 0.5);
+}
+
+/* === DRAG & DROP TASK REORDERING === */
+
+/* Make draggable tasks have a grab cursor */
+.draggable-task {
+  cursor: grab;
+  user-select: none;
+}
+
+.draggable-task:active {
+  cursor: grabbing;
+}
+
+/* Task being dragged */
+.task-item.dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+  transform: scale(1.02);
+  box-shadow: var(--shadow-lg);
+  z-index: 1000;
+  background: var(--surface-elevated);
+}
+
+/* Placeholder for dragged item */
+.task-item.task-placeholder {
+  background: var(--background-subtle);
+  border: 2px dashed var(--border-default);
+  border-radius: var(--radius-lg);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Drop zone indicators */
+.task-item.drag-over {
+  transition: background 0.15s ease;
+}
+
+.task-item.drag-over-top {
+  border-top: 3px solid var(--primary);
+  margin-top: -3px;
+}
+
+.task-item.drag-over-bottom {
+  border-bottom: 3px solid var(--primary);
+  margin-bottom: -3px;
+}
+
+/* Animated reorder confirmation */
+.task-item.task-reordered {
+  animation: taskReordered 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes taskReordered {
+  0% {
+    background: var(--primary-light);
+    transform: scale(1.02);
+  }
+  100% {
+    background: transparent;
+    transform: scale(1);
+  }
+}
+
+/* Container drag-active state */
+.task-list.drag-active .task-item {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Drag handle icon (optional - for future use) */
+.task-drag-handle {
+  opacity: 0;
+  cursor: grab;
+  padding: var(--space-2);
+  color: var(--text-tertiary);
+  transition: opacity 0.2s;
+}
+
+.task-item:hover .task-drag-handle {
+  opacity: 1;
+}
+
+.task-drag-handle:active {
+  cursor: grabbing;
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .task-item.dragging {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5),
+              0 8px 10px -6px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .task-item.task-placeholder {
+  background: var(--background);
+  border-color: var(--border-default);
+}
+
+/* Mobile: Disable drag & drop (use long-press menu instead) */
+@media (max-width: 768px) {
+  .draggable-task {
+    cursor: default;
+  }
+
+  .task-item.dragging {
+    cursor: default;
+  }
+}
+
+/* === INLINE EDITING (NOTION-STYLE) === */
+
+/* Make task titles editable on hover */
+.task-title {
+  cursor: text;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  transition: background 0.15s ease;
+  position: relative;
+}
+
+.task-title:hover {
+  background: var(--background-subtle);
+}
+
+/* Inline edit input */
+.inline-edit-input {
+  width: 100%;
+  min-width: 200px;
+  padding: var(--space-1) var(--space-2);
+  border: 2px solid var(--primary);
+  border-radius: var(--radius-md);
+  font-size: inherit;
+  font-family: inherit;
+  font-weight: inherit;
+  color: var(--text-primary);
+  background: var(--primary-light);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.inline-edit-input:focus {
+  border-color: var(--primary);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+/* Saving state */
+.inline-edit-input.is-saving {
+  opacity: 0.7;
+  cursor: wait;
+  pointer-events: none;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Error state */
+.inline-edit-input.is-error {
+  border-color: var(--accent-rose);
+  background: rgba(244, 63, 94, 0.05);
+  box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.1);
+  animation: shake 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Error message */
+.inline-edit-error {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  background: var(--accent-rose);
+  color: white;
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  z-index: 100;
+  animation: slideInDown 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+.inline-edit-error::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: var(--space-3);
+  border: 6px solid transparent;
+  border-bottom-color: var(--accent-rose);
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Task item editing state */
+.task-item.is-editing {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-lg);
+  background: var(--surface-elevated);
+  box-shadow: var(--shadow-md);
+  z-index: 10;
+  position: relative;
+}
+
+/* Edit hint on hover */
+.task-title::after {
+  content: 'Double-click to edit';
+  position: absolute;
+  top: 50%;
+  right: -140px;
+  transform: translateY(-50%);
+  padding: var(--space-1) var(--space-2);
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.task-title:hover::after {
+  opacity: 1;
+  transition-delay: 0.5s;
+}
+
+/* Hide hint on mobile */
+@media (max-width: 768px) {
+  .task-title::after {
+    display: none;
+  }
+
+  .task-title {
+    cursor: default;
+  }
+
+  .task-title:hover {
+    background: transparent;
+  }
+}
+
+/* Hide hint when editing */
+.task-item.is-editing .task-title::after {
+  display: none;
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .inline-edit-input {
+  background: var(--background);
+  border-color: var(--primary);
+}
+
+[data-theme="dark"] .inline-edit-input:focus {
+  background: var(--surface);
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+}
+
+[data-theme="dark"] .inline-edit-input.is-error {
+  background: rgba(244, 63, 94, 0.1);
+  box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.2);
+}
+
+[data-theme="dark"] .task-item.is-editing {
+  background: var(--surface);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}

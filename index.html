@@ -102,8 +102,31 @@
   <!-- Toast Container -->
   <div id="toast-container" class="toast-container"></div>
 
+  <!-- Command Palette (Cmd+K) -->
+  <div id="command-palette-overlay" class="command-palette-overlay" style="display: none;">
+    <div class="command-palette" role="dialog" aria-modal="true" aria-labelledby="command-palette-title">
+      <div class="command-palette-input-wrapper">
+        <i class="bi bi-search command-palette-search-icon"></i>
+        <input
+          type="text"
+          id="command-palette-input"
+          class="command-palette-input"
+          placeholder="Search or type a command..."
+          aria-label="Command palette search"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <kbd class="command-palette-shortcut">Esc</kbd>
+      </div>
+      <div class="command-palette-results" id="command-palette-results">
+        <!-- Results will be injected here -->
+      </div>
+    </div>
+  </div>
 
   <!-- Scripts -->
+  <!-- Load command palette -->
+  <script type="module" src="/js/commandPalette.js"></script>
   <!-- Load router as module - it will import dependencies -->
   <script type="module" src="/js/router.js"></script>
 
