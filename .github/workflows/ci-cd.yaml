@@ -39,10 +39,10 @@ jobs:
           # Determine environment based on branch
           if [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
             # Staging deployment - always use latest
-            echo "repository=goalixa-pwa-staging/pwa" >> $GITHUB_OUTPUT
+            echo "repository=pwa-staging/pwa" >> $GITHUB_OUTPUT
             echo "image_tag=latest" >> $GITHUB_OUTPUT
             echo "environment=staging" >> $GITHUB_OUTPUT
-            echo "app_name=goalixa-pwa-staging" >> $GITHUB_OUTPUT
+            echo "app_name=pwa-staging" >> $GITHUB_OUTPUT
             echo "branch_name=staging" >> $GITHUB_OUTPUT
           elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             # Production deployment - always use latest

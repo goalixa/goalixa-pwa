@@ -3,7 +3,9 @@
  * Combines styles for auth and app views
  */
 
-
+/* ============================================
+   CSS VARIABLES & RESET
+   ============================================ */
 :root {
   /* === TYPOGRAPHY === */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -70,6 +72,7 @@
   --white: #FFFFFF;
   --gray: #6B7280;
   --light-gray: #E5E7EB;
+  --field: #F9FAFB;
 
   /* === SPACING === */
   --space-0: 0;
@@ -152,6 +155,12 @@
   --white: #FFFFFF;
   --gray: #CBD5E1;
   --light-gray: #334155;
+  --field: #1E293B;
+  --border: #334155;
+  --card: rgba(30, 41, 59, 0.6);
+  --soft: rgba(15, 23, 42, 0.8);
+  --muted: #64748B;
+  --text: #F1F5F9;
 
   /* Shadows (darker for dark mode) */
   --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
@@ -2346,21 +2355,21 @@ select {
 }
 
 .period-preset-btn {
-  background: var(--surface);
-  border: 1px solid var(--border-subtle);
+  background: var(--card);
+  border: 1px solid var(--border);
   padding: 8px 16px;
   border-radius: 8px;
   font-size: 0.85rem;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--muted);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .period-preset-btn:hover {
-  background: var(--background-subtle);
+  background: var(--soft);
   border-color: var(--primary);
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 .period-preset-btn.is-active {
@@ -3393,22 +3402,22 @@ select {
 /* Overview dark mode styles are now in the enhanced section above */
 
 [data-theme="dark"] .timer-range-card {
-  background: linear-gradient(180deg, var(--white) 0%, var(--surface) 100%);
+  background: linear-gradient(180deg, var(--white) 0%, var(--field) 100%);
 }
 
 [data-theme="dark"] .timer-view-toggle {
-  background: var(--surface);
-  border-color: var(--border-subtle);
+  background: var(--card);
+  border-color: var(--border);
 }
 
 [data-theme="dark"] .pomodoro-ring {
-  background: radial-gradient(circle at top, var(--surface) 0%, var(--background-subtle) 60%, var(--border-subtle) 100%);
+  background: radial-gradient(circle at top, var(--card) 0%, var(--soft) 60%, var(--border) 100%);
 }
 
 [data-theme="dark"] .calendar-day-pill {
-  background: var(--surface);
+  background: var(--field);
   border-color: var(--light-gray);
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 [data-theme="dark"] .calendar-day-pill.today {
@@ -3434,9 +3443,9 @@ select {
 [data-theme="dark"] .account-form-lite input,
 [data-theme="dark"] .account-form-lite select,
 [data-theme="dark"] .account-form-lite textarea {
-  background: var(--surface);
+  background: var(--field);
   border-color: var(--light-gray);
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 .auth-container {
@@ -4785,7 +4794,7 @@ select {
 .trust-item {
   padding: 10px 18px;
   border-radius: 999px;
-  background: var(--surface);
+  background: var(--field);
   border: 1px solid rgba(46, 139, 87, 0.15);
   font-weight: 600;
   color: var(--primary-dark);
@@ -4860,7 +4869,7 @@ select {
 }
 
 [data-theme="dark"] .use-icon {
-  background: var(--surface);
+  background: var(--field);
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
 }
 
@@ -4879,7 +4888,7 @@ select {
 .use-cases-grid .use-case-card:nth-child(3) { --delay: 0.19s; }
 
 .use-case-card {
-  background: var(--surface);
+  background: var(--field);
   padding: 32px;
   border-radius: var(--radius);
   box-shadow: 0 12px 24px rgba(26, 26, 46, 0.08);
@@ -4994,7 +5003,7 @@ select {
 }
 
 [data-theme="dark"] .testimonials {
-  background-color: var(--surface);
+  background-color: var(--field);
 }
 
 .testimonials-grid {
@@ -5079,7 +5088,7 @@ select {
 .pricing-grid .pricing-card:nth-child(3) { --delay: 0.19s; }
 
 .pricing-card {
-  background: var(--surface);
+  background: var(--field);
   padding: 40px 32px;
   border-radius: var(--radius);
   box-shadow: 0 12px 24px rgba(26, 26, 46, 0.08);
@@ -5163,7 +5172,7 @@ select {
 }
 
 [data-theme="dark"] .faq {
-  background: var(--surface);
+  background: var(--field);
 }
 
 [data-theme="dark"] .faq-item {
@@ -5464,9 +5473,9 @@ footer {
 .tasks-page .task-form select {
   height: 40px;
   border-radius: 10px;
-  border: 1px solid var(--border-subtle);
-  background: var(--surface);
-  color: var(--text-primary);
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
   padding: 0 10px;
   font-size: 0.9rem;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -5579,9 +5588,9 @@ footer {
   height: 40px;
   padding: 0;
   border-radius: 999px;
-  border: 1px solid var(--border-subtle);
-  background: var(--surface);
-  color: var(--text-primary);
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
 }
 
 .tasks-page .label-toggle:hover {
@@ -5599,8 +5608,8 @@ footer {
   min-width: 220px;
   padding: 14px;
   border-radius: 18px;
-  border: 1px solid var(--border-subtle);
-  background: linear-gradient(180deg, var(--surface) 0%, rgba(255, 255, 255, 0.96) 100%);
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, var(--card) 0%, rgba(255, 255, 255, 0.96) 100%);
   box-shadow: 0 18px 38px rgba(15, 23, 42, 0.12);
   opacity: 0;
   transform: translateY(8px) scale(0.98);
@@ -5627,12 +5636,12 @@ footer {
 .tasks-page .label-picker-title {
   font-weight: 700;
   font-size: 0.9rem;
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 .tasks-page .label-picker-hint {
   font-size: 0.75rem;
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 .tasks-page .label-options {
@@ -5662,8 +5671,8 @@ footer {
   width: 100%;
   padding: 8px 10px;
   border-radius: 999px;
-  border: 1px solid var(--border-subtle);
-  background: var(--surface);
+  border: 1px solid var(--border);
+  background: var(--card);
 }
 
 .tasks-page .label-option:hover .label-pill {
@@ -5689,7 +5698,7 @@ footer {
 .tasks-page .label-empty {
   margin: 0;
   font-size: 0.85rem;
-  color: var(--text-secondary);
+  color: var(--muted);
   grid-column: 1 / -1;
 }
 
@@ -5720,9 +5729,9 @@ footer {
 .tasks-page .task-controls select {
   height: 38px;
   border-radius: 9px;
-  border: 1px solid var(--border-subtle);
-  background: var(--surface);
-  color: var(--text-primary);
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
   padding: 0 12px;
   font-size: 0.85rem;
   min-width: 140px;
@@ -5746,7 +5755,7 @@ footer {
 .tasks-page .task-column {
   padding: 16px;
   border-radius: 16px;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   background: #f8fafc;
   min-height: 100%;
 }
@@ -5793,7 +5802,7 @@ footer {
 .tasks-page .task-group-title {
   font-size: 0;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--muted);
   margin: 20px 0 12px 0;
   padding: 0;
   border-bottom: none;
@@ -5812,19 +5821,19 @@ footer {
   justify-content: space-between;
   gap: 12px;
   padding: 12px 16px;
-  background: var(--background-subtle);
-  border: 1px solid var(--border-subtle);
+  background: var(--soft);
+  border: 1px solid var(--border);
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
   font-size: 0.95rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text);
   text-align: left;
 }
 
 .tasks-page .task-group-toggle:hover {
-  background: var(--surface);
+  background: var(--card);
   border-color: var(--primary);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
@@ -5835,7 +5844,7 @@ footer {
 
 .tasks-page .task-group-icon {
   font-size: 0.85rem;
-  color: var(--text-secondary);
+  color: var(--muted);
   transition: transform 0.2s ease;
   flex-shrink: 0;
 }
@@ -5848,7 +5857,7 @@ footer {
   flex: 1;
   font-size: 0.95rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 .tasks-page .task-group-count {
@@ -5856,8 +5865,8 @@ footer {
   font-weight: 500;
   padding: 4px 10px;
   border-radius: 12px;
-  background: var(--surface);
-  color: var(--text-secondary);
+  background: var(--card);
+  color: var(--muted);
   flex-shrink: 0;
 }
 
@@ -5911,9 +5920,9 @@ footer {
   align-items: center;
   gap: 12px;
   padding: 14px 16px;
-  background: var(--surface);
+  background: var(--card);
   border-radius: 14px;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
 }
 
@@ -5954,14 +5963,14 @@ footer {
 
 .tasks-page .task-title {
   font-size: 1rem;
-  color: var(--text-primary);
+  color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .tasks-page .task-time {
-  color: var(--text-secondary);
+  color: var(--muted);
   font-size: 0.93rem;
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
@@ -6007,8 +6016,8 @@ footer {
   border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 600;
-  background: var(--background-subtle);
-  color: var(--text-primary);
+  background: var(--soft);
+  color: var(--text);
 }
 
 .tasks-page .meta-pill i {
@@ -6067,7 +6076,7 @@ footer {
 
 .tasks-page .empty {
   margin: 0;
-  color: var(--text-secondary);
+  color: var(--muted);
   font-size: 0.9rem;
 }
 
@@ -6467,6 +6476,11 @@ footer {
    TIMER (App Parity Migration)
    ============================================ */
 :root {
+  --card: #ffffff;
+  --border: #dbe4f2;
+  --text: #1f2a44;
+  --muted: #64748b;
+  --soft: #f4f8ff;
   --accent: #1f6feb;
   --timer-accent: #1f6feb;
   --timer-accent-soft: rgba(31, 111, 235, 0.12);
@@ -6474,6 +6488,11 @@ footer {
 }
 
 [data-theme="dark"] {
+  --card: #1a2236;
+  --border: #2d3a52;
+  --text: #f1f5f9;
+  --muted: #b4c5e0;
+  --soft: #242d44;
   --accent: #6a9eff;
   --timer-accent: #9dc3ff;
   --timer-accent-soft: rgba(157, 195, 255, 0.22);
@@ -6493,8 +6512,8 @@ footer {
 }
 
 .timer-page .card {
-  background: var(--surface);
-  border: 1px solid var(--border-subtle);
+  background: var(--card);
+  border: 1px solid var(--border);
   border-radius: 16px;
   box-shadow: none;
 }
@@ -6516,8 +6535,8 @@ footer {
 .btn-outline-success,
 .btn-light {
   background: #ffffff;
-  border: 1px solid var(--border-subtle);
-  color: var(--text-primary);
+  border: 1px solid var(--border);
+  color: var(--text);
 }
 
 .btn-outline-primary {
@@ -6560,8 +6579,8 @@ footer {
 [data-theme="dark"] .btn-outline-danger,
 [data-theme="dark"] .btn-outline-success,
 [data-theme="dark"] .btn-light {
-  background: var(--surface);
-  border-color: var(--border-subtle);
+  background: var(--card);
+  border-color: var(--border);
   color: #dce4f6;
   transition: all 0.2s ease;
 }
@@ -6629,8 +6648,8 @@ footer {
 .timer-hero {
   width: 100%;
   padding: 14px 24px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border-subtle);
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
 }
 
 .timer-controls {
@@ -6655,7 +6674,7 @@ footer {
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  color: var(--text-secondary);
+  color: var(--muted);
   font-weight: 600;
 }
 
@@ -6667,11 +6686,11 @@ footer {
 
 .timer-select input[type="text"] {
   border-radius: 12px;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   padding: 10px 42px 10px 12px;
   font-size: 1rem;
-  background: var(--surface);
-  color: var(--text-primary);
+  background: var(--card);
+  color: var(--text);
   width: 100%;
 }
 
@@ -6682,7 +6701,7 @@ footer {
   transform: translateY(-50%);
   border: none;
   background: transparent;
-  color: var(--text-secondary);
+  color: var(--muted);
   width: 28px;
   height: 28px;
   border-radius: 50%;
@@ -6693,8 +6712,8 @@ footer {
 }
 
 .timer-clear:hover {
-  background: var(--background-subtle);
-  color: var(--text-primary);
+  background: var(--soft);
+  color: var(--text);
 }
 
 .timer-clear:disabled {
@@ -6707,8 +6726,8 @@ footer {
   top: calc(100% + 8px);
   left: 0;
   right: 0;
-  background: var(--surface);
-  border: 1px solid var(--border-subtle);
+  background: var(--card);
+  border: 1px solid var(--border);
   border-radius: 14px;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
   padding: 12px;
@@ -6730,7 +6749,7 @@ footer {
 
 .timer-bulk-count {
   font-size: 0.82rem;
-  color: var(--text-secondary);
+  color: var(--muted);
   min-width: 74px;
 }
 
@@ -6777,7 +6796,7 @@ footer {
   border-radius: 10px;
   border: 1px solid transparent;
   background: transparent;
-  color: var(--text-primary);
+  color: var(--text);
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -6785,8 +6804,8 @@ footer {
 }
 
 .timer-task-pick:hover {
-  background: var(--background-subtle);
-  border-color: var(--border-subtle);
+  background: var(--soft);
+  border-color: var(--border);
 }
 
 .timer-task-pick.is-completed {
@@ -6796,7 +6815,7 @@ footer {
 
 .timer-task-meta {
   font-size: 0.78rem;
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 .daily-target-inline {
@@ -6817,7 +6836,7 @@ footer {
 .focus-time {
   font-size: 1rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--text);
   min-width: 96px;
   display: inline-flex;
   align-items: center;
@@ -6833,12 +6852,12 @@ footer {
 }
 
 .focus-segment.is-active {
-  background: var(--background-subtle);
-  border-color: var(--border-subtle);
+  background: var(--soft);
+  border-color: var(--border);
 }
 
 .focus-separator {
-  color: var(--text-secondary);
+  color: var(--muted);
   font-weight: 600;
 }
 
@@ -6863,7 +6882,7 @@ footer {
   padding: 12px 14px;
   border-radius: 18px;
   background: linear-gradient(180deg, #ffffff 0%, #f7f2ec 100%);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   box-shadow: 0 12px 28px rgba(31, 41, 55, 0.08);
 }
 
@@ -6887,11 +6906,11 @@ footer {
   max-width: 100%;
   padding: 6px 12px;
   border-radius: 999px;
-  border: 1px solid var(--border-subtle);
-  background: var(--surface);
+  border: 1px solid var(--border);
+  background: var(--card);
   font-weight: 600;
   cursor: pointer;
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 .timer-range-summary {
@@ -6911,14 +6930,14 @@ footer {
 .timer-summary-label {
   font-size: 0.7rem;
   letter-spacing: 1px;
-  color: var(--text-secondary);
+  color: var(--muted);
   font-weight: 500;
 }
 
 .timer-summary-value {
   font-size: 1.1rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text);
   font-variant-numeric: tabular-nums;
 }
 
@@ -6928,7 +6947,7 @@ footer {
   gap: 4px;
   padding: 4px;
   border-radius: 12px;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.9);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
@@ -6941,7 +6960,7 @@ footer {
   border-radius: 8px;
   border: 1px solid transparent;
   background: transparent;
-  color: var(--text-secondary);
+  color: var(--muted);
   font-weight: 500;
   font-size: 0.9rem;
   cursor: pointer;
@@ -6974,7 +6993,7 @@ footer {
   position: relative;
   overflow: hidden;
   background: linear-gradient(135deg, #ffffff 0%, #f4f7ff 55%, #fff2e4 100%);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   box-shadow: 0 18px 40px rgba(31, 41, 55, 0.12);
   padding: 16px;
 }
@@ -6986,10 +7005,10 @@ footer {
 .focus-progress-bar {
   width: 100%;
   height: 10px;
-  background: var(--background-subtle);
+  background: var(--soft);
   border-radius: 999px;
   overflow: hidden;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
 }
 
 .focus-progress-fill {
@@ -7018,7 +7037,7 @@ footer {
 .pomodoro-label {
   margin: 0;
   font-size: 0.75rem;
-  color: var(--text-secondary);
+  color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.16em;
 }
@@ -7039,12 +7058,12 @@ footer {
   margin: 0;
   font-size: 1rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 .pomodoro-meta {
   margin: 0;
-  color: var(--text-secondary);
+  color: var(--muted);
   font-size: 0.9rem;
 }
 
@@ -7125,7 +7144,7 @@ footer {
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 .pomodoro-controls,
@@ -7227,9 +7246,9 @@ footer {
   padding: 0 10px;
   font-size: 0.86rem;
   border-radius: 10px;
-  border: 1px solid var(--border-subtle);
-  background: var(--surface);
-  color: var(--text-primary);
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
 }
 
 .timer-task-create-card .timer-quick-task-form button {
@@ -7243,7 +7262,7 @@ footer {
 .timer-quick-task-feedback {
   margin: 0;
   font-size: 0.82rem;
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 .timer-quick-task-feedback.is-success {
@@ -7267,31 +7286,31 @@ footer {
 /* Timer Hero Dark Mode */
 [data-theme="dark"] .timer-hero {
   background: var(--card-elevated);
-  border-bottom-color: var(--border-subtle);
+  border-bottom-color: var(--border);
 }
 
 /* Timer Range Card Dark Mode */
 [data-theme="dark"] .timer-range-card {
   background: linear-gradient(145deg, var(--gradient-dark-start) 0%, var(--gradient-dark-end) 100%);
-  border-color: var(--border-subtle);
+  border-color: var(--border);
   box-shadow: 0 14px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 /* Timer View Toggle Dark Mode */
 [data-theme="dark"] .timer-view-toggle {
   background: rgba(26, 34, 54, 0.95);
-  border-color: var(--border-subtle);
+  border-color: var(--border);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(10px);
 }
 
 [data-theme="dark"] .timer-view-tab {
-  color: var(--text-secondary);
+  color: var(--muted);
   transition: all 0.2s ease;
 }
 
 [data-theme="dark"] .timer-view-tab:hover {
-  color: var(--text-primary);
+  color: var(--text);
   background: rgba(157, 195, 255, 0.12);
   transform: translateY(-1px);
 }
@@ -7306,7 +7325,7 @@ footer {
 /* Pomodoro Card Dark Mode */
 [data-theme="dark"] .pomodoro-card {
   background: linear-gradient(140deg, #1e2a45 0%, #25324d 40%, #1d2840 100%);
-  border-color: var(--border-subtle);
+  border-color: var(--border);
   box-shadow: 0 20px 48px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06);
   position: relative;
   overflow: hidden;
@@ -7338,7 +7357,7 @@ footer {
 /* Focus Progress Bar Dark Mode */
 [data-theme="dark"] .focus-progress-bar {
   background: rgba(35, 48, 74, 0.7);
-  border-color: var(--border-subtle);
+  border-color: var(--border);
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
@@ -7350,14 +7369,14 @@ footer {
 [data-theme="dark"] .focus-segment {
   background: rgba(35, 48, 74, 0.6);
   border-color: transparent;
-  color: var(--text-secondary);
+  color: var(--muted);
   transition: all 0.2s ease;
 }
 
 [data-theme="dark"] .focus-segment:hover {
   background: rgba(157, 195, 255, 0.18);
   border-color: rgba(157, 195, 255, 0.35);
-  color: var(--text-primary);
+  color: var(--text);
   transform: translateY(-1px);
 }
 
@@ -7386,9 +7405,9 @@ footer {
 
 /* Timer Input Dark Mode Improvements */
 [data-theme="dark"] .timer-select input[type="text"] {
-  background: var(--surface);
-  border-color: var(--border-subtle);
-  color: var(--text-primary);
+  background: var(--card);
+  border-color: var(--border);
+  color: var(--text);
   transition: all 0.2s ease;
 }
 
@@ -7399,7 +7418,7 @@ footer {
 }
 
 [data-theme="dark"] .timer-clear {
-  color: var(--text-secondary);
+  color: var(--muted);
   transition: all 0.2s ease;
 }
 
@@ -7412,7 +7431,7 @@ footer {
 /* Timer Dropdown Dark Mode */
 [data-theme="dark"] .timer-dropdown {
   background: var(--card-elevated);
-  border-color: var(--border-subtle);
+  border-color: var(--border);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(12px);
 }
@@ -7428,21 +7447,21 @@ footer {
 }
 
 [data-theme="dark"] .timer-task-pick:hover {
-  background: var(--background-subtle);
-  border-color: var(--border-subtle);
+  background: var(--soft);
+  border-color: var(--border);
 }
 
 /* Calendar Input Dark Mode */
 [data-theme="dark"] .calendar-input {
   background: var(--card-elevated);
-  border-color: var(--border-subtle);
-  color: var(--text-primary);
+  border-color: var(--border);
+  color: var(--text);
   transition: all 0.2s ease;
 }
 
 [data-theme="dark"] .calendar-input:hover {
   border-color: rgba(157, 195, 255, 0.5);
-  background: var(--surface);
+  background: var(--card);
 }
 
 [data-theme="dark"] .calendar-input:focus {
@@ -7472,16 +7491,16 @@ footer {
 /* Timer Task Create Card Dark Mode */
 [data-theme="dark"] .timer-task-create-card {
   background: var(--card-elevated);
-  border-color: var(--border-subtle);
+  border-color: var(--border);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
 /* Timer Task Create Form Dark Mode */
 [data-theme="dark"] .timer-task-create-card .timer-quick-task-form input,
 [data-theme="dark"] .timer-task-create-card .timer-quick-task-form select {
-  background: var(--surface);
-  border-color: var(--border-subtle);
-  color: var(--text-primary);
+  background: var(--card);
+  border-color: var(--border);
+  color: var(--text);
   transition: all 0.2s ease;
 }
 
@@ -7493,7 +7512,7 @@ footer {
 }
 
 [data-theme="dark"] .timer-task-create-card .timer-quick-task-form input::placeholder {
-  color: var(--text-secondary);
+  color: var(--muted);
   opacity: 0.7;
 }
 
@@ -7504,7 +7523,7 @@ footer {
 }
 
 [data-theme="dark"] .timer-summary-label {
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 /* Pomodoro Text Dark Mode */
@@ -7514,11 +7533,11 @@ footer {
 }
 
 [data-theme="dark"] .pomodoro-task {
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 [data-theme="dark"] .pomodoro-meta {
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 [data-theme="dark"] .pomodoro-dial {
@@ -7542,42 +7561,42 @@ footer {
 [data-theme="dark"] .timer-list-card,
 [data-theme="dark"] .timer-timesheet-card {
   background: var(--card-elevated);
-  border-color: var(--border-subtle);
+  border-color: var(--border);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
 }
 
 /* Daily Target Inline Dark Mode */
 [data-theme="dark"] .daily-target-inline {
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 [data-theme="dark"] .focus-time {
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 /* Focus Separator Dark Mode */
 [data-theme="dark"] .focus-separator {
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 /* Timer Task Meta Dark Mode */
 [data-theme="dark"] .timer-task-meta {
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 /* Timer Label Dark Mode */
 [data-theme="dark"] .timer-input-label {
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 /* Pomodoro Label Dark Mode */
 [data-theme="dark"] .pomodoro-label {
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 /* Pomodoro Caption Dark Mode */
 [data-theme="dark"] .pomodoro-caption {
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 /* Smooth Dark Mode Transitions */
@@ -7648,7 +7667,7 @@ footer {
 
 .calendar-filter label {
   font-size: 0.75rem;
-  color: var(--text-secondary);
+  color: var(--muted);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   font-weight: 700;
@@ -7656,21 +7675,21 @@ footer {
 
 .calendar-filter select {
   min-width: 180px;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   border-radius: 10px;
-  background: var(--surface);
-  color: var(--text-primary);
+  background: var(--card);
+  color: var(--text);
   padding: 8px 10px;
   font-size: 0.86rem;
 }
 
 .calendar-week-meta-pill {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   border-radius: 999px;
   padding: 6px 10px;
   font-size: 0.82rem;
-  color: var(--text-secondary);
-  background: var(--background-subtle);
+  color: var(--muted);
+  background: var(--soft);
   font-weight: 700;
 }
 
@@ -7694,7 +7713,7 @@ footer {
 
 .calendar-week-header-row {
   padding-bottom: 12px;
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border);
 }
 
 .calendar-weekday {
@@ -7702,7 +7721,7 @@ footer {
   font-size: 0.75rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--text-secondary);
+  color: var(--muted);
   display: grid;
   gap: 4px;
 }
@@ -7710,7 +7729,7 @@ footer {
 .calendar-weekday-date {
   font-size: 1rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 .calendar-weekday.is-today .calendar-weekday-date {
@@ -7720,7 +7739,7 @@ footer {
 .calendar-task-header {
   text-align: left;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text);
   text-transform: none;
 }
 
@@ -7732,7 +7751,7 @@ footer {
 
 .calendar-week-row {
   padding: 10px 0;
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border);
 }
 
 .calendar-week-row:last-child {
@@ -7748,12 +7767,12 @@ footer {
 
 .calendar-task-name {
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 .calendar-task-meta {
   font-size: 0.8rem;
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 .calendar-day-cell {
@@ -7772,8 +7791,8 @@ footer {
   width: 24px;
   height: 24px;
   border-radius: 999px;
-  border: 1.5px solid var(--border-subtle);
-  background: var(--surface);
+  border: 1.5px solid var(--border);
+  background: var(--card);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -7824,7 +7843,7 @@ footer {
   border-radius: 12px;
   border: 1px dashed rgba(31, 111, 235, 0.4);
   background: rgba(31, 111, 235, 0.08);
-  color: var(--text-secondary);
+  color: var(--muted);
   font-size: 0.82rem;
 }
 
@@ -7844,7 +7863,7 @@ footer {
 }
 
 .timer-list-group + .timer-list-group {
-  border-top: 1px solid var(--border-subtle);
+  border-top: 1px solid var(--border);
   padding-top: 16px;
 }
 
@@ -7857,18 +7876,18 @@ footer {
 .timer-list-day {
   font-size: 0.95rem;
   font-weight: 500;
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 .timer-list-total {
   font-size: 0.9rem;
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 .timer-list-item {
   padding: 12px 14px;
   border-radius: 12px;
-  background: var(--background-subtle);
+  background: var(--soft);
   border: 1px solid transparent;
 }
 
@@ -7886,7 +7905,7 @@ footer {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: var(--text-secondary);
+  color: var(--muted);
   font-size: 0.82rem;
 }
 
@@ -7901,7 +7920,7 @@ footer {
 
 .timer-list-title {
   font-weight: 500;
-  color: var(--text-primary);
+  color: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -7919,7 +7938,7 @@ footer {
 .timer-list-right {
   margin-left: auto;
   white-space: nowrap;
-  color: var(--text-primary);
+  color: var(--text);
   display: inline-flex;
   align-items: center;
   gap: 10px;
@@ -7927,7 +7946,7 @@ footer {
 
 .timer-list-label {
   font-size: 0.75rem;
-  color: var(--text-primary);
+  color: var(--text);
   background: rgba(242, 169, 0, 0.18);
   border-radius: 999px;
   padding: 2px 8px;
@@ -7940,7 +7959,7 @@ footer {
 
 .timer-list-time {
   font-size: 0.85rem;
-  color: var(--text-secondary);
+  color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
 
@@ -7968,7 +7987,7 @@ footer {
   display: none;
   gap: 8px;
   padding-top: 10px;
-  border-top: 1px dashed var(--border-subtle);
+  border-top: 1px dashed var(--border);
 }
 
 .timer-task-item.is-open .timer-task-details,
@@ -7983,13 +8002,13 @@ footer {
   gap: 12px;
   padding: 8px 10px;
   border-radius: 10px;
-  background: var(--surface);
-  border: 1px solid var(--border-subtle);
+  background: var(--card);
+  border: 1px solid var(--border);
   font-size: 0.85rem;
 }
 
 .timer-task-entry-time {
-  color: var(--text-secondary);
+  color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
 
@@ -8015,13 +8034,13 @@ footer {
   margin: 0;
   font-size: 1rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 .timesheet-subtitle {
   margin: 0;
   font-size: 0.85rem;
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 .timesheet-target-banner {
@@ -8064,7 +8083,7 @@ footer {
   gap: 16px;
   padding: 12px;
   border-radius: 14px;
-  background: var(--background-subtle);
+  background: var(--soft);
 }
 
 .timesheet-day {
@@ -8074,12 +8093,12 @@ footer {
 
 .timesheet-day-label {
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 .timesheet-day-total {
   font-size: 0.9rem;
-  color: var(--text-secondary);
+  color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
 
@@ -8093,8 +8112,8 @@ footer {
   gap: 8px;
   padding: 10px 12px;
   border-radius: 12px;
-  background: var(--surface);
-  border: 1px solid var(--border-subtle);
+  background: var(--card);
+  border: 1px solid var(--border);
 }
 
 .timesheet-task-summary {
@@ -8107,12 +8126,12 @@ footer {
 
 .timesheet-task-title {
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 .timesheet-task-meta {
   font-size: 0.8rem;
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 .timesheet-task-duration {
@@ -8206,7 +8225,7 @@ footer {
 .empty {
   text-align: center;
   padding: 24px 12px;
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 /* ============================================
@@ -8225,7 +8244,7 @@ footer {
   border-radius: 12px;
   border: 1px dashed rgba(31, 111, 235, 0.45);
   background: rgba(31, 111, 235, 0.08);
-  color: var(--text-secondary);
+  color: var(--muted);
   font-size: 0.84rem;
 }
 
@@ -8241,14 +8260,14 @@ footer {
 
 .goals-page .goal-hub-card {
   border-radius: 16px;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   background: linear-gradient(135deg, #ffffff 0%, #f7f2ec 100%);
   padding: 16px;
   display: flex;
   justify-content: space-between;
   gap: 10px;
   text-decoration: none;
-  color: var(--text-primary);
+  color: var(--text);
   box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
@@ -8265,7 +8284,7 @@ footer {
 
 .goals-page .goal-hub-meta {
   margin: 8px 0 0;
-  color: var(--text-secondary);
+  color: var(--muted);
   font-size: 0.86rem;
 }
 
@@ -8293,10 +8312,10 @@ footer {
 }
 
 .goals-page .goals-overview-chart {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   border-radius: 14px;
   padding: 12px;
-  background: var(--surface);
+  background: var(--card);
 }
 
 .goals-page .goals-create-card {
@@ -8317,8 +8336,8 @@ footer {
 
 .goals-page .goal-card {
   border-radius: 14px;
-  border: 1px solid var(--border-subtle);
-  background: var(--surface);
+  border: 1px solid var(--border);
+  background: var(--card);
   padding: 14px;
   display: grid;
   gap: 10px;
@@ -8342,7 +8361,7 @@ footer {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: conic-gradient(var(--accent) calc(var(--progress) * 1%), var(--background-subtle) 0);
+  background: conic-gradient(var(--accent) calc(var(--progress) * 1%), var(--soft) 0);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -8356,7 +8375,7 @@ footer {
   position: absolute;
   inset: 4px;
   border-radius: 50%;
-  background: var(--surface);
+  background: var(--card);
 }
 
 .goals-page .deadline-ring span {
@@ -8365,7 +8384,7 @@ footer {
 
 .goals-page .deadline-date {
   font-size: 0.78rem;
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 .goals-page .goal-status {
@@ -8406,7 +8425,7 @@ footer {
 
 .goals-page .goal-desc {
   margin: 0;
-  color: var(--text-secondary);
+  color: var(--muted);
   font-size: 0.88rem;
 }
 
@@ -8425,9 +8444,9 @@ footer {
   padding: 4px 9px;
   border-radius: 999px;
   font-size: 0.75rem;
-  border: 1px solid var(--border-subtle);
-  background: var(--background-subtle);
-  color: var(--text-primary);
+  border: 1px solid var(--border);
+  background: var(--soft);
+  color: var(--text);
 }
 
 .goals-page .goal-label-dot {
@@ -8456,7 +8475,7 @@ footer {
 
 .goals-page .goal-progress-text {
   font-size: 0.78rem;
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 .goals-page .goal-subgoal-items {
@@ -8468,11 +8487,11 @@ footer {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   border-radius: 10px;
   padding: 7px 9px;
   font-size: 0.84rem;
-  background: var(--background-subtle);
+  background: var(--soft);
 }
 
 .goals-page .goal-subgoal-item input[type="checkbox"] {
@@ -8481,13 +8500,13 @@ footer {
 
 .goals-page .goal-subgoal-item.is-done span {
   text-decoration: line-through;
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 .goals-page .goal-subgoal-empty {
   margin: 0;
   font-size: 0.82rem;
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 .goals-page .goal-subgoal-add-form {
@@ -8509,9 +8528,9 @@ footer {
 }
 
 .goals-page .subgoal-group {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   border-radius: 14px;
-  background: var(--surface);
+  background: var(--card);
   padding: 12px;
   display: grid;
   gap: 10px;
@@ -8532,7 +8551,7 @@ footer {
 .goals-page .subgoal-group-meta {
   margin: 4px 0 0;
   font-size: 0.8rem;
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 .goals-page .subgoal-progress {
@@ -8927,7 +8946,7 @@ footer {
   border-radius: 12px;
   border: 1px dashed rgba(31, 111, 235, 0.45);
   background: rgba(31, 111, 235, 0.08);
-  color: var(--text-secondary);
+  color: var(--muted);
   font-size: 0.84rem;
 }
 
@@ -8954,10 +8973,10 @@ footer {
 
 .weekly-goals-page .weekly-goal-form input,
 .weekly-goals-page .weekly-goal-form select {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   border-radius: 10px;
-  background: var(--surface);
-  color: var(--text-primary);
+  background: var(--card);
+  color: var(--text);
   padding: 10px 12px;
   min-height: 40px;
 }
@@ -8968,10 +8987,10 @@ footer {
 }
 
 .weekly-goals-page .weekly-goal-item {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 12px;
-  background: var(--surface);
+  background: var(--card);
   display: grid;
   gap: 10px;
 }
@@ -8991,7 +9010,7 @@ footer {
 .weekly-goals-page .weekly-goal-info p {
   margin: 0;
   font-size: 0.84rem;
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 .weekly-goals-page .weekly-goal-actions {
@@ -9008,7 +9027,7 @@ footer {
 
 .weekly-goals-page .weekly-goal-progress > span {
   font-size: 0.82rem;
-  color: var(--text-secondary);
+  color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
 
@@ -9037,12 +9056,12 @@ footer {
 }
 
 .weekly-goals-page .weekly-history-group {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   border-radius: 14px;
   padding: 12px;
   display: grid;
   gap: 10px;
-  background: var(--surface);
+  background: var(--card);
 }
 
 .weekly-goals-page .weekly-history-header {
@@ -9059,7 +9078,7 @@ footer {
 
 .weekly-goals-page .weekly-history-header span {
   font-size: 0.8rem;
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 [data-theme="dark"] .weekly-goals-page .weekly-goal-item,
@@ -9100,7 +9119,7 @@ footer {
   border-radius: 12px;
   border: 1px dashed rgba(31, 111, 235, 0.45);
   background: rgba(31, 111, 235, 0.08);
-  color: var(--text-secondary);
+  color: var(--muted);
   font-size: 0.85rem;
 }
 
@@ -9116,9 +9135,9 @@ footer {
 }
 
 .habits-page .habit-stat-card {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   border-radius: 16px;
-  background: var(--surface);
+  background: var(--card);
   padding: 18px;
   display: grid;
   gap: 8px;
@@ -9132,7 +9151,7 @@ footer {
 
 .habits-page .habit-stat-label {
   font-size: 0.75rem;
-  color: var(--text-secondary);
+  color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   font-weight: 700;
@@ -9141,13 +9160,13 @@ footer {
 .habits-page .habit-stat-value {
   font-size: 1.5rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--text);
   line-height: 1.2;
 }
 
 .habits-page .habit-stat-meta {
   font-size: 0.84rem;
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 /* Cards */
@@ -9181,10 +9200,10 @@ footer {
 
 .habits-page .habit-create-form input,
 .habits-page .habit-create-form select {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   border-radius: 10px;
-  background: var(--surface);
-  color: var(--text-primary);
+  background: var(--card);
+  color: var(--text);
   padding: 10px 14px;
   font-size: 0.9rem;
   min-height: 42px;
@@ -9220,9 +9239,9 @@ footer {
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   border-radius: 14px;
-  background: var(--surface);
+  background: var(--card);
   padding: 14px 16px;
   transition: all 0.2s ease;
 }
@@ -9264,7 +9283,7 @@ footer {
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
-  background: var(--surface);
+  background: var(--card);
 }
 
 .habits-page .habit-checkbox:hover .habit-checkmark {
@@ -9299,7 +9318,7 @@ footer {
 .habits-page .habit-name {
   font-size: 1rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -9307,7 +9326,7 @@ footer {
 
 .habits-page .habit-meta {
   font-size: 0.82rem;
-  color: var(--text-secondary);
+  color: var(--muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -9332,12 +9351,12 @@ footer {
 
 .habits-page .habit-streak {
   font-size: 0.82rem;
-  color: var(--text-secondary);
+  color: var(--muted);
   display: inline-flex;
   align-items: center;
   gap: 5px;
   padding: 4px 10px;
-  background: var(--background-subtle);
+  background: var(--soft);
   border-radius: 20px;
 }
 
@@ -9351,8 +9370,8 @@ footer {
   gap: 12px;
   padding: 16px;
   border-radius: 14px;
-  border: 1px dashed var(--border-subtle);
-  background: var(--background-subtle);
+  border: 1px dashed var(--border);
+  background: var(--soft);
 }
 
 .habits-page .habit-edit-form.is-open {
@@ -9369,17 +9388,17 @@ footer {
   display: grid;
   gap: 6px;
   font-size: 0.82rem;
-  color: var(--text-secondary);
+  color: var(--muted);
   font-weight: 500;
 }
 
 .habits-page .habit-edit-form input,
 .habits-page .habit-edit-form select,
 .habits-page .habit-edit-form textarea {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   border-radius: 10px;
-  background: var(--surface);
-  color: var(--text-primary);
+  background: var(--card);
+  color: var(--text);
   padding: 10px 12px;
   font-size: 0.9rem;
 }
@@ -9398,7 +9417,7 @@ footer {
 
 .habits-page .habit-chart-note {
   font-size: 0.84rem;
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 /* ============================================
@@ -9930,7 +9949,7 @@ footer {
   border-radius: 12px;
   border: 1px dashed rgba(31, 111, 235, 0.45);
   background: rgba(31, 111, 235, 0.08);
-  color: var(--text-secondary);
+  color: var(--muted);
   font-size: 0.84rem;
 }
 
@@ -9945,9 +9964,9 @@ footer {
 }
 
 .planner-page .planner-stat-card {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   border-radius: 14px;
-  background: var(--surface);
+  background: var(--card);
   padding: 14px;
   display: grid;
   gap: 5px;
@@ -9956,7 +9975,7 @@ footer {
 
 .planner-page .planner-stat-label {
   font-size: 0.74rem;
-  color: var(--text-secondary);
+  color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 700;
@@ -9965,12 +9984,12 @@ footer {
 .planner-page .planner-stat-value {
   font-size: 1.35rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 .planner-page .planner-stat-meta {
   font-size: 0.82rem;
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 .planner-page .planner-headline {
@@ -9990,10 +10009,10 @@ footer {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   border-radius: 999px;
   padding: 4px;
-  background: var(--background-subtle);
+  background: var(--soft);
 }
 
 .planner-page .planner-toggle-btn {
@@ -10001,7 +10020,7 @@ footer {
   border-radius: 999px;
   padding: 6px 12px;
   background: transparent;
-  color: var(--text-secondary);
+  color: var(--muted);
   font-size: 0.8rem;
   font-weight: 700;
   cursor: pointer;
@@ -10009,7 +10028,7 @@ footer {
 
 .planner-page .planner-toggle-btn:hover {
   background: rgba(31, 111, 235, 0.1);
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 .planner-page .planner-toggle-btn.is-active {
@@ -10039,10 +10058,10 @@ footer {
 }
 
 .planner-page .planner-panel-meta {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   border-radius: 999px;
-  background: var(--background-subtle);
-  color: var(--text-secondary);
+  background: var(--soft);
+  color: var(--muted);
   font-size: 0.78rem;
   font-weight: 700;
   padding: 6px 10px;
@@ -10061,10 +10080,10 @@ footer {
 
 .planner-page .planner-form input,
 .planner-page .planner-form select {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   border-radius: 10px;
-  background: var(--surface);
-  color: var(--text-primary);
+  background: var(--card);
+  color: var(--text);
   padding: 10px 12px;
   min-height: 40px;
 }
@@ -10079,14 +10098,14 @@ footer {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   border-radius: 12px;
-  background: var(--surface);
+  background: var(--card);
   padding: 12px;
 }
 
 .planner-page .planner-habit-row.is-done {
-  background: var(--background-subtle);
+  background: var(--soft);
 }
 
 .planner-page .planner-habit-left {
@@ -10113,17 +10132,17 @@ footer {
 .planner-page .planner-habit-name {
   font-size: 0.95rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 .planner-page .planner-habit-meta {
   font-size: 0.81rem;
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 .planner-page .planner-habit-row.is-done .planner-habit-name {
   text-decoration: line-through;
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 .planner-page .planner-badge {
@@ -10132,7 +10151,7 @@ footer {
   gap: 5px;
   font-size: 0.78rem;
   font-weight: 700;
-  color: var(--text-secondary);
+  color: var(--muted);
   background: rgba(31, 111, 235, 0.1);
   border-radius: 999px;
   padding: 6px 10px;
@@ -10149,7 +10168,7 @@ footer {
 }
 
 .planner-page .planner-todo-done {
-  border-top: 1px dashed var(--border-subtle);
+  border-top: 1px dashed var(--border);
   padding-top: 10px;
 }
 
@@ -10162,9 +10181,9 @@ footer {
 }
 
 .planner-page .planner-task-item {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   border-radius: 12px;
-  background: var(--surface);
+  background: var(--card);
   padding: 11px;
   display: flex;
   align-items: center;
@@ -10173,7 +10192,7 @@ footer {
 }
 
 .planner-page .planner-task-item.is-done {
-  background: var(--background-subtle);
+  background: var(--soft);
 }
 
 .planner-page .planner-task-info {
@@ -10185,17 +10204,17 @@ footer {
 .planner-page .planner-task-title {
   font-size: 0.92rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 .planner-page .planner-task-meta {
   font-size: 0.8rem;
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 .planner-page .planner-task-item.is-done .planner-task-title {
   text-decoration: line-through;
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 .planner-page .planner-task-actions {
@@ -10305,7 +10324,7 @@ footer {
   border-radius: 12px;
   border: 1px dashed rgba(31, 111, 235, 0.45);
   background: rgba(31, 111, 235, 0.08);
-  color: var(--text-secondary);
+  color: var(--muted);
   font-size: 0.84rem;
 }
 
@@ -10320,9 +10339,9 @@ footer {
 }
 
 .reminders-page .reminder-stat-card {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   border-radius: 14px;
-  background: var(--surface);
+  background: var(--card);
   padding: 14px;
   display: grid;
   gap: 5px;
@@ -10343,7 +10362,7 @@ footer {
 
 .reminders-page .reminder-stat-label {
   font-size: 0.74rem;
-  color: var(--text-secondary);
+  color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 700;
@@ -10352,12 +10371,12 @@ footer {
 .reminders-page .reminder-stat-value {
   font-size: 1.35rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 .reminders-page .reminder-stat-meta {
   font-size: 0.82rem;
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 .reminders-page .reminders-grid {
@@ -10400,17 +10419,17 @@ footer {
   display: grid;
   gap: 6px;
   font-size: 0.8rem;
-  color: var(--text-secondary);
+  color: var(--muted);
   font-weight: 700;
 }
 
 .reminders-page .reminder-field input,
 .reminders-page .reminder-field select,
 .reminders-page .reminder-field textarea {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   border-radius: 10px;
-  background: var(--surface);
-  color: var(--text-primary);
+  background: var(--card);
+  color: var(--text);
   padding: 10px 12px;
 }
 
@@ -10429,9 +10448,9 @@ footer {
   align-items: center;
   gap: 6px;
   border-radius: 999px;
-  border: 1px solid var(--border-subtle);
-  background: var(--background-subtle);
-  color: var(--text-primary);
+  border: 1px solid var(--border);
+  background: var(--soft);
+  color: var(--text);
   padding: 6px 10px;
   font-size: 0.8rem;
   cursor: pointer;
@@ -10452,9 +10471,9 @@ footer {
   align-items: center;
   gap: 8px;
   border-radius: 999px;
-  border: 1px solid var(--border-subtle);
-  background: var(--background-subtle);
-  color: var(--text-primary);
+  border: 1px solid var(--border);
+  background: var(--soft);
+  color: var(--text);
   padding: 7px 11px;
   font-size: 0.8rem;
 }
@@ -10470,9 +10489,9 @@ footer {
 }
 
 .reminders-page .reminder-item {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   border-radius: 14px;
-  background: var(--surface);
+  background: var(--card);
   padding: 12px;
   display: grid;
   gap: 10px;
@@ -10501,7 +10520,7 @@ footer {
 
 .reminders-page .reminder-subtitle {
   margin: 4px 0 0;
-  color: var(--text-secondary);
+  color: var(--muted);
   font-size: 0.84rem;
 }
 
@@ -10519,7 +10538,7 @@ footer {
   font-size: 0.74rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  background: var(--background-subtle);
+  background: var(--soft);
 }
 
 .reminders-page .priority-low {
@@ -10541,7 +10560,7 @@ footer {
 }
 
 .reminders-page .status-muted {
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 .reminders-page .status-warning {
@@ -10560,7 +10579,7 @@ footer {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  color: var(--text-secondary);
+  color: var(--muted);
   font-size: 0.82rem;
 }
 
@@ -10570,10 +10589,10 @@ footer {
 
 .reminders-page .reminder-notes {
   margin: 0;
-  border: 1px dashed var(--border-subtle);
+  border: 1px dashed var(--border);
   border-radius: 10px;
-  background: var(--background-subtle);
-  color: var(--text-primary);
+  background: var(--soft);
+  color: var(--text);
   padding: 10px 12px;
   font-size: 0.84rem;
 }
@@ -10586,7 +10605,7 @@ footer {
 
 .reminders-page .reminder-edit-form {
   padding-top: 8px;
-  border-top: 1px dashed var(--border-subtle);
+  border-top: 1px dashed var(--border);
   display: none;
   gap: 10px;
 }
@@ -10596,9 +10615,9 @@ footer {
 }
 
 .reminders-page .reminder-empty {
-  border: 1px dashed var(--border-subtle);
+  border: 1px dashed var(--border);
   border-radius: 12px;
-  background: var(--background-subtle);
+  background: var(--soft);
   padding: 12px;
 }
 
@@ -10684,7 +10703,7 @@ footer {
   border-radius: 12px;
   border: 1px dashed rgba(31, 111, 235, 0.45);
   background: rgba(31, 111, 235, 0.08);
-  color: var(--text-secondary);
+  color: var(--muted);
   font-size: 0.84rem;
 }
 
@@ -10699,9 +10718,9 @@ footer {
 }
 
 .labels-page .label-stat-card {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   border-radius: 14px;
-  background: var(--surface);
+  background: var(--card);
   padding: 14px;
   display: grid;
   gap: 6px;
@@ -10710,7 +10729,7 @@ footer {
 
 .labels-page .label-stat-label {
   font-size: 0.74rem;
-  color: var(--text-secondary);
+  color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 700;
@@ -10719,12 +10738,12 @@ footer {
 .labels-page .label-stat-value {
   font-size: 1.35rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 .labels-page .label-stat-meta {
   font-size: 0.82rem;
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 .labels-page .label-palette {
@@ -10744,7 +10763,7 @@ footer {
 
 .labels-page .label-palette-empty {
   font-size: 0.83rem;
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 .labels-page .labels-card {
@@ -10761,14 +10780,14 @@ footer {
 }
 
 .labels-page .labels-tip {
-  color: var(--text-secondary);
+  color: var(--muted);
   font-size: 0.85rem;
 }
 
 .labels-page .labels-count {
   display: block;
   margin-top: 4px;
-  color: var(--text-secondary);
+  color: var(--muted);
   font-size: 0.82rem;
 }
 
@@ -10788,15 +10807,15 @@ footer {
 
 .labels-page .label-field span {
   font-size: 0.8rem;
-  color: var(--text-secondary);
+  color: var(--muted);
   font-weight: 700;
 }
 
 .labels-page .label-field input {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   border-radius: 10px;
-  background: var(--surface);
-  color: var(--text-primary);
+  background: var(--card);
+  color: var(--text);
   padding: 10px 12px;
 }
 
@@ -10809,7 +10828,7 @@ footer {
   font-size: 0.74rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--text-secondary);
+  color: var(--muted);
   font-weight: 700;
 }
 
@@ -10854,7 +10873,7 @@ footer {
   align-items: center;
   gap: 6px;
   font-size: 0.8rem;
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 .labels-page .color-custom input[type="color"] {
@@ -10862,8 +10881,8 @@ footer {
   height: 34px;
   padding: 0;
   border-radius: 8px;
-  border: 1px solid var(--border-subtle);
-  background: var(--surface);
+  border: 1px solid var(--border);
+  background: var(--card);
 }
 
 .labels-page .label-actions {
@@ -10887,14 +10906,14 @@ footer {
 .labels-page .labels-search i {
   position: absolute;
   left: 10px;
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 .labels-page .labels-search input {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   border-radius: 10px;
-  background: var(--surface);
-  color: var(--text-primary);
+  background: var(--card);
+  color: var(--text);
   padding: 8px 34px 8px 32px;
   font-size: 0.9rem;
 }
@@ -10904,7 +10923,7 @@ footer {
   right: 6px;
   border: none;
   background: transparent;
-  color: var(--text-secondary);
+  color: var(--muted);
   padding: 2px;
   cursor: pointer;
   border-radius: 4px;
@@ -10912,7 +10931,7 @@ footer {
 }
 
 .labels-page .labels-clear:hover {
-  color: var(--text-primary);
+  color: var(--text);
   background: rgba(0, 0, 0, 0.05);
 }
 
@@ -10926,10 +10945,10 @@ footer {
 }
 
 .labels-page .labels-sort select {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   border-radius: 10px;
-  background: var(--surface);
-  color: var(--text-primary);
+  background: var(--card);
+  color: var(--text);
   padding: 8px 12px;
   font-size: 0.9rem;
 }
@@ -10944,9 +10963,9 @@ footer {
   justify-content: space-between;
   align-items: flex-start;
   gap: 10px;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   border-radius: 12px;
-  background: var(--surface);
+  background: var(--card);
   padding: 12px;
 }
 
@@ -10978,7 +10997,7 @@ footer {
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--text-secondary);
+  color: var(--muted);
   font-weight: 700;
 }
 
@@ -11000,10 +11019,10 @@ footer {
 }
 
 .labels-page .label-edit-form input {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   border-radius: 10px;
-  background: var(--surface);
-  color: var(--text-primary);
+  background: var(--card);
+  color: var(--text);
   padding: 8px 10px;
 }
 
@@ -11096,7 +11115,7 @@ footer {
   border-radius: 12px;
   border: 1px dashed rgba(31, 111, 235, 0.45);
   background: rgba(31, 111, 235, 0.08);
-  color: var(--text-secondary);
+  color: var(--muted);
   font-size: 0.84rem;
 }
 
@@ -11151,10 +11170,10 @@ footer {
 }
 
 .account-page .profile-badge {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   border-radius: 999px;
-  background: var(--background-subtle);
-  color: var(--text-secondary);
+  background: var(--soft);
+  color: var(--muted);
   padding: 4px 10px;
   font-size: 0.74rem;
   font-weight: 700;
@@ -11163,14 +11182,14 @@ footer {
 
 .account-page .profile-email {
   margin: 0;
-  color: var(--text-secondary);
+  color: var(--muted);
   font-size: 0.9rem;
 }
 
 .account-page .profile-bio {
   margin: 0;
   font-size: 0.9rem;
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 .account-page .profile-meta-grid {
@@ -11182,7 +11201,7 @@ footer {
 .account-page .meta-label {
   margin: 0;
   font-size: 0.73rem;
-  color: var(--text-secondary);
+  color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.07em;
   font-weight: 700;
@@ -11191,7 +11210,7 @@ footer {
 .account-page .meta-value {
   margin: 2px 0 0;
   font-size: 0.88rem;
-  color: var(--text-primary);
+  color: var(--text);
   font-weight: 700;
 }
 
@@ -11222,17 +11241,17 @@ footer {
   display: grid;
   gap: 6px;
   font-size: 0.8rem;
-  color: var(--text-secondary);
+  color: var(--muted);
   font-weight: 700;
 }
 
 .account-page .profile-field-card input,
 .account-page .profile-field-card select,
 .account-page .profile-field-card textarea {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   border-radius: 10px;
-  background: var(--surface);
-  color: var(--text-primary);
+  background: var(--card);
+  color: var(--text);
   padding: 10px 12px;
 }
 
@@ -11244,7 +11263,7 @@ footer {
 
 .account-page .profile-hint {
   font-size: 0.76rem;
-  color: var(--text-secondary);
+  color: var(--muted);
   font-weight: 500;
 }
 
@@ -11282,10 +11301,10 @@ footer {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   border-radius: 999px;
-  background: var(--background-subtle);
-  color: var(--text-primary);
+  background: var(--soft);
+  color: var(--text);
   padding: 8px 12px;
   font-size: 0.82rem;
   cursor: pointer;
@@ -14431,7 +14450,7 @@ footer {
 
 /* Modal Container */
 .task-edit-modal {
-  background: var(--surface);
+  background: var(--card);
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   width: 100%;
@@ -14460,14 +14479,14 @@ footer {
   align-items: center;
   justify-content: space-between;
   padding: 20px 24px;
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border);
 }
 
 .task-edit-modal-header h2 {
   margin: 0;
   font-size: 1.25rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 .task-edit-modal-close {
@@ -14476,7 +14495,7 @@ footer {
   padding: 8px;
   cursor: pointer;
   border-radius: 8px;
-  color: var(--text-secondary);
+  color: var(--muted);
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
@@ -14484,8 +14503,8 @@ footer {
 }
 
 .task-edit-modal-close:hover {
-  background: var(--background-subtle);
-  color: var(--text-primary);
+  background: var(--soft);
+  color: var(--text);
 }
 
 /* Modal Form */
@@ -14516,17 +14535,17 @@ footer {
 .task-edit-field-label {
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 .task-edit-input,
 .task-edit-select {
   padding: 12px 16px;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   border-radius: 10px;
   font-size: 0.95rem;
-  background: var(--surface);
-  color: var(--text-primary);
+  background: var(--card);
+  color: var(--text);
   transition: all 0.2s ease;
 }
 
@@ -14549,15 +14568,15 @@ footer {
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
-  background: var(--surface);
+  background: var(--card);
 }
 
 .task-edit-label-item:hover {
-  background: var(--background-subtle);
+  background: var(--soft);
   border-color: var(--primary);
 }
 
@@ -14583,11 +14602,11 @@ footer {
 
 .task-edit-label-name {
   font-size: 0.9rem;
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 .task-edit-no-labels {
-  color: var(--text-secondary);
+  color: var(--muted);
   font-size: 0.9rem;
   font-style: italic;
   padding: 12px 0;
@@ -14600,8 +14619,8 @@ footer {
   justify-content: flex-end;
   gap: 12px;
   padding: 16px 24px;
-  border-top: 1px solid var(--border-subtle);
-  background: var(--background-subtle);
+  border-top: 1px solid var(--border);
+  background: var(--soft);
 }
 
 .task-edit-cancel-btn,
@@ -14619,14 +14638,14 @@ footer {
 
 .task-edit-cancel-btn {
   background: transparent;
-  border: 1px solid var(--border-subtle);
-  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  color: var(--muted);
 }
 
 .task-edit-cancel-btn:hover {
-  background: var(--background-subtle);
-  border-color: var(--text-secondary);
-  color: var(--text-primary);
+  background: var(--soft);
+  border-color: var(--muted);
+  color: var(--text);
 }
 
 .task-edit-save-btn {
@@ -14854,7 +14873,7 @@ footer {
 
 /* Modal Container */
 .project-edit-modal {
-  background: var(--surface);
+  background: var(--card);
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   width: 100%;
@@ -14883,14 +14902,14 @@ footer {
   align-items: center;
   justify-content: space-between;
   padding: 20px 24px;
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border);
 }
 
 .project-edit-modal-header h2 {
   margin: 0;
   font-size: 1.25rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 .project-edit-modal-close {
@@ -14899,7 +14918,7 @@ footer {
   padding: 8px;
   cursor: pointer;
   border-radius: 8px;
-  color: var(--text-secondary);
+  color: var(--muted);
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
@@ -14907,8 +14926,8 @@ footer {
 }
 
 .project-edit-modal-close:hover {
-  background: var(--background-subtle);
-  color: var(--text-primary);
+  background: var(--soft);
+  color: var(--text);
 }
 
 /* Modal Form */
@@ -14939,17 +14958,17 @@ footer {
 .project-edit-field-label {
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 .project-edit-input,
 .project-edit-select {
   padding: 12px 16px;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   border-radius: 10px;
   font-size: 0.95rem;
-  background: var(--surface);
-  color: var(--text-primary);
+  background: var(--card);
+  color: var(--text);
   transition: all 0.2s ease;
 }
 
@@ -14972,15 +14991,15 @@ footer {
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
-  background: var(--surface);
+  background: var(--card);
 }
 
 .project-edit-label-item:hover {
-  background: var(--background-subtle);
+  background: var(--soft);
   border-color: var(--primary);
 }
 
@@ -15006,11 +15025,11 @@ footer {
 
 .project-edit-label-name {
   font-size: 0.9rem;
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 .project-edit-no-labels {
-  color: var(--text-secondary);
+  color: var(--muted);
   font-size: 0.9rem;
   font-style: italic;
   padding: 12px 0;
@@ -15030,15 +15049,15 @@ footer {
   align-items: flex-start;
   gap: 8px;
   padding: 8px 12px;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
-  background: var(--surface);
+  background: var(--card);
 }
 
 .project-edit-goal-item:hover {
-  background: var(--background-subtle);
+  background: var(--soft);
   border-color: var(--primary);
 }
 
@@ -15060,17 +15079,17 @@ footer {
 .project-edit-goal-name {
   font-size: 0.9rem;
   font-weight: 500;
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 .project-edit-goal-description {
   font-size: 0.8rem;
-  color: var(--text-secondary);
+  color: var(--muted);
   line-height: 1.3;
 }
 
 .project-edit-no-goals {
-  color: var(--text-secondary);
+  color: var(--muted);
   font-size: 0.9rem;
   font-style: italic;
   padding: 12px 0;
@@ -15079,7 +15098,7 @@ footer {
 .project-edit-field-hint {
   display: block;
   margin-top: 4px;
-  color: var(--text-secondary);
+  color: var(--muted);
   font-size: 0.8rem;
   font-style: italic;
 }
@@ -15093,7 +15112,7 @@ footer {
 .project-form-hint {
   display: block;
   margin-top: 8px;
-  color: var(--text-secondary);
+  color: var(--muted);
   font-size: 0.85rem;
   font-style: italic;
 }
@@ -15105,8 +15124,8 @@ footer {
   justify-content: flex-end;
   gap: 12px;
   padding: 16px 24px;
-  border-top: 1px solid var(--border-subtle);
-  background: var(--background-subtle);
+  border-top: 1px solid var(--border);
+  background: var(--soft);
 }
 
 .project-edit-cancel-btn,
@@ -15124,14 +15143,14 @@ footer {
 
 .project-edit-cancel-btn {
   background: transparent;
-  border: 1px solid var(--border-subtle);
-  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  color: var(--muted);
 }
 
 .project-edit-cancel-btn:hover {
-  background: var(--background-subtle);
-  border-color: var(--text-secondary);
-  color: var(--text-primary);
+  background: var(--soft);
+  border-color: var(--muted);
+  color: var(--text);
 }
 
 .project-edit-save-btn {
@@ -15341,14 +15360,14 @@ footer {
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
   cursor: pointer;
-  background: var(--background-subtle);
-  border: 2px solid var(--border-subtle);
-  color: var(--text-secondary);
+  background: var(--soft);
+  border: 2px solid var(--border);
+  color: var(--muted);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .chart-compare-btn:hover {
-  background: var(--surface);
+  background: var(--card);
   border-color: var(--primary);
   color: var(--primary);
   transform: translateY(-1px);
@@ -15381,10 +15400,10 @@ footer {
 .mode-switch {
   display: flex;
   gap: 6px;
-  background: var(--background-subtle);
+  background: var(--soft);
   padding: 4px;
   border-radius: 10px;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
 }
 
 .mode-button {
@@ -15400,7 +15419,7 @@ footer {
   cursor: pointer;
   background: transparent;
   border: none;
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 .mode-button i {
@@ -15408,7 +15427,7 @@ footer {
 }
 
 .mode-button:hover {
-  background: var(--surface);
+  background: var(--card);
   color: var(--primary);
 }
 
@@ -15497,7 +15516,7 @@ footer {
   position: relative;
   max-width: 440px;
   width: 100%;
-  background: var(--surface);
+  background: var(--card);
   border-radius: 20px;
   padding: 32px 28px 24px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
@@ -15544,14 +15563,14 @@ footer {
   margin: 0 0 12px;
   font-size: 1.5rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--text);
   line-height: 1.3;
 }
 
 .pwa-update-modal-text {
   margin: 0;
   font-size: 0.95rem;
-  color: var(--text-secondary);
+  color: var(--muted);
   line-height: 1.5;
 }
 
@@ -15590,7 +15609,7 @@ footer {
   justify-content: center;
   background: transparent;
   border: none;
-  color: var(--text-secondary);
+  color: var(--muted);
   font-size: 18px;
   cursor: pointer;
   border-radius: 8px;
@@ -15598,8 +15617,8 @@ footer {
 }
 
 .pwa-update-modal-close:hover {
-  background: var(--background-subtle);
-  color: var(--text-primary);
+  background: var(--soft);
+  color: var(--text);
 }
 
 /* Dark Mode */
@@ -15909,7 +15928,7 @@ footer {
   border: 1px solid var(--border, #e2e8f4);
   border-radius: 8px;
   font-size: 0.9rem;
-  background: var(--surface);
+  background: var(--field);
   color: var(--dark);
   transition: all 0.15s ease;
 }
@@ -15925,7 +15944,7 @@ footer {
   border: 1px solid var(--border, #e2e8f4);
   border-radius: 8px;
   font-size: 0.9rem;
-  background: var(--surface);
+  background: var(--field);
   color: var(--dark);
   min-width: 120px;
 }
@@ -15962,7 +15981,7 @@ footer {
   gap: 10px;
   padding: 10px;
   border-radius: 8px;
-  background: var(--surface);
+  background: var(--field);
   transition: all 0.15s ease;
 }
 
@@ -15979,7 +15998,7 @@ footer {
   width: 20px;
   height: 20px;
   min-width: 20px;
-  border: 2px solid var(--border-subtle);
+  border: 2px solid var(--border);
   border-radius: 4px;
   cursor: pointer;
   display: flex;
@@ -16117,7 +16136,7 @@ footer {
   flex-direction: column;
   gap: 10px;
   padding: 14px;
-  background: var(--surface);
+  background: var(--field);
   border-radius: 12px;
   flex: 1;
 }
@@ -16168,7 +16187,7 @@ footer {
 
 .dashboard-card-pomodoro .pomodoro-meta {
   font-size: 0.8rem;
-  color: var(--text-secondary);
+  color: var(--muted);
   margin: 0;
 }
 
@@ -16194,7 +16213,7 @@ footer {
 .dashboard-chart-metric {
   text-align: center;
   padding: 12px;
-  background: var(--surface);
+  background: var(--field);
   border-radius: 10px;
 }
 
@@ -16212,7 +16231,7 @@ footer {
 
 .dashboard-chart-canvas {
   min-height: 180px;
-  background: var(--surface);
+  background: var(--field);
   border-radius: 10px;
   padding: 12px;
 }
@@ -16229,7 +16248,7 @@ footer {
   align-items: center;
   gap: 12px;
   padding: 12px;
-  background: var(--surface);
+  background: var(--field);
   border-radius: 10px;
   transition: all 0.2s ease;
   cursor: pointer;
@@ -16515,8 +16534,8 @@ footer {
 /* Dark Theme */
 [data-theme="dark"] .dashboard-kpi,
 [data-theme="dark"] .dashboard-card {
-  background: var(--surface);
-  border-color: var(--border-subtle);
+  background: var(--card);
+  border-color: var(--border);
 }
 
 [data-theme="dark"] .dashboard-kpi-value,
@@ -16525,14 +16544,14 @@ footer {
 [data-theme="dark"] .dashboard-pomodoro-mode,
 [data-theme="dark"] .dashboard-chart-metric-value,
 [data-theme="dark"] .dashboard-project-title {
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 [data-theme="dark"] .dashboard-quick-input,
 [data-theme="dark"] .dashboard-quick-select {
   background: rgba(26, 38, 57, 0.6);
-  border-color: var(--border-subtle);
-  color: var(--text-primary);
+  border-color: var(--border);
+  color: var(--text);
 }
 
 [data-theme="dark"] .dashboard-list-item {
@@ -16544,7 +16563,7 @@ footer {
 }
 
 [data-theme="dark"] .dashboard-list-checkbox {
-  border-color: var(--border-subtle);
+  border-color: var(--border);
 }
 
 [data-theme="dark"] .dashboard-chart-canvas,
@@ -16590,7 +16609,7 @@ footer {
 }
 
 [data-theme="dark"] .dashboard-card-pomodoro .pomodoro-mode {
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 [data-theme="dark"] .pomodoro-task-label i {
@@ -16859,786 +16878,4 @@ footer {
   .session-actions .btn {
     flex: 1;
   }
-}
-
-/* ============================================
-   PHASE 4: ADVANCED FEATURES
-   ============================================ */
-
-/* === COMMAND PALETTE (Cmd+K) === */
-
-.command-palette-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  z-index: 9999;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding-top: 15vh;
-  animation: fadeIn 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.command-palette {
-  width: 90%;
-  max-width: 640px;
-  max-height: 60vh;
-  background: var(--surface);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-xl);
-  overflow: hidden;
-  animation: commandPaletteEnter 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@keyframes commandPaletteEnter {
-  from {
-    opacity: 0;
-    transform: scale(0.96) translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-.command-palette-input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-  padding: var(--space-5);
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.command-palette-search-icon {
-  position: absolute;
-  left: var(--space-5);
-  color: var(--text-tertiary);
-  font-size: var(--text-lg);
-  pointer-events: none;
-}
-
-.command-palette-input {
-  flex: 1;
-  padding: var(--space-2) var(--space-10) var(--space-2) var(--space-8);
-  border: none;
-  background: transparent;
-  font-size: var(--text-lg);
-  font-family: var(--font-sans);
-  color: var(--text-primary);
-  outline: none;
-}
-
-.command-palette-input::placeholder {
-  color: var(--text-tertiary);
-}
-
-.command-palette-shortcut {
-  position: absolute;
-  right: var(--space-5);
-  padding: var(--space-1) var(--space-2);
-  background: var(--background-subtle);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-xs);
-  font-family: var(--font-mono);
-  color: var(--text-secondary);
-  font-weight: var(--font-medium);
-}
-
-.command-palette-results {
-  max-height: calc(60vh - 80px);
-  overflow-y: auto;
-  padding: var(--space-2);
-}
-
-.command-palette-section {
-  margin-bottom: var(--space-4);
-}
-
-.command-palette-section:last-child {
-  margin-bottom: 0;
-}
-
-.command-palette-section-label {
-  padding: var(--space-2) var(--space-4);
-  font-size: var(--text-xs);
-  font-weight: var(--font-semibold);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-tertiary);
-}
-
-.command-palette-item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: background 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-  user-select: none;
-}
-
-.command-palette-item:hover,
-.command-palette-item.selected {
-  background: var(--background-subtle);
-}
-
-.command-palette-item.selected {
-  outline: 2px solid var(--primary);
-  outline-offset: -2px;
-}
-
-.command-palette-icon {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--primary-light);
-  color: var(--primary);
-  border-radius: var(--radius-md);
-  flex-shrink: 0;
-  font-size: var(--text-base);
-}
-
-.command-palette-icon.action-icon {
-  background: var(--accent-purple);
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%);
-  color: var(--accent-purple);
-}
-
-.command-palette-icon.nav-icon {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
-  color: var(--primary);
-}
-
-.command-palette-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.command-palette-title {
-  font-size: var(--text-sm);
-  font-weight: var(--font-medium);
-  color: var(--text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.command-palette-description {
-  font-size: var(--text-xs);
-  color: var(--text-secondary);
-  margin-top: var(--space-1);
-}
-
-.command-palette-meta {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  flex-shrink: 0;
-}
-
-.command-palette-badge {
-  padding: var(--space-1) var(--space-2);
-  background: var(--background-subtle);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-xs);
-  color: var(--text-secondary);
-  font-family: var(--font-mono);
-}
-
-.command-palette-kbd {
-  padding: var(--space-1) var(--space-2);
-  background: var(--background-subtle);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-xs);
-  font-family: var(--font-mono);
-  color: var(--text-secondary);
-  font-weight: var(--font-medium);
-}
-
-.command-palette-empty {
-  padding: var(--space-16) var(--space-8);
-  text-align: center;
-}
-
-.command-palette-empty-icon {
-  width: 48px;
-  height: 48px;
-  margin: 0 auto var(--space-4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--background-subtle);
-  border-radius: var(--radius-full);
-  color: var(--text-tertiary);
-  font-size: var(--text-2xl);
-}
-
-.command-palette-empty-title {
-  font-size: var(--text-base);
-  font-weight: var(--font-semibold);
-  color: var(--text-primary);
-  margin-bottom: var(--space-1);
-}
-
-.command-palette-empty-description {
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
-}
-
-/* Dark mode adjustments */
-[data-theme="dark"] .command-palette-overlay {
-  background: rgba(0, 0, 0, 0.7);
-}
-
-[data-theme="dark"] .command-palette {
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5),
-              0 8px 10px -6px rgba(0, 0, 0, 0.5);
-}
-
-/* === DRAG & DROP TASK REORDERING === */
-
-/* Make draggable tasks have a grab cursor */
-.draggable-task {
-  cursor: grab;
-  user-select: none;
-}
-
-.draggable-task:active {
-  cursor: grabbing;
-}
-
-/* Task being dragged */
-.task-item.dragging {
-  opacity: 0.5;
-  cursor: grabbing;
-  transform: scale(1.02);
-  box-shadow: var(--shadow-lg);
-  z-index: 1000;
-  background: var(--surface-elevated);
-}
-
-/* Placeholder for dragged item */
-.task-item.task-placeholder {
-  background: var(--background-subtle);
-  border: 2px dashed var(--border-default);
-  border-radius: var(--radius-lg);
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-/* Drop zone indicators */
-.task-item.drag-over {
-  transition: background 0.15s ease;
-}
-
-.task-item.drag-over-top {
-  border-top: 3px solid var(--primary);
-  margin-top: -3px;
-}
-
-.task-item.drag-over-bottom {
-  border-bottom: 3px solid var(--primary);
-  margin-bottom: -3px;
-}
-
-/* Animated reorder confirmation */
-.task-item.task-reordered {
-  animation: taskReordered 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@keyframes taskReordered {
-  0% {
-    background: var(--primary-light);
-    transform: scale(1.02);
-  }
-  100% {
-    background: transparent;
-    transform: scale(1);
-  }
-}
-
-/* Container drag-active state */
-.task-list.drag-active .task-item {
-  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Drag handle icon (optional - for future use) */
-.task-drag-handle {
-  opacity: 0;
-  cursor: grab;
-  padding: var(--space-2);
-  color: var(--text-tertiary);
-  transition: opacity 0.2s;
-}
-
-.task-item:hover .task-drag-handle {
-  opacity: 1;
-}
-
-.task-drag-handle:active {
-  cursor: grabbing;
-}
-
-/* Dark mode adjustments */
-[data-theme="dark"] .task-item.dragging {
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5),
-              0 8px 10px -6px rgba(0, 0, 0, 0.5);
-}
-
-[data-theme="dark"] .task-item.task-placeholder {
-  background: var(--background);
-  border-color: var(--border-default);
-}
-
-/* Mobile: Disable drag & drop (use long-press menu instead) */
-@media (max-width: 768px) {
-  .draggable-task {
-    cursor: default;
-  }
-
-  .task-item.dragging {
-    cursor: default;
-  }
-}
-
-/* === INLINE EDITING (NOTION-STYLE) === */
-
-/* Make task titles editable on hover */
-.task-title {
-  cursor: text;
-  padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius-sm);
-  transition: background 0.15s ease;
-  position: relative;
-}
-
-.task-title:hover {
-  background: var(--background-subtle);
-}
-
-/* Inline edit input */
-.inline-edit-input {
-  width: 100%;
-  min-width: 200px;
-  padding: var(--space-1) var(--space-2);
-  border: 2px solid var(--primary);
-  border-radius: var(--radius-md);
-  font-size: inherit;
-  font-family: inherit;
-  font-weight: inherit;
-  color: var(--text-primary);
-  background: var(--primary-light);
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.inline-edit-input:focus {
-  border-color: var(--primary);
-  background: var(--surface);
-  box-shadow: 0 0 0 3px var(--primary-light);
-}
-
-/* Saving state */
-.inline-edit-input.is-saving {
-  opacity: 0.7;
-  cursor: wait;
-  pointer-events: none;
-  animation: pulse 1s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 0.7;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-/* Error state */
-.inline-edit-input.is-error {
-  border-color: var(--accent-rose);
-  background: rgba(244, 63, 94, 0.05);
-  box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.1);
-  animation: shake 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Error message */
-.inline-edit-error {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  margin-top: var(--space-1);
-  padding: var(--space-2) var(--space-3);
-  background: var(--accent-rose);
-  color: white;
-  font-size: var(--text-xs);
-  font-weight: var(--font-medium);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
-  z-index: 100;
-  animation: slideInDown 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  pointer-events: none;
-}
-
-.inline-edit-error::before {
-  content: '';
-  position: absolute;
-  bottom: 100%;
-  left: var(--space-3);
-  border: 6px solid transparent;
-  border-bottom-color: var(--accent-rose);
-}
-
-@keyframes slideInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Task item editing state */
-.task-item.is-editing {
-  outline: 2px solid var(--primary);
-  outline-offset: 2px;
-  border-radius: var(--radius-lg);
-  background: var(--surface-elevated);
-  box-shadow: var(--shadow-md);
-  z-index: 10;
-  position: relative;
-}
-
-/* Edit hint on hover */
-.task-title::after {
-  content: 'Double-click to edit';
-  position: absolute;
-  top: 50%;
-  right: -140px;
-  transform: translateY(-50%);
-  padding: var(--space-1) var(--space-2);
-  background: var(--surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-xs);
-  color: var(--text-tertiary);
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease;
-  box-shadow: var(--shadow-sm);
-}
-
-.task-title:hover::after {
-  opacity: 1;
-  transition-delay: 0.5s;
-}
-
-/* Hide hint on mobile */
-@media (max-width: 768px) {
-  .task-title::after {
-    display: none;
-  }
-
-  .task-title {
-    cursor: default;
-  }
-
-  .task-title:hover {
-    background: transparent;
-  }
-}
-
-/* Hide hint when editing */
-.task-item.is-editing .task-title::after {
-  display: none;
-}
-
-/* Dark mode adjustments */
-[data-theme="dark"] .inline-edit-input {
-  background: var(--background);
-  border-color: var(--primary);
-}
-
-[data-theme="dark"] .inline-edit-input:focus {
-  background: var(--surface);
-  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
-}
-
-[data-theme="dark"] .inline-edit-input.is-error {
-  background: rgba(244, 63, 94, 0.1);
-  box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.2);
-}
-
-[data-theme="dark"] .task-item.is-editing {
-  background: var(--surface);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
-}
-
-/* ============================================
-   Email Verification Alert Component
-   ============================================ */
-
-.verification-alert {
-  background: var(--surface-elevated);
-  border: 1px solid var(--border-default);
-  border-left: 4px solid var(--primary);
-  border-radius: var(--radius-lg);
-  padding: var(--space-4);
-  margin-bottom: var(--space-4);
-  display: flex;
-  gap: var(--space-3);
-  align-items: flex-start;
-  animation: slideInDown 0.3s ease-out;
-}
-
-.verification-alert .alert-icon {
-  font-size: 2rem;
-  color: var(--primary);
-  flex-shrink: 0;
-}
-
-.verification-alert .alert-content {
-  flex: 1;
-}
-
-.verification-alert .alert-title {
-  font-size: var(--text-lg);
-  font-weight: var(--font-semibold);
-  margin: 0 0 var(--space-1) 0;
-  color: var(--text-primary);
-}
-
-.verification-alert .alert-message {
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
-  margin: 0 0 var(--space-3) 0;
-  line-height: var(--leading-normal);
-}
-
-.verification-alert .user-email {
-  color: var(--primary);
-  font-weight: var(--font-semibold);
-}
-
-.verification-alert .alert-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  flex-wrap: wrap;
-}
-
-.verification-alert .resend-button {
-  font-size: var(--text-sm);
-  padding: var(--space-2) var(--space-4);
-}
-
-.verification-alert .resend-timer {
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
-  font-family: var(--font-mono);
-}
-
-.verification-alert .resend-success {
-  font-size: var(--text-sm);
-  color: var(--success);
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  font-weight: var(--font-medium);
-}
-
-.verification-alert .alert-close {
-  background: none;
-  border: none;
-  color: var(--text-tertiary);
-  cursor: pointer;
-  padding: var(--space-1);
-  transition: color 0.2s;
-  flex-shrink: 0;
-  font-size: 1.25rem;
-  line-height: 1;
-}
-
-.verification-alert .alert-close:hover {
-  color: var(--text-primary);
-}
-
-.verification-alert .alert-close:focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: 2px;
-  border-radius: var(--radius-sm);
-}
-
-/* Dark mode adjustments */
-[data-theme="dark"] .verification-alert {
-  background: var(--surface-elevated);
-  border-color: var(--border-subtle);
-}
-
-/* Mobile responsive */
-@media (max-width: 640px) {
-  .verification-alert {
-    flex-direction: column;
-    gap: var(--space-2);
-  }
-
-  .verification-alert .alert-icon {
-    font-size: 1.5rem;
-  }
-
-  .verification-alert .alert-close {
-    position: absolute;
-    top: var(--space-2);
-    right: var(--space-2);
-  }
-}
-
-/* ============================================
-   Verify Email Page
-   ============================================ */
-
-.verify-email-content {
-  text-align: center;
-  padding: var(--space-8) 0;
-}
-
-.verify-status {
-  margin-bottom: var(--space-6);
-}
-
-.verify-loading,
-.verify-success,
-.verify-error {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-4);
-}
-
-.verify-loading i {
-  color: var(--primary);
-}
-
-.verify-success i {
-  color: var(--success);
-  animation: scaleIn 0.5s ease-out;
-}
-
-.verify-error i {
-  color: var(--danger);
-  animation: shake 0.5s ease-out;
-}
-
-.verify-success h3,
-.verify-error h3 {
-  font-size: var(--text-2xl);
-  font-weight: var(--font-bold);
-  margin: 0;
-}
-
-.verify-success p,
-.verify-error p {
-  color: var(--text-secondary);
-  margin: 0;
-}
-
-.verify-resend-form {
-  max-width: 400px;
-  margin: 0 auto;
-  text-align: left;
-}
-
-.verify-resend-form .error-message {
-  background: var(--danger-light);
-  color: var(--danger);
-  padding: var(--space-3);
-  border-radius: var(--radius-md);
-  margin-bottom: var(--space-4);
-  font-size: var(--text-sm);
-  border: 1px solid var(--danger);
-}
-
-[data-theme="dark"] .verify-resend-form .error-message {
-  background: rgba(244, 63, 94, 0.1);
-  border-color: var(--danger);
-}
-
-/* ============================================
-   Verification Pending Page
-   ============================================ */
-
-.verification-pending-content {
-  text-align: center;
-  padding: var(--space-4) 0;
-}
-
-.verification-pending-content .email-icon {
-  font-size: 4rem;
-  color: var(--primary);
-  margin-bottom: var(--space-4);
-}
-
-.verification-pending-content .email-display {
-  font-size: var(--text-base);
-  color: var(--text-secondary);
-  margin-bottom: var(--space-6);
-}
-
-.verification-pending-content .email-display strong {
-  color: var(--primary);
-  font-size: var(--text-lg);
-  display: block;
-  margin-top: var(--space-1);
-  word-break: break-all;
-}
-
-.verification-pending-content #verificationAlertContainer {
-  margin: var(--space-6) 0;
-}
-
-.verification-tips {
-  background: var(--surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: var(--space-4);
-  margin-top: var(--space-6);
-  text-align: left;
-}
-
-.verification-tips p {
-  margin: 0 0 var(--space-2) 0;
-  font-weight: var(--font-semibold);
-  color: var(--text-primary);
-}
-
-.verification-tips ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.verification-tips li {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2) 0;
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
-}
-
-.verification-tips li i {
-  color: var(--success);
-  font-size: var(--text-xs);
 }

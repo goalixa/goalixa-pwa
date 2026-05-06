@@ -17,6 +17,8 @@ const routes = {
   '/register': { view: 'auth', title: 'Goalixa - Register' },
   '/forgot-password': { view: 'auth', title: 'Goalixa - Reset Password' },
   '/reset-password': { view: 'auth', title: 'Goalixa - Reset Password' },
+  '/verify-email': { view: 'auth', title: 'Goalixa - Verify Email' },
+  '/verification-pending': { view: 'auth', title: 'Goalixa - Check Your Email' },
   '/app': { view: 'app', title: 'Goalixa - App', auth: true },
   '/app/timer': { view: 'app', title: 'Goalixa - Timer', auth: true },
   '/app/overview': { view: 'app', title: 'Goalixa - Overview', auth: true },

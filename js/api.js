@@ -123,6 +123,7 @@ async function apiRequest(url, options = {}) {
         }
         const error = new Error(data.message || data.error || `HTTP ${response.status}`);
         error.status = response.status;
+        error.data = data;
         throw error;
       }
 
@@ -304,11 +305,44 @@ export const authApi = {
     });
   },
 
+  /**
+   * Verify email with token
+   * @param {string} token - Verification token from email
+   * @returns {Promise<{success: boolean, message?: string, error?: string}>}
+   */
   async verifyEmail(token) {
-    return apiRequest(buildUrl('/auth/verify-email'), {
-      method: 'POST',
-      body: { token }
-    });
+    try {
+      const response = await apiRequest(buildUrl('/auth/verify-email'), {
+        method: 'POST',
+        body: { token }
+      });
+      return response;
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message || 'Verification failed'
+      };
+    }
+  },
+
+  /**
+   * Resend verification email
+   * @param {string} email - User's email address
+   * @returns {Promise<{success: boolean, message?: string, error?: string}>}
+   */
+  async resendVerification(email) {
+    try {
+      const response = await apiRequest(buildUrl('/auth/resend-verification'), {
+        method: 'POST',
+        body: { email }
+      });
+      return response;
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message || 'Failed to resend verification email'
+      };
+    }
   },
 
   async getSessions() {

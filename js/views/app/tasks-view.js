@@ -1,6 +1,8 @@
 import { appApi } from '../../api.js';
 import { showToast } from '../../utils.js';
 import { openTaskEditModal, closeTaskEditModal } from '../../components/task-edit-modal.js';
+import { taskDragDrop } from '../../dragDrop.js';
+import { inlineEditor } from '../../inlineEdit.js';
 
 let tasksViewCleanup = null;
 
@@ -485,6 +487,8 @@ export async function bindTasksSection(container, initialPayload = {}, projects 
     stopLiveTimer();
     abortController.abort();
     closeTaskEditModal();
+    taskDragDrop.destroy();
+    inlineEditor.destroy();
     // Clear taskTimeState to prevent memory leaks
     taskTimeState.clear();
   };
@@ -545,6 +549,87 @@ export async function bindTasksSection(container, initialPayload = {}, projects 
     }
 
     refreshTaskTimeState(sortedActive.concat(sortedDoneToday));
+
+    // Initialize drag & drop for task reordering
+    initializeDragDrop();
+
+    // Initialize inline editing for task titles
+    initializeInlineEditing();
+  };
+
+  const initializeDragDrop = () => {
+    // Initialize drag & drop for active tasks
+    taskDragDrop.init('#task-list .task-list', async (data) => {
+      try {
+        // Extract task IDs in new order
+        const taskIds = data.allTaskIds;
+
+        // Update local state optimistically
+        const reorderedTasks = taskIds
+          .map(id => tasksPayload.tasks.find(t => String(t.id) === String(id)))
+          .filter(Boolean);
+
+        tasksPayload.tasks = reorderedTasks;
+
+        // TODO: Call API to persist order on backend
+        // await appApi.updateTaskOrder(taskIds);
+
+        showToast('Task reordered', 'success');
+      } catch (error) {
+        console.error('Failed to reorder task:', error);
+        showToast('Failed to reorder task', 'error');
+        // Reload to restore correct order
+        paintTaskBoards();
+      }
+    });
+
+    // Initialize for done today tasks
+    taskDragDrop.init('#done-today-list .task-list', async (data) => {
+      try {
+        const taskIds = data.allTaskIds;
+        const reorderedTasks = taskIds
+          .map(id => tasksPayload.doneTodayTasks.find(t => String(t.id) === String(id)))
+          .filter(Boolean);
+
+        tasksPayload.doneTodayTasks = reorderedTasks;
+
+        showToast('Task reordered', 'success');
+      } catch (error) {
+        console.error('Failed to reorder task:', error);
+        showToast('Failed to reorder task', 'error');
+        paintTaskBoards();
+      }
+    });
+  };
+
+  const initializeInlineEditing = () => {
+    // Initialize inline editing for all task lists
+    inlineEditor.init('.tasks-page', async (data) => {
+      try {
+        const { taskId, newValue, oldValue } = data;
+
+        // Call API to update task name
+        const response = await appApi.updateTask(taskId, { name: newValue });
+
+        // Update local state
+        const updateTaskName = (task) => {
+          if (String(task.id) === String(taskId)) {
+            task.name = newValue;
+          }
+        };
+
+        tasksPayload.tasks.forEach(updateTaskName);
+        tasksPayload.doneTodayTasks.forEach(updateTaskName);
+        tasksPayload.completedTasks.forEach(updateTaskName);
+
+        showToast('Task updated', 'success');
+      } catch (error) {
+        console.error('Failed to update task:', error);
+        showToast(error.message || 'Failed to update task', 'error');
+        // Re-throw to show error in inline editor
+        throw error;
+      }
+    });
   };
 
   paintTaskBoards();

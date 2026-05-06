@@ -3,6 +3,7 @@ image:
   repository: goalixa-pwa/pwa
   tag: "latest"
   pullPolicy: Always
+  pullSecret: harbor-pull
 
 replicaCount: 1
 
