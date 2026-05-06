@@ -311,6 +311,26 @@ export const authApi = {
     });
   },
 
+  /**
+   * Resend verification email
+   * @param {string} email - User's email address
+   * @returns {Promise<{success: boolean, message?: string, error?: string}>}
+   */
+  async resendVerification(email) {
+    try {
+      const response = await apiRequest(buildUrl('/auth/resend-verification'), {
+        method: 'POST',
+        body: { email }
+      });
+      return response;
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message || 'Failed to resend verification email'
+      };
+    }
+  },
+
   async getSessions() {
     return apiRequest(buildUrl('/auth/sessions'));
   },
