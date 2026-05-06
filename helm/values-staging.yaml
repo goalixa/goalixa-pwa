@@ -23,5 +23,6 @@ ingress:
     nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
     nginx.ingress.kubernetes.io/proxy-body-size: "50m"
 
+
 namespace:
   name: pwa-staging
