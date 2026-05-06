@@ -123,6 +123,7 @@ async function apiRequest(url, options = {}) {
         }
         const error = new Error(data.message || data.error || `HTTP ${response.status}`);
         error.status = response.status;
+        error.data = data;
         throw error;
       }
 

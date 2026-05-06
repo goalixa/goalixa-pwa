@@ -44,6 +44,10 @@ export async function render(container, path, params) {
     mode = 'forgot-password';
   } else if (path === '/reset-password') {
     mode = 'reset-password';
+  } else if (path === '/verify-email') {
+    mode = 'verify-email';
+  } else if (path === '/verification-pending') {
+    mode = 'verification-pending';
   }
 
   container.innerHTML = getAuthHTML(mode);
@@ -84,6 +88,10 @@ function getTitle(mode) {
       return 'Reset password';
     case 'reset-password':
       return 'Set a new password';
+    case 'verification-pending':
+      return 'Check Your Email';
+    case 'verify-email':
+      return 'Verify Email';
     default:
       return 'Welcome back';
   }
@@ -97,6 +105,10 @@ function getSubtitle(mode) {
       return 'Enter your email to receive reset instructions.';
     case 'reset-password':
       return 'Choose a new password for your account.';
+    case 'verification-pending':
+      return 'We sent you a verification link. Please check your inbox.';
+    case 'verify-email':
+      return '';
     default:
       return '';
   }
@@ -215,6 +227,30 @@ function getFormHTML(mode) {
           </button>
         </form>
       `;
+
+    case 'verification-pending':
+      return `
+    <div class="verification-pending-content">
+      <div class="email-icon">
+        <i class="fas fa-envelope-open-text"></i>
+      </div>
+      <div class="verification-message">
+        <p class="email-display">
+          Verification link sent to:<br>
+          <strong id="pendingEmail"></strong>
+        </p>
+      </div>
+      <div id="verificationAlertContainer"></div>
+      <div class="verification-tips">
+        <p><strong>Didn't receive it?</strong></p>
+        <ul>
+          <li><i class="fas fa-check"></i> Check your spam/junk folder</li>
+          <li><i class="fas fa-check"></i> Make sure the email address is correct</li>
+          <li><i class="fas fa-check"></i> Wait a few minutes for the email to arrive</li>
+        </ul>
+      </div>
+    </div>
+  `;
 
     default:
       return `
@@ -349,7 +385,29 @@ function initAuthView(container, mode, params) {
         showToast('Welcome back!', 'success');
         redirectAfterLogin();
       } else {
-        showToast(result.error || 'Login failed', 'error');
+        // Check if error is due to unverified email
+        if (result.email_verified === false) {
+          // Show verification alert inline
+          const alertContainer = document.createElement('div');
+          alertContainer.id = 'loginVerificationAlert';
+
+          // Insert before the form
+          const form = container.querySelector('#loginForm');
+          form.parentNode.insertBefore(alertContainer, form);
+
+          // Render verification alert
+          import('../components/verification-alert.js').then(module => {
+            const { VerificationAlert } = module;
+            const alert = new VerificationAlert(alertContainer, result.email, {
+              cooldownSeconds: 60
+            });
+            alert.render();
+          });
+
+          showToast('Please verify your email before logging in', 'error');
+        } else {
+          showToast(result.error || 'Login failed', 'error');
+        }
       }
     });
   }
@@ -414,8 +472,18 @@ function initAuthView(container, mode, params) {
       setButtonLoading(button, false);
 
       if (result.success) {
-        showToast('Account created successfully!', 'success');
-        redirectAfterLogin();
+        // Check if email needs verification
+        if (result.email_verified === false) {
+          // Store email for resend functionality
+          sessionStorage.setItem('pending_verification_email', result.user.email);
+
+          // Redirect to verification pending page
+          navigate(`/verification-pending?email=${encodeURIComponent(result.user.email)}`);
+        } else {
+          // Google OAuth or already verified - proceed normally
+          showToast('Account created successfully!', 'success');
+          redirectAfterLogin();
+        }
       } else {
         showToast(result.error || 'Signup failed', 'error');
       }
@@ -498,6 +566,39 @@ function initAuthView(container, mode, params) {
         navigate('/login');
       } else {
         showToast(result.error || 'Password reset failed.', 'error');
+      }
+    });
+  }
+
+  // Handle verification-pending mode
+  if (mode === 'verification-pending') {
+    const email = params.email || sessionStorage.getItem('pending_verification_email') || '';
+
+    if (!email) {
+      showToast('Email address is missing', 'error');
+      navigate('/signup');
+      return;
+    }
+
+    // Display email
+    const emailDisplay = container.querySelector('#pendingEmail');
+    if (emailDisplay) {
+      emailDisplay.textContent = email;
+    }
+
+    // Render verification alert
+    import('../components/verification-alert.js').then(module => {
+      const { VerificationAlert } = module;
+      const alertContainer = container.querySelector('#verificationAlertContainer');
+
+      if (alertContainer) {
+        const alert = new VerificationAlert(alertContainer, email, {
+          cooldownSeconds: 60,
+          onResendSuccess: () => {
+            console.log('Verification email resent successfully');
+          }
+        });
+        alert.render();
       }
     });
   }

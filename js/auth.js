@@ -126,6 +126,21 @@ export async function login(email, password) {
     return { success: false, error: 'Invalid response from server' };
   } catch (error) {
     console.error('Login failed:', error);
+
+    // Check for 403 with email_verified flag
+    if (error.status === 403) {
+      // Try to parse response body for email_verified flag
+      const errorData = error.data || {};
+      if (errorData.email_verified === false) {
+        return {
+          success: false,
+          error: errorData.error || 'Please verify your email address before logging in.',
+          email_verified: false,
+          email: email // Include email for resend functionality
+        };
+      }
+    }
+
     return {
       success: false,
       error: error.message || 'Login failed. Please try again.'
@@ -142,6 +157,23 @@ export async function register(userData) {
 
     // Backend sets HttpOnly cookies
     if (response.success || response.user) {
+      // Check if email verification is required
+      if (response.email_verified === false) {
+        // Don't set auth state - user must verify first
+        eventBus.emit('auth:register-pending-verification', {
+          user: response.user,
+          message: response.message
+        });
+
+        return {
+          success: true,
+          user: response.user,
+          email_verified: false,
+          message: response.message || 'Please verify your email to continue.'
+        };
+      }
+
+      // Google OAuth or already verified - set auth state normally
       authState.isAuthenticated = true;
       authState.user = response.user;
       authState.token = null;
@@ -158,7 +190,7 @@ export async function register(userData) {
       // Start proactive token refresh
       startProactiveRefresh();
 
-      return { success: true, user: response.user };
+      return { success: true, user: response.user, email_verified: true };
     }
 
     return { success: false, error: 'Invalid response from server' };
