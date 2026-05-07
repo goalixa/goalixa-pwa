@@ -8450,21 +8450,25 @@ footer {
 
 .goals-page .goal-hub-card {
   border-radius: 16px;
-  border: 1px solid var(--border-subtle);
-  background: linear-gradient(135deg, #ffffff 0%, #f7f2ec 100%);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 247, 255, 0.6) 100%);
   padding: 16px;
   display: flex;
   justify-content: space-between;
   gap: 10px;
   text-decoration: none;
   color: var(--text-primary);
-  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.08),
+              inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .goals-page .goal-hub-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 14px 26px rgba(15, 23, 42, 0.12);
+  border-color: rgba(59, 130, 246, 0.3);
+  box-shadow: 0 12px 28px rgba(59, 130, 246, 0.12),
+              inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(240, 247, 255, 0.8) 100%);
 }
 
 .goals-page .goal-hub-card h2 {
@@ -8482,12 +8486,18 @@ footer {
   width: 34px;
   height: 34px;
   border-radius: 10px;
-  background: rgba(31, 111, 235, 0.12);
-  color: var(--accent);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
+  color: #3B82F6;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.goals-page .goal-hub-card:hover .goal-hub-arrow {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.08) 100%);
+  transform: translateX(2px);
 }
 
 .goals-page .goals-overview-card {
@@ -8526,12 +8536,21 @@ footer {
 
 .goals-page .goal-card {
   border-radius: 14px;
-  border: 1px solid var(--border-subtle);
-  background: var(--surface);
+  border: 1px solid rgba(59, 130, 246, 0.15);
+  background: linear-gradient(145deg, #ffffff 0%, rgba(240, 247, 255, 0.3) 100%);
   padding: 14px;
   display: grid;
   gap: 10px;
-  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.06),
+              inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.goals-page .goal-card:hover {
+  border-color: rgba(59, 130, 246, 0.25);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.1),
+              inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  transform: translateY(-1px);
 }
 
 .goals-page .goal-top {
@@ -8584,21 +8603,29 @@ footer {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid transparent;
 }
 
 .goals-page .goal-status.active {
-  background: rgba(34, 197, 94, 0.15);
-  color: #166534;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.12) 0%, rgba(34, 197, 94, 0.08) 100%);
+  color: #15803d;
+  border-color: rgba(34, 197, 94, 0.25);
+  box-shadow: 0 2px 6px rgba(34, 197, 94, 0.1);
 }
 
 .goals-page .goal-status.paused {
-  background: rgba(249, 115, 22, 0.16);
-  color: #9a3412;
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.12) 0%, rgba(249, 115, 22, 0.08) 100%);
+  color: #b45309;
+  border-color: rgba(249, 115, 22, 0.25);
+  box-shadow: 0 2px 6px rgba(249, 115, 22, 0.1);
 }
 
 .goals-page .goal-status.completed {
-  background: rgba(148, 163, 184, 0.22);
-  color: #475569;
+  background: linear-gradient(135deg, rgba(100, 116, 139, 0.12) 0%, rgba(100, 116, 139, 0.08) 100%);
+  color: #334155;
+  border-color: rgba(100, 116, 139, 0.25);
+  box-shadow: 0 2px 6px rgba(100, 116, 139, 0.1);
 }
 
 .goals-page .goal-card-header {
@@ -8611,6 +8638,11 @@ footer {
 .goals-page .goal-name {
   margin: 0;
   font-size: 1rem;
+  transition: color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.goals-page .goal-card:hover .goal-name {
+  color: #3B82F6;
 }
 
 .goals-page .goal-desc {
@@ -8634,9 +8666,16 @@ footer {
   padding: 4px 9px;
   border-radius: 999px;
   font-size: 0.75rem;
-  border: 1px solid var(--border-subtle);
-  background: var(--background-subtle);
+  border: 1px solid rgba(59, 130, 246, 0.15);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(59, 130, 246, 0.02) 100%);
   color: var(--text-primary);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.goals-page .goal-relation-pill:hover,
+.goals-page .goal-label-chip:hover {
+  border-color: rgba(59, 130, 246, 0.3);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(59, 130, 246, 0.04) 100%);
 }
 
 .goals-page .goal-label-dot {
@@ -8654,13 +8693,16 @@ footer {
   height: 8px;
   border-radius: 999px;
   overflow: hidden;
-  background: rgba(31, 111, 235, 0.12);
+  background: rgba(59, 130, 246, 0.08);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .goals-page .goal-progress-bar span {
   display: block;
   height: 100%;
-  background: linear-gradient(90deg, #1f6feb, #60a5fa);
+  background: linear-gradient(90deg, #3B82F6 0%, #2563EB 100%);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.3);
 }
 
 .goals-page .goal-progress-text {
@@ -8751,17 +8793,41 @@ footer {
 }
 
 [data-theme="dark"] .goals-page .goal-hub-card {
-  background: linear-gradient(135deg, #182236 0%, #1b263f 100%);
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(20, 30, 48, 0.8) 100%);
+  border-color: rgba(96, 165, 250, 0.25);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3),
+              inset 0 1px 0 rgba(96, 165, 250, 0.1);
+}
+
+[data-theme="dark"] .goals-page .goal-hub-card:hover {
+  border-color: rgba(96, 165, 250, 0.35);
+  box-shadow: 0 12px 28px rgba(96, 165, 250, 0.15),
+              inset 0 1px 0 rgba(96, 165, 250, 0.15);
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(20, 30, 48, 0.9) 100%);
 }
 
 [data-theme="dark"] .goals-page .goal-hub-arrow {
-  background: rgba(139, 179, 255, 0.18);
+  background: linear-gradient(135deg, rgba(96, 165, 250, 0.15) 0%, rgba(96, 165, 250, 0.08) 100%);
+  color: #60a5fa;
+}
+
+[data-theme="dark"] .goals-page .goal-hub-card:hover .goal-hub-arrow {
+  background: linear-gradient(135deg, rgba(96, 165, 250, 0.2) 0%, rgba(96, 165, 250, 0.12) 100%);
 }
 
 [data-theme="dark"] .goals-page .goal-card,
 [data-theme="dark"] .goals-page .subgoal-group {
-  background: linear-gradient(145deg, #1a2336 0%, #16213e 100%);
-  border-color: rgba(139, 179, 255, 0.2);
+  background: linear-gradient(145deg, rgba(30, 41, 59, 0.7) 0%, rgba(20, 30, 48, 0.7) 100%);
+  border-color: rgba(96, 165, 250, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2),
+              inset 0 1px 0 rgba(96, 165, 250, 0.08);
+}
+
+[data-theme="dark"] .goals-page .goal-card:hover,
+[data-theme="dark"] .goals-page .subgoal-group:hover {
+  border-color: rgba(96, 165, 250, 0.3);
+  box-shadow: 0 8px 20px rgba(96, 165, 250, 0.12),
+              inset 0 1px 0 rgba(96, 165, 250, 0.12);
 }
 
 [data-theme="dark"] .goals-page .goal-status.active {
@@ -9325,18 +9391,23 @@ footer {
 }
 
 .habits-page .habit-stat-card {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(59, 130, 246, 0.15);
   border-radius: 16px;
-  background: var(--surface);
+  background: linear-gradient(145deg, #ffffff 0%, rgba(240, 247, 255, 0.4) 100%);
   padding: 18px;
   display: grid;
   gap: 8px;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.06),
+              inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 .habits-page .habit-stat-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+  border-color: rgba(59, 130, 246, 0.25);
+  box-shadow: 0 12px 28px rgba(59, 130, 246, 0.12),
+              inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  background: linear-gradient(145deg, #ffffff 0%, rgba(240, 247, 255, 0.6) 100%);
 }
 
 .habits-page .habit-stat-label {
@@ -9350,7 +9421,10 @@ footer {
 .habits-page .habit-stat-value {
   font-size: 1.5rem;
   font-weight: 700;
-  color: var(--text-primary);
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   line-height: 1.2;
 }
 
@@ -9390,21 +9464,25 @@ footer {
 
 .habits-page .habit-create-form input,
 .habits-page .habit-create-form select {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(59, 130, 246, 0.2);
   border-radius: 10px;
-  background: var(--surface);
+  background: linear-gradient(145deg, #ffffff 0%, rgba(240, 247, 255, 0.3) 100%);
   color: var(--text-primary);
   padding: 10px 14px;
   font-size: 0.9rem;
   min-height: 42px;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
 .habits-page .habit-create-form input:focus,
 .habits-page .habit-create-form select:focus {
   outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.15);
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1),
+              inset 0 1px 2px rgba(59, 130, 246, 0.05),
+              0 0 8px rgba(59, 130, 246, 0.15);
+  background: linear-gradient(145deg, #ffffff 0%, rgba(240, 247, 255, 0.5) 100%);
 }
 
 .habits-page .habit-create-form button[type="submit"] {
@@ -9429,16 +9507,21 @@ footer {
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(59, 130, 246, 0.12);
   border-radius: 14px;
-  background: var(--surface);
+  background: linear-gradient(145deg, #ffffff 0%, rgba(240, 247, 255, 0.2) 100%);
   padding: 14px 16px;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.04),
+              inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 .habits-page .habit-row:hover {
-  border-color: rgba(31, 111, 235, 0.3);
-  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
+  border-color: rgba(59, 130, 246, 0.25);
+  box-shadow: 0 8px 18px rgba(59, 130, 246, 0.08),
+              inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  background: linear-gradient(145deg, #ffffff 0%, rgba(240, 247, 255, 0.4) 100%);
+  transform: translateY(-1px);
 }
 
 .habits-page .habit-left {
@@ -9468,16 +9551,19 @@ footer {
   width: 24px;
   height: 24px;
   border-radius: 8px;
-  border: 2px solid rgba(31, 111, 235, 0.5);
+  border: 2px solid rgba(59, 130, 246, 0.35);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
-  background: var(--surface);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  background: linear-gradient(135deg, #ffffff 0%, rgba(240, 247, 255, 0.5) 100%);
+  box-shadow: inset 0 1px 2px rgba(59, 130, 246, 0.05);
 }
 
 .habits-page .habit-checkbox:hover .habit-checkmark {
-  border-color: rgba(31, 111, 235, 0.7);
+  border-color: rgba(59, 130, 246, 0.55);
+  box-shadow: inset 0 1px 2px rgba(59, 130, 246, 0.08),
+              0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .habits-page .habit-checkmark::after {
@@ -9487,11 +9573,14 @@ footer {
   border-left: 2px solid transparent;
   border-bottom: 2px solid transparent;
   transform: rotate(-45deg) translate(1px, -1px);
+  transition: border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .habits-page .habit-checkbox input:checked + .habit-checkmark {
-  border-color: var(--accent);
-  background: var(--accent);
+  border-color: #3B82F6;
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3),
+              inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .habits-page .habit-checkbox input:checked + .habit-checkmark::after {
@@ -9512,6 +9601,11 @@ footer {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  transition: color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.habits-page .habit-row:hover .habit-name {
+  color: #3B82F6;
 }
 
 .habits-page .habit-meta {
@@ -9546,8 +9640,15 @@ footer {
   align-items: center;
   gap: 5px;
   padding: 4px 10px;
-  background: var(--background-subtle);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(245, 158, 11, 0.04) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.2);
   border-radius: 20px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.habits-page .habit-streak:hover {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(245, 158, 11, 0.06) 100%);
+  border-color: rgba(245, 158, 11, 0.3);
 }
 
 .habits-page .habit-streak i {
@@ -9560,12 +9661,16 @@ footer {
   gap: 12px;
   padding: 16px;
   border-radius: 14px;
-  border: 1px dashed var(--border-subtle);
-  background: var(--background-subtle);
+  border: 1px dashed rgba(59, 130, 246, 0.25);
+  background: linear-gradient(145deg, rgba(240, 247, 255, 0.3) 0%, rgba(240, 247, 255, 0.1) 100%);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: inset 0 1px 2px rgba(59, 130, 246, 0.05);
 }
 
 .habits-page .habit-edit-form.is-open {
   display: grid;
+  border-style: solid;
+  border-color: rgba(59, 130, 246, 0.3);
 }
 
 .habits-page .habit-edit-grid {
@@ -9585,12 +9690,23 @@ footer {
 .habits-page .habit-edit-form input,
 .habits-page .habit-edit-form select,
 .habits-page .habit-edit-form textarea {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(59, 130, 246, 0.2);
   border-radius: 10px;
-  background: var(--surface);
+  background: linear-gradient(145deg, #ffffff 0%, rgba(240, 247, 255, 0.3) 100%);
   color: var(--text-primary);
   padding: 10px 12px;
   font-size: 0.9rem;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.habits-page .habit-edit-form input:focus,
+.habits-page .habit-edit-form select:focus,
+.habits-page .habit-edit-form textarea:focus {
+  outline: none;
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1),
+              0 0 8px rgba(59, 130, 246, 0.15);
+  background: linear-gradient(145deg, #ffffff 0%, rgba(240, 247, 255, 0.5) 100%);
 }
 
 .habits-page .habit-edit-form textarea {
@@ -9621,15 +9737,18 @@ footer {
 
 /* Hero Stat Cards - Enhanced */
 [data-theme="dark"] .habits-page .habit-stat-card {
-  background: linear-gradient(145deg, rgba(30, 41, 59, 0.95) 0%, rgba(22, 33, 62, 0.95) 100%);
-  border-color: rgba(139, 179, 255, 0.2);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(139, 179, 255, 0.05);
+  background: linear-gradient(145deg, rgba(30, 41, 59, 0.85) 0%, rgba(20, 30, 48, 0.85) 100%);
+  border-color: rgba(96, 165, 250, 0.22);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3),
+              inset 0 1px 0 rgba(96, 165, 250, 0.08);
 }
 
 [data-theme="dark"] .habits-page .habit-stat-card:hover {
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(139, 179, 255, 0.1);
-  border-color: rgba(139, 179, 255, 0.35);
-  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(96, 165, 250, 0.15),
+              inset 0 1px 0 rgba(96, 165, 250, 0.12);
+  border-color: rgba(96, 165, 250, 0.35);
+  transform: translateY(-2px);
+  background: linear-gradient(145deg, rgba(30, 41, 59, 0.9) 0%, rgba(20, 30, 48, 0.9) 100%);
 }
 
 [data-theme="dark"] .habits-page .habit-stat-label {
@@ -9638,8 +9757,10 @@ footer {
 }
 
 [data-theme="dark"] .habits-page .habit-stat-value {
-  color: #e2e8f0;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 [data-theme="dark"] .habits-page .habit-stat-meta {
@@ -10154,13 +10275,22 @@ footer {
 }
 
 .planner-page .planner-stat-card {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(59, 130, 246, 0.15);
   border-radius: 14px;
-  background: var(--surface);
+  background: linear-gradient(145deg, #ffffff 0%, rgba(240, 247, 255, 0.3) 100%);
   padding: 14px;
   display: grid;
   gap: 5px;
-  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.06),
+              inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.planner-page .planner-stat-card:hover {
+  border-color: rgba(59, 130, 246, 0.25);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.1),
+              inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  transform: translateY(-1px);
 }
 
 .planner-page .planner-stat-label {
@@ -10174,7 +10304,10 @@ footer {
 .planner-page .planner-stat-value {
   font-size: 1.35rem;
   font-weight: 600;
-  color: var(--text-primary);
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .planner-page .planner-stat-meta {
@@ -10199,10 +10332,11 @@ footer {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(59, 130, 246, 0.2);
   border-radius: 999px;
   padding: 4px;
-  background: var(--background-subtle);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(59, 130, 246, 0.02) 100%);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .planner-page .planner-toggle-btn {
@@ -10214,16 +10348,18 @@ footer {
   font-size: 0.8rem;
   font-weight: 700;
   cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .planner-page .planner-toggle-btn:hover {
-  background: rgba(31, 111, 235, 0.1);
+  background: rgba(59, 130, 246, 0.08);
   color: var(--text-primary);
 }
 
 .planner-page .planner-toggle-btn.is-active {
-  background: var(--accent);
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
   color: #ffffff;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .planner-page .planner-grid {
@@ -10270,12 +10406,22 @@ footer {
 
 .planner-page .planner-form input,
 .planner-page .planner-form select {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(59, 130, 246, 0.2);
   border-radius: 10px;
-  background: var(--surface);
+  background: linear-gradient(145deg, #ffffff 0%, rgba(240, 247, 255, 0.3) 100%);
   color: var(--text-primary);
   padding: 10px 12px;
   min-height: 40px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.planner-page .planner-form input:focus,
+.planner-page .planner-form select:focus {
+  outline: none;
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1),
+              0 0 8px rgba(59, 130, 246, 0.15);
+  background: linear-gradient(145deg, #ffffff 0%, rgba(240, 247, 255, 0.5) 100%);
 }
 
 .planner-page .planner-habit-list {
@@ -10288,10 +10434,20 @@ footer {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(59, 130, 246, 0.12);
   border-radius: 12px;
-  background: var(--surface);
+  background: linear-gradient(145deg, #ffffff 0%, rgba(240, 247, 255, 0.2) 100%);
   padding: 12px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.04),
+              inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.planner-page .planner-habit-row:hover {
+  border-color: rgba(59, 130, 246, 0.25);
+  box-shadow: 0 6px 14px rgba(59, 130, 246, 0.08),
+              inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  transform: translateY(-1px);
 }
 
 .planner-page .planner-habit-row.is-done {
@@ -10342,9 +10498,17 @@ footer {
   font-size: 0.78rem;
   font-weight: 700;
   color: var(--text-secondary);
-  background: rgba(31, 111, 235, 0.1);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(59, 130, 246, 0.04) 100%);
+  border: 1px solid rgba(59, 130, 246, 0.15);
   border-radius: 999px;
   padding: 6px 10px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.planner-page .planner-badge:hover {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(59, 130, 246, 0.06) 100%);
+  border-color: rgba(59, 130, 246, 0.25);
+  color: #3B82F6;
 }
 
 .planner-page .planner-todo {
@@ -10371,14 +10535,24 @@ footer {
 }
 
 .planner-page .planner-task-item {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(59, 130, 246, 0.12);
   border-radius: 12px;
-  background: var(--surface);
+  background: linear-gradient(145deg, #ffffff 0%, rgba(240, 247, 255, 0.2) 100%);
   padding: 11px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.04),
+              inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.planner-page .planner-task-item:hover {
+  border-color: rgba(59, 130, 246, 0.25);
+  box-shadow: 0 6px 14px rgba(59, 130, 246, 0.08),
+              inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  transform: translateY(-1px);
 }
 
 .planner-page .planner-task-item.is-done {
@@ -10417,8 +10591,35 @@ footer {
 [data-theme="dark"] .planner-page .planner-stat-card,
 [data-theme="dark"] .planner-page .planner-habit-row,
 [data-theme="dark"] .planner-page .planner-task-item {
-  background: linear-gradient(145deg, #1a2336 0%, #16213e 100%);
-  border-color: rgba(139, 179, 255, 0.2);
+  background: linear-gradient(145deg, rgba(30, 41, 59, 0.7) 0%, rgba(20, 30, 48, 0.7) 100%);
+  border-color: rgba(96, 165, 250, 0.2);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2),
+              inset 0 1px 0 rgba(96, 165, 250, 0.08);
+}
+
+[data-theme="dark"] .planner-page .planner-stat-card:hover,
+[data-theme="dark"] .planner-page .planner-habit-row:hover,
+[data-theme="dark"] .planner-page .planner-task-item:hover {
+  border-color: rgba(96, 165, 250, 0.3);
+  box-shadow: 0 6px 14px rgba(96, 165, 250, 0.1),
+              inset 0 1px 0 rgba(96, 165, 250, 0.12);
+}
+
+[data-theme="dark"] .planner-page .planner-stat-value {
+  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+[data-theme="dark"] .planner-page .planner-toggle {
+  border-color: rgba(96, 165, 250, 0.25);
+  background: linear-gradient(135deg, rgba(96, 165, 250, 0.08) 0%, rgba(96, 165, 250, 0.04) 100%);
+}
+
+[data-theme="dark"] .planner-page .planner-toggle-btn.is-active {
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
 }
 
 [data-theme="dark"] .planner-page .goals-demo-note {
@@ -10529,15 +10730,24 @@ footer {
 }
 
 .reminders-page .reminder-stat-card {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(59, 130, 246, 0.15);
   border-radius: 14px;
-  background: var(--surface);
+  background: linear-gradient(145deg, #ffffff 0%, rgba(240, 247, 255, 0.3) 100%);
   padding: 14px;
   display: grid;
   gap: 5px;
-  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.06),
+              inset 0 1px 0 rgba(255, 255, 255, 0.5);
   position: relative;
   overflow: hidden;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.reminders-page .reminder-stat-card:hover {
+  border-color: rgba(59, 130, 246, 0.25);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.1),
+              inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  transform: translateY(-1px);
 }
 
 .reminders-page .reminder-stat-card::after {
@@ -10546,7 +10756,7 @@ footer {
   inset: auto -34px -56px auto;
   width: 130px;
   height: 130px;
-  background: radial-gradient(circle, rgba(31, 111, 235, 0.18), transparent 65%);
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.12), transparent 65%);
   pointer-events: none;
 }
 
@@ -10561,7 +10771,10 @@ footer {
 .reminders-page .reminder-stat-value {
   font-size: 1.35rem;
   font-weight: 600;
-  color: var(--text-primary);
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .reminders-page .reminder-stat-meta {
@@ -10616,11 +10829,22 @@ footer {
 .reminders-page .reminder-field input,
 .reminders-page .reminder-field select,
 .reminders-page .reminder-field textarea {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(59, 130, 246, 0.2);
   border-radius: 10px;
-  background: var(--surface);
+  background: linear-gradient(145deg, #ffffff 0%, rgba(240, 247, 255, 0.3) 100%);
   color: var(--text-primary);
   padding: 10px 12px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.reminders-page .reminder-field input:focus,
+.reminders-page .reminder-field select:focus,
+.reminders-page .reminder-field textarea:focus {
+  outline: none;
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1),
+              0 0 8px rgba(59, 130, 246, 0.15);
+  background: linear-gradient(145deg, #ffffff 0%, rgba(240, 247, 255, 0.5) 100%);
 }
 
 .reminders-page .repeat-days {
@@ -10638,12 +10862,18 @@ footer {
   align-items: center;
   gap: 6px;
   border-radius: 999px;
-  border: 1px solid var(--border-subtle);
-  background: var(--background-subtle);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(59, 130, 246, 0.02) 100%);
   color: var(--text-primary);
   padding: 6px 10px;
   font-size: 0.8rem;
   cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.reminders-page .day-chip:hover {
+  border-color: rgba(59, 130, 246, 0.3);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(59, 130, 246, 0.04) 100%);
 }
 
 .reminders-page .day-chip input {
@@ -10679,12 +10909,22 @@ footer {
 }
 
 .reminders-page .reminder-item {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(59, 130, 246, 0.12);
   border-radius: 14px;
-  background: var(--surface);
+  background: linear-gradient(145deg, #ffffff 0%, rgba(240, 247, 255, 0.2) 100%);
   padding: 12px;
   display: grid;
   gap: 10px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.04),
+              inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.reminders-page .reminder-item:hover:not(.is-paused) {
+  border-color: rgba(59, 130, 246, 0.25);
+  box-shadow: 0 6px 14px rgba(59, 130, 246, 0.08),
+              inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  transform: translateY(-1px);
 }
 
 .reminders-page .reminder-item.is-overdue {
@@ -10729,24 +10969,28 @@ footer {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   background: var(--background-subtle);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .reminders-page .priority-low {
-  border-color: rgba(148, 163, 184, 0.6);
+  border-color: rgba(148, 163, 184, 0.25);
   color: #64748b;
-  background: rgba(148, 163, 184, 0.15);
+  background: linear-gradient(135deg, rgba(148, 163, 184, 0.12) 0%, rgba(148, 163, 184, 0.06) 100%);
+  box-shadow: 0 2px 6px rgba(148, 163, 184, 0.08);
 }
 
 .reminders-page .priority-normal {
-  border-color: rgba(59, 130, 246, 0.6);
+  border-color: rgba(59, 130, 246, 0.25);
   color: #2563eb;
-  background: rgba(59, 130, 246, 0.12);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(59, 130, 246, 0.06) 100%);
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.1);
 }
 
 .reminders-page .priority-high {
-  border-color: rgba(249, 115, 22, 0.6);
+  border-color: rgba(249, 115, 22, 0.25);
   color: #ea580c;
-  background: rgba(249, 115, 22, 0.15);
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.12) 0%, rgba(249, 115, 22, 0.06) 100%);
+  box-shadow: 0 2px 6px rgba(249, 115, 22, 0.1);
 }
 
 .reminders-page .status-muted {
@@ -10755,14 +10999,16 @@ footer {
 
 .reminders-page .status-warning {
   color: #f59e0b;
-  border-color: rgba(245, 158, 11, 0.45);
-  background: rgba(245, 158, 11, 0.14);
+  border-color: rgba(245, 158, 11, 0.3);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(245, 158, 11, 0.06) 100%);
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.1);
 }
 
 .reminders-page .status-ok {
   color: #10b981;
-  border-color: rgba(16, 185, 129, 0.4);
-  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.3);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(16, 185, 129, 0.06) 100%);
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.1);
 }
 
 .reminders-page .reminder-meta {
@@ -10817,27 +11063,51 @@ footer {
 
 [data-theme="dark"] .reminders-page .reminder-stat-card,
 [data-theme="dark"] .reminders-page .reminder-item {
-  background: linear-gradient(145deg, #1a2336 0%, #16213e 100%);
-  border-color: rgba(139, 179, 255, 0.2);
+  background: linear-gradient(145deg, rgba(30, 41, 59, 0.7) 0%, rgba(20, 30, 48, 0.7) 100%);
+  border-color: rgba(96, 165, 250, 0.2);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2),
+              inset 0 1px 0 rgba(96, 165, 250, 0.08);
+}
+
+[data-theme="dark"] .reminders-page .reminder-stat-card:hover,
+[data-theme="dark"] .reminders-page .reminder-item:hover:not(.is-paused) {
+  border-color: rgba(96, 165, 250, 0.3);
+  box-shadow: 0 6px 14px rgba(96, 165, 250, 0.1),
+              inset 0 1px 0 rgba(96, 165, 250, 0.12);
+}
+
+[data-theme="dark"] .reminders-page .reminder-stat-value {
+  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 [data-theme="dark"] .reminders-page .goals-demo-note {
-  border-color: rgba(139, 179, 255, 0.45);
-  background: rgba(139, 179, 255, 0.12);
+  border-color: rgba(96, 165, 250, 0.3);
+  background: rgba(96, 165, 250, 0.08);
 }
 
 [data-theme="dark"] .reminders-page .day-chip,
 [data-theme="dark"] .reminders-page .reminder-switch {
-  background: rgba(18, 23, 34, 0.9);
-  border-color: rgba(139, 179, 255, 0.25);
+  background: linear-gradient(135deg, rgba(96, 165, 250, 0.08) 0%, rgba(96, 165, 250, 0.04) 100%);
+  border-color: rgba(96, 165, 250, 0.25);
   color: #f8fafc;
 }
 
 [data-theme="dark"] .reminders-page .reminder-field input,
 [data-theme="dark"] .reminders-page .reminder-field select,
 [data-theme="dark"] .reminders-page .reminder-field textarea {
-  background: #121722;
-  border-color: rgba(139, 179, 255, 0.25);
+  background: linear-gradient(145deg, rgba(30, 41, 59, 0.5) 0%, rgba(20, 30, 48, 0.5) 100%);
+  border-color: rgba(96, 165, 250, 0.25);
+}
+
+[data-theme="dark"] .reminders-page .reminder-field input:focus,
+[data-theme="dark"] .reminders-page .reminder-field select:focus,
+[data-theme="dark"] .reminders-page .reminder-field textarea:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1),
+              0 0 8px rgba(96, 165, 250, 0.2);
 }
 
 [data-theme="dark"] .reminders-page .reminder-notes,
@@ -10908,13 +11178,22 @@ footer {
 }
 
 .labels-page .label-stat-card {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(59, 130, 246, 0.15);
   border-radius: 14px;
-  background: var(--surface);
+  background: linear-gradient(145deg, #ffffff 0%, rgba(240, 247, 255, 0.3) 100%);
   padding: 14px;
   display: grid;
   gap: 6px;
-  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.06),
+              inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.labels-page .label-stat-card:hover {
+  border-color: rgba(59, 130, 246, 0.25);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.1),
+              inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  transform: translateY(-1px);
 }
 
 .labels-page .label-stat-label {
@@ -10928,7 +11207,10 @@ footer {
 .labels-page .label-stat-value {
   font-size: 1.35rem;
   font-weight: 600;
-  color: var(--text-primary);
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .labels-page .label-stat-meta {
@@ -11002,11 +11284,20 @@ footer {
 }
 
 .labels-page .label-field input {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(59, 130, 246, 0.2);
   border-radius: 10px;
-  background: var(--surface);
+  background: linear-gradient(145deg, #ffffff 0%, rgba(240, 247, 255, 0.3) 100%);
   color: var(--text-primary);
   padding: 10px 12px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.labels-page .label-field input:focus {
+  outline: none;
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1),
+              0 0 8px rgba(59, 130, 246, 0.15);
+  background: linear-gradient(145deg, #ffffff 0%, rgba(240, 247, 255, 0.5) 100%);
 }
 
 .labels-page .label-color-group {
@@ -11153,10 +11444,20 @@ footer {
   justify-content: space-between;
   align-items: flex-start;
   gap: 10px;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(59, 130, 246, 0.12);
   border-radius: 12px;
-  background: var(--surface);
+  background: linear-gradient(145deg, #ffffff 0%, rgba(240, 247, 255, 0.2) 100%);
   padding: 12px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.04),
+              inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.labels-page .label-item:hover {
+  border-color: rgba(59, 130, 246, 0.25);
+  box-shadow: 0 6px 14px rgba(59, 130, 246, 0.08),
+              inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  transform: translateY(-1px);
 }
 
 .labels-page .label-item-main {
@@ -11209,11 +11510,19 @@ footer {
 }
 
 .labels-page .label-edit-form input {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(59, 130, 246, 0.2);
   border-radius: 10px;
-  background: var(--surface);
+  background: linear-gradient(145deg, #ffffff 0%, rgba(240, 247, 255, 0.3) 100%);
   color: var(--text-primary);
   padding: 8px 10px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.labels-page .label-edit-form input:focus {
+  outline: none;
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1),
+              0 0 8px rgba(59, 130, 246, 0.15);
 }
 
 .labels-page .labels-empty-search {
@@ -11222,13 +11531,29 @@ footer {
 
 [data-theme="dark"] .labels-page .label-stat-card,
 [data-theme="dark"] .labels-page .label-item {
-  background: linear-gradient(145deg, #1a2336 0%, #16213e 100%);
-  border-color: rgba(139, 179, 255, 0.2);
+  background: linear-gradient(145deg, rgba(30, 41, 59, 0.7) 0%, rgba(20, 30, 48, 0.7) 100%);
+  border-color: rgba(96, 165, 250, 0.2);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2),
+              inset 0 1px 0 rgba(96, 165, 250, 0.08);
+}
+
+[data-theme="dark"] .labels-page .label-stat-card:hover,
+[data-theme="dark"] .labels-page .label-item:hover {
+  border-color: rgba(96, 165, 250, 0.3);
+  box-shadow: 0 6px 14px rgba(96, 165, 250, 0.1),
+              inset 0 1px 0 rgba(96, 165, 250, 0.12);
+}
+
+[data-theme="dark"] .labels-page .label-stat-value {
+  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 [data-theme="dark"] .labels-page .goals-demo-note {
-  border-color: rgba(139, 179, 255, 0.45);
-  background: rgba(139, 179, 255, 0.12);
+  border-color: rgba(96, 165, 250, 0.3);
+  background: rgba(96, 165, 250, 0.08);
 }
 
 [data-theme="dark"] .labels-page .label-swatch,
@@ -11245,8 +11570,18 @@ footer {
 [data-theme="dark"] .labels-page .labels-sort select,
 [data-theme="dark"] .labels-page .label-edit-form input,
 [data-theme="dark"] .labels-page .color-custom input[type="color"] {
-  background: #121722;
-  border-color: rgba(139, 179, 255, 0.25);
+  background: linear-gradient(145deg, rgba(30, 41, 59, 0.5) 0%, rgba(20, 30, 48, 0.5) 100%);
+  border-color: rgba(96, 165, 250, 0.25);
+}
+
+[data-theme="dark"] .labels-page .label-field input:focus,
+[data-theme="dark"] .labels-page .labels-search input:focus,
+[data-theme="dark"] .labels-page .labels-sort select:focus,
+[data-theme="dark"] .labels-page .label-edit-form input:focus,
+[data-theme="dark"] .labels-page .color-custom input[type="color"]:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1),
+              0 0 8px rgba(96, 165, 250, 0.2);
 }
 
 [data-theme="dark"] .labels-page .label-hex {
@@ -11360,14 +11695,20 @@ footer {
 }
 
 .account-page .profile-badge {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(59, 130, 246, 0.2);
   border-radius: 999px;
-  background: var(--background-subtle);
-  color: var(--text-secondary);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(59, 130, 246, 0.02) 100%);
+  color: #3B82F6;
   padding: 4px 10px;
   font-size: 0.74rem;
   font-weight: 700;
   text-transform: uppercase;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.account-page .profile-badge:hover {
+  border-color: rgba(59, 130, 246, 0.3);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(59, 130, 246, 0.04) 100%);
 }
 
 .account-page .profile-email {
@@ -11438,11 +11779,22 @@ footer {
 .account-page .profile-field-card input,
 .account-page .profile-field-card select,
 .account-page .profile-field-card textarea {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(59, 130, 246, 0.2);
   border-radius: 10px;
-  background: var(--surface);
+  background: linear-gradient(145deg, #ffffff 0%, rgba(240, 247, 255, 0.3) 100%);
   color: var(--text-primary);
   padding: 10px 12px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.account-page .profile-field-card input:focus,
+.account-page .profile-field-card select:focus,
+.account-page .profile-field-card textarea:focus {
+  outline: none;
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1),
+              0 0 8px rgba(59, 130, 246, 0.15);
+  background: linear-gradient(145deg, #ffffff 0%, rgba(240, 247, 255, 0.5) 100%);
 }
 
 .account-page .profile-field-card input:disabled,
@@ -11491,13 +11843,19 @@ footer {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(59, 130, 246, 0.2);
   border-radius: 999px;
-  background: var(--background-subtle);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(59, 130, 246, 0.02) 100%);
   color: var(--text-primary);
   padding: 8px 12px;
   font-size: 0.82rem;
   cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.account-page .profile-switch:hover {
+  border-color: rgba(59, 130, 246, 0.3);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(59, 130, 246, 0.04) 100%);
 }
 
 .account-page .profile-switch input {
@@ -11511,27 +11869,41 @@ footer {
 }
 
 [data-theme="dark"] .account-page .profile-avatar {
-  background: linear-gradient(135deg, #5a8dff, #8bb3ff);
-  color: #091224;
+  background: linear-gradient(135deg, #3B82F6, #60a5fa);
+  color: #ffffff;
 }
 
 [data-theme="dark"] .account-page .profile-badge,
 [data-theme="dark"] .account-page .profile-switch {
-  border-color: rgba(139, 179, 255, 0.25);
-  background: rgba(18, 23, 34, 0.9);
+  border-color: rgba(96, 165, 250, 0.25);
+  background: linear-gradient(135deg, rgba(96, 165, 250, 0.08) 0%, rgba(96, 165, 250, 0.04) 100%);
   color: #f8fafc;
 }
 
+[data-theme="dark"] .account-page .profile-badge:hover,
+[data-theme="dark"] .account-page .profile-switch:hover {
+  border-color: rgba(96, 165, 250, 0.35);
+  background: linear-gradient(135deg, rgba(96, 165, 250, 0.12) 0%, rgba(96, 165, 250, 0.06) 100%);
+}
+
 [data-theme="dark"] .account-page .goals-demo-note {
-  border-color: rgba(139, 179, 255, 0.45);
-  background: rgba(139, 179, 255, 0.12);
+  border-color: rgba(96, 165, 250, 0.3);
+  background: rgba(96, 165, 250, 0.08);
 }
 
 [data-theme="dark"] .account-page .profile-field-card input,
 [data-theme="dark"] .account-page .profile-field-card select,
 [data-theme="dark"] .account-page .profile-field-card textarea {
-  background: #121722;
-  border-color: rgba(139, 179, 255, 0.25);
+  background: linear-gradient(145deg, rgba(30, 41, 59, 0.5) 0%, rgba(20, 30, 48, 0.5) 100%);
+  border-color: rgba(96, 165, 250, 0.25);
+}
+
+[data-theme="dark"] .account-page .profile-field-card input:focus,
+[data-theme="dark"] .account-page .profile-field-card select:focus,
+[data-theme="dark"] .account-page .profile-field-card textarea:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1),
+              0 0 8px rgba(96, 165, 250, 0.2);
 }
 
 @media (max-width: 1024px) {
