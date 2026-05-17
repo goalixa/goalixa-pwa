@@ -3,6 +3,8 @@
  * Shows a modal when a new version of the PWA is available
  */
 
+import { logger } from '../utils.js';
+
 let updateModal = null;
 let deferredPrompt = null;
 
@@ -65,7 +67,7 @@ export function showUpdateNotification(onUpdate) {
         await onUpdate();
       }
     } catch (error) {
-      console.error('[PWA Update] Failed to update:', error);
+      logger.error('[PWA Update] Failed to update:', error);
       applyBtn.disabled = false;
       applyBtn.innerHTML = '<i class="bi bi-download"></i> Retry';
     }
@@ -128,34 +130,34 @@ export function registerServiceWorker(options = {}) {
   } = options;
 
   if (!('serviceWorker' in navigator)) {
-    console.warn('[PWA] Service Worker not supported');
+    logger.warn('[PWA] Service Worker not supported');
     return null;
   }
 
   return navigator.serviceWorker.register(swPath, { scope: '/' })
     .then((registration) => {
-      console.log('[PWA] Service Worker registered:', registration.scope);
-      console.log('[PWA] Current SW state:', registration.active?.state);
-      console.log('[PWA] Waiting SW:', registration.waiting?.state);
-      console.log('[PWA] Installing SW:', registration.installing?.state);
+      logger.log('[PWA] Service Worker registered:', registration.scope);
+      logger.log('[PWA] Current SW state:', registration.active?.state);
+      logger.log('[PWA] Waiting SW:', registration.waiting?.state);
+      logger.log('[PWA] Installing SW:', registration.installing?.state);
 
       // Listen for new service worker installation
       registration.addEventListener('updatefound', () => {
         const newWorker = registration.installing;
         if (!newWorker) return;
 
-        console.log('[PWA] New service worker installing...');
+        logger.log('[PWA] New service worker installing...');
 
         newWorker.addEventListener('statechange', () => {
-          console.log('[PWA] Service Worker state:', newWorker.state);
+          logger.log('[PWA] Service Worker state:', newWorker.state);
 
           if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
             // New version available, old SW still controlling
-            console.log('[PWA] New version available!');
+            logger.log('[PWA] New version available!');
 
             // Show update notification
             showUpdateNotification(async () => {
-              console.log('[PWA] User requested update, activating new service worker...');
+              logger.log('[PWA] User requested update, activating new service worker...');
 
               // Tell new SW to skip waiting
               newWorker.postMessage({ type: 'SKIP_WAITING' });
@@ -163,7 +165,7 @@ export function registerServiceWorker(options = {}) {
               // Wait for the new service worker to become active
               await new Promise((resolve) => {
                 const handleControllerChange = () => {
-                  console.log('[PWA] New service worker is now controlling the page');
+                  logger.log('[PWA] New service worker is now controlling the page');
                   navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
                   resolve();
                 };
@@ -172,7 +174,7 @@ export function registerServiceWorker(options = {}) {
                 // Fallback timeout in case controllerchange doesn't fire
                 setTimeout(() => {
                   navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
-                  console.warn('[PWA] Controller change timeout, proceeding anyway');
+                  logger.warn('[PWA] Controller change timeout, proceeding anyway');
                   resolve();
                 }, 3000);
               });
@@ -181,11 +183,11 @@ export function registerServiceWorker(options = {}) {
               if ('caches' in window) {
                 try {
                   const cacheNames = await caches.keys();
-                  console.log('[PWA] Clearing caches:', cacheNames);
+                  logger.log('[PWA] Clearing caches:', cacheNames);
                   await Promise.all(cacheNames.map(name => caches.delete(name)));
-                  console.log('[PWA] All caches cleared successfully');
+                  logger.log('[PWA] All caches cleared successfully');
                 } catch (err) {
-                  console.warn('[PWA] Failed to clear caches:', err);
+                  logger.warn('[PWA] Failed to clear caches:', err);
                 }
               }
 
@@ -194,7 +196,7 @@ export function registerServiceWorker(options = {}) {
                 try {
                   await onUpdate();
                 } catch (err) {
-                  console.warn('[PWA] Update callback failed:', err);
+                  logger.warn('[PWA] Update callback failed:', err);
                 }
               }
 
@@ -202,7 +204,7 @@ export function registerServiceWorker(options = {}) {
               await new Promise(resolve => setTimeout(resolve, 100));
 
               // Hard refresh to get new version
-              console.log('[PWA] Refreshing to load new version...');
+              logger.log('[PWA] Refreshing to load new version...');
               window.location.reload(true);
             });
           }
@@ -211,13 +213,13 @@ export function registerServiceWorker(options = {}) {
 
       // Handle messages from service worker
       navigator.serviceWorker.addEventListener('message', (event) => {
-        console.log('[PWA] Message from service worker:', event.data);
+        logger.log('[PWA] Message from service worker:', event.data);
       });
 
       // Check for updates when window gains focus
       window.addEventListener('focus', () => {
         registration.update().catch(err => {
-          console.warn('[PWA] Update check failed:', err);
+          logger.warn('[PWA] Update check failed:', err);
         });
       });
 
@@ -229,7 +231,7 @@ export function registerServiceWorker(options = {}) {
       return registration;
     })
     .catch((error) => {
-      console.error('[PWA] Service Worker registration failed:', error);
+      logger.error('[PWA] Service Worker registration failed:', error);
       throw error;
     });
 }
@@ -242,13 +244,13 @@ export async function unregisterServiceWorkers() {
   if ('serviceWorker' in navigator) {
     const registrations = await navigator.serviceWorker.getRegistrations();
     await Promise.all(registrations.map(reg => reg.unregister()));
-    console.log('[PWA] All service workers unregistered');
+    logger.log('[PWA] All service workers unregistered');
   }
 
   if ('caches' in window) {
     const cacheNames = await caches.keys();
     await Promise.all(cacheNames.map(name => caches.delete(name)));
-    console.log('[PWA] All caches cleared');
+    logger.log('[PWA] All caches cleared');
   }
 }
 
@@ -257,14 +259,14 @@ export async function unregisterServiceWorkers() {
  * Call this from browser console: testPWAUpdate()
  */
 export function testPWAUpdate() {
-  console.log('[PWA DEBUG] Manually triggering update notification...');
+  logger.log('[PWA DEBUG] Manually triggering update notification...');
   showUpdateNotification(async () => {
-    console.log('[PWA DEBUG] Update callback executed');
+    logger.log('[PWA DEBUG] Update callback executed');
     // Clear all caches
     if ('caches' in window) {
       const cacheNames = await caches.keys();
       await Promise.all(cacheNames.map(name => caches.delete(name)));
-      console.log('[PWA DEBUG] All caches cleared');
+      logger.log('[PWA DEBUG] All caches cleared');
     }
     // Hard refresh
     window.location.reload(true);
@@ -275,5 +277,5 @@ export function testPWAUpdate() {
 if (typeof window !== 'undefined') {
   window.testPWAUpdate = testPWAUpdate;
   window.showPWAUpdate = showUpdateNotification;
-  console.log('[PWA] Debug functions available: testPWAUpdate(), showPWAUpdate()');
+  logger.log('[PWA] Debug functions available: testPWAUpdate(), showPWAUpdate()');
 }

@@ -4,18 +4,10 @@
  */
 
 import { appApi } from '../api.js';
+import { escapeHtml, logger } from '../utils.js';
 
 let currentModal = null;
 let currentAbortController = null;
-
-function escapeHtml(value) {
-  return String(value)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
 
 /**
  * Open a task edit modal
@@ -185,7 +177,7 @@ export function openTaskEditModal(task, options = {}) {
       }
       closeTaskEditModal();
     } catch (error) {
-      console.error('Failed to update task:', error);
+      logger.error('Failed to update task:', error);
       submitBtn.disabled = false;
       submitBtn.innerHTML = '<i class="bi bi-check-lg"></i> Save Changes';
       // Show error feedback

@@ -3,6 +3,8 @@
  * Allows users to reorder tasks by dragging them
  */
 
+import { logger } from './utils.js';
+
 class TaskDragDrop {
   constructor() {
     this.draggedElement = null;
@@ -22,7 +24,7 @@ class TaskDragDrop {
     const container = document.querySelector(containerSelector);
 
     if (!container) {
-      console.warn(`TaskDragDrop: Container ${containerSelector} not found`);
+      logger.warn(`TaskDragDrop: Container ${containerSelector} not found`);
       return;
     }
 

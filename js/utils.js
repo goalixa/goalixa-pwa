@@ -320,3 +320,54 @@ class EventBus {
 }
 
 export const eventBus = new EventBus();
+
+/**
+ * Escape HTML special characters to prevent XSS attacks
+ * Use this for any user-generated content rendered via innerHTML
+ */
+export function escapeHtml(value) {
+  if (value === null || value === undefined) return '';
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
+/**
+ * Debug logger - only logs in development mode
+ * Set window.DEBUG = true in console to enable logging
+ */
+const isDev = typeof window !== 'undefined' && (
+  window.location.hostname === 'localhost' ||
+  window.location.hostname === '127.0.0.1' ||
+  window.DEBUG === true
+);
+
+export const logger = {
+  log(...args) {
+    if (isDev || window.DEBUG) console.log('[Goalixa]', ...args);
+  },
+  warn(...args) {
+    if (isDev || window.DEBUG) console.warn('[Goalixa]', ...args);
+  },
+  error(...args) {
+    // Errors always logged
+    console.error('[Goalixa]', ...args);
+  },
+  debug(...args) {
+    if (isDev || window.DEBUG) console.debug('[Goalixa]', ...args);
+  }
+};
+
+/**
+ * Check if running in localhost/development
+ */
+export function isLocalhost() {
+  return typeof window !== 'undefined' && (
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1' ||
+    window.location.hostname.includes('.local')
+  );
+}

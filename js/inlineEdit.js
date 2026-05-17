@@ -3,6 +3,8 @@
  * Edit task fields directly without opening modals
  */
 
+import { logger } from './utils.js';
+
 class InlineEditor {
   constructor() {
     this.activeEditor = null;
@@ -22,7 +24,7 @@ class InlineEditor {
 
     const container = document.querySelector(containerSelector);
     if (!container) {
-      console.warn(`InlineEditor: Container ${containerSelector} not found`);
+      logger.warn(`InlineEditor: Container ${containerSelector} not found`);
       return;
     }
 
@@ -61,7 +63,7 @@ class InlineEditor {
     const taskId = this.getTaskId(taskItem);
 
     if (!taskId) {
-      console.warn('InlineEditor: Could not find task ID');
+      logger.warn('InlineEditor: Could not find task ID');
       return;
     }
 
@@ -166,7 +168,7 @@ class InlineEditor {
       originalElement.textContent = newValue;
       this.restoreElement(input, originalElement);
     } catch (error) {
-      console.error('InlineEditor: Save failed', error);
+      logger.error('InlineEditor: Save failed', error);
 
       // Show error state
       input.classList.add('is-error');

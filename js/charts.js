@@ -3,6 +3,8 @@
  * Uses ApexCharts for beautiful, interactive visualizations
  */
 
+import { logger } from './utils.js';
+
 // Chart instance storage for cleanup
 const chartInstances = new Map();
 
@@ -1348,4 +1350,4 @@ window.addEventListener('theme-changed', () => {
   updateChartsTheme();
 });
 
-console.log('[GoalixaCharts] Enhanced charts module loaded');
+logger.log('[GoalixaCharts] Enhanced charts module loaded');

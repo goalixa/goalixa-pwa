@@ -3,6 +3,8 @@
  * Handles communication with API gateway and backend services.
  */
 
+import { logger } from './utils.js';
+
 function getRuntimeApiBase() {
   // Production: Always use relative /bff path for same-domain requests
   if (typeof window !== 'undefined') {
@@ -69,7 +71,7 @@ async function apiRequest(url, options = {}) {
   const isMutation = method && method !== 'GET';
 
   if (!isMutation && pendingRequests.has(requestKey)) {
-    console.log(`[API] Deduplicating request: ${requestKey}`);
+    logger.log(`[API] Deduplicating request: ${requestKey}`);
     return pendingRequests.get(requestKey);
   }
 
@@ -172,7 +174,7 @@ async function handle401Error(originalUrl, originalOptions) {
   // Check if this URL is in cooldown (previously failed after refresh)
   const lastFailure = failedRefreshUrls.get(originalUrl);
   if (lastFailure && Date.now() - lastFailure < FAILED_RETRY_COOLDOWN) {
-    console.warn(`[Auth] URL ${originalUrl} is in cooldown after failed refresh retry`);
+    logger.warn(`[Auth] URL ${originalUrl} is in cooldown after failed refresh retry`);
     const error = new Error('Authentication failed. Please refresh the page.');
     error.status = 401;
     throw error;
@@ -181,7 +183,7 @@ async function handle401Error(originalUrl, originalOptions) {
   // If a refresh is already in progress, return the existing promise
   // This prevents race conditions when multiple 401s occur simultaneously
   if (refreshPromise) {
-    console.log(`[Auth] Refresh already in progress, queuing request for ${originalUrl}`);
+    logger.log(`[Auth] Refresh already in progress, queuing request for ${originalUrl}`);
     return new Promise((resolve, reject) => {
       subscribeToRefresh(async () => {
         try {
@@ -196,7 +198,7 @@ async function handle401Error(originalUrl, originalOptions) {
 
   // Start a new refresh and store the promise
   isRefreshing = true;
-  console.log(`[Auth] Starting token refresh for 401 at ${originalUrl}`);
+  logger.log(`[Auth] Starting token refresh for 401 at ${originalUrl}`);
 
   refreshPromise = (async () => {
     try {
@@ -205,7 +207,7 @@ async function handle401Error(originalUrl, originalOptions) {
 
       if (refreshResult.success) {
         onRefreshed();
-        console.log(`[Auth] Token refreshed successfully, retrying ${originalUrl}`);
+        logger.log(`[Auth] Token refreshed successfully, retrying ${originalUrl}`);
 
         // Add a small delay to ensure cookies are properly set
         await new Promise(resolve => setTimeout(resolve, 100));
@@ -215,21 +217,21 @@ async function handle401Error(originalUrl, originalOptions) {
 
           // Clear the cooldown if the retry succeeded
           failedRefreshUrls.delete(originalUrl);
-          console.log(`[Auth] Retry succeeded for ${originalUrl}`);
+          logger.log(`[Auth] Retry succeeded for ${originalUrl}`);
 
           return result;
         } catch (retryError) {
           // If the retry fails with 401, add this URL to cooldown
           // and report it to auth module for tracking
           if (retryError.status === 401) {
-            console.error(`[Auth] Retry after refresh still returned 401 for ${originalUrl}. Adding to cooldown.`);
+            logger.error(`[Auth] Retry after refresh still returned 401 for ${originalUrl}. Adding to cooldown.`);
             failedRefreshUrls.set(originalUrl, Date.now());
 
             // Report this to the auth module - if too many occur, it will logout
             const authStillValid = report401AfterRefresh();
             if (!authStillValid) {
               // User was logged out due to too many failed retries
-              console.error('[Auth] Too many 401s after refresh, logging out');
+              logger.error('[Auth] Too many 401s after refresh, logging out');
               const logoutError = new Error('Session expired. Please login again.');
               logoutError.status = 401;
               throw logoutError;
@@ -240,7 +242,7 @@ async function handle401Error(originalUrl, originalOptions) {
       }
 
       onRefreshed();
-      console.error('[Auth] Token refresh failed:', refreshResult.error);
+      logger.error('[Auth] Token refresh failed:', refreshResult.error);
       throw new Error(refreshResult.error || 'Session expired');
     } catch (error) {
       onRefreshed();
@@ -739,14 +741,14 @@ export async function healthCheck() {
     await apiRequest(buildUrl('/auth/health'), { timeout: 5000 });
     results.auth = true;
   } catch (err) {
-    console.error('Auth service health check failed:', err);
+    logger.error('Auth service health check failed:', err);
   }
 
   try {
     await apiRequest(buildUrl('/app/health'), { timeout: 5000 });
     results.app = true;
   } catch (err) {
-    console.error('App service health check failed:', err);
+    logger.error('App service health check failed:', err);
   }
 
   return results;
