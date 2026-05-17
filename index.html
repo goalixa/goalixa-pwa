@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
   <meta name="description" content="Goalixa PWA workspace for goals, projects, tasks, and planning." />
   <meta name="theme-color" content="#3B82F6" />
 
@@ -238,7 +237,7 @@
                     await new Promise(r => {
                       const h = () => { navigator.serviceWorker.removeEventListener('controllerchange', h); r(); };
                       navigator.serviceWorker.addEventListener('controllerchange', h);
-                      setTimeout(() => { navigator.serviceWorker.removeEventListener('controllerchange', h); r(); }, 3000);
+                      setTimeout(() => { navigator.serviceWorker.removeEventListener('controllerchange', h); r(); }, 10000);
                     });
                     // Reload - the new SW will handle cache cleanup
                     location.reload(true);

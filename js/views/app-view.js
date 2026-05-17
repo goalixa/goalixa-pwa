@@ -5,7 +5,7 @@
 
 import { appApi } from '../api.js';
 import { getCurrentUser, logout } from '../auth.js';
-import { showToast } from '../utils.js';
+import { showToast, escapeHtml, logger } from '../utils.js';
 import { navigate } from '../router.js';
 import { getTheme, toggleTheme } from '../theme.js';
 import { bindTasksSection, clearTasksView, renderTasksSection } from './app/tasks-view.js';
@@ -120,14 +120,7 @@ function resolveSection(path) {
   return { section: key, subPath: `/${trimmed}` };
 }
 
-function escapeHtml(value) {
-  return String(value)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
+// escapeHtml imported from utils.js
 
 function formatDuration(seconds) {
   const total = Number(seconds || 0);
@@ -338,7 +331,7 @@ function renderShell(container, section) {
       }
       updateCollapseButton(collapseButton, isCollapsed);
     } catch (e) {
-      console.warn('Failed to load sidebar state:', e);
+      logger.warn('Failed to load sidebar state:', e);
     }
   };
 
@@ -596,7 +589,7 @@ function bindOverviewCharts(content, summary, distribution, habits, plannedSecon
           fullLabel: String(item?.label || item?.date || item?.day || `Day ${index + 1}`)
         })) : [];
       } catch (error) {
-        console.error('[Overview] Failed to fetch previous week data:', error);
+        logger.error('[Overview] Failed to fetch previous week data:', error);
         previousWeekData = [];
       }
     }
@@ -706,7 +699,7 @@ function bindOverviewCharts(content, summary, distribution, habits, plannedSecon
           fullLabel: String(item?.label || item?.date || item?.day || `Day ${index + 1}`)
         })) : [];
       } catch (error) {
-        console.error('[Overview] Failed to fetch previous week data:', error);
+        logger.error('[Overview] Failed to fetch previous week data:', error);
         previousWeekData = [];
       }
     }
@@ -1514,7 +1507,7 @@ function bindDashboardActions(content, appApi, showToast, data, signal) {
           fullLabel: String(item?.label || item?.date || item?.day || `Day ${index + 1}`)
         })) : [];
       } catch (error) {
-        console.error('[Dashboard] Failed to fetch previous week data:', error);
+        logger.error('[Dashboard] Failed to fetch previous week data:', error);
         previousWeekData = [];
       }
     }
@@ -2778,7 +2771,7 @@ async function bindReportsActions(container, range, initialReport) {
           const prevReport = await appApi.getReportsSummary({ start: prevStartStr, end: prevEndStr });
           state.previousReport = prevReport;
         } catch (error) {
-          console.error('[Reports] Failed to fetch previous period data:', error);
+          logger.error('[Reports] Failed to fetch previous period data:', error);
           state.previousReport = null;
         }
       }
@@ -2936,7 +2929,7 @@ async function bindReportsActions(container, range, initialReport) {
         const prevReport = await appApi.getReportsSummary({ start: prevStartStr, end: prevEndStr });
         state.previousReport = prevReport;
       } catch (error) {
-        console.error('[Reports] Failed to fetch previous period data:', error);
+        logger.error('[Reports] Failed to fetch previous period data:', error);
         state.previousReport = null;
       }
     }

@@ -3,7 +3,7 @@
  * Handles auth state across the PWA and shares with iframe
  */
 
-import { getCookie, deleteCookie, storage, eventBus } from './utils.js';
+import { getCookie, deleteCookie, storage, eventBus, logger } from './utils.js';
 import { authApi } from './api.js';
 import { authMonitor } from './authMonitor.js';
 
@@ -71,7 +71,7 @@ export async function initAuth() {
   } catch (error) {
     // Expected for unauthenticated users - don't log as error
     if (error.message !== 'Not authenticated') {
-      console.error('Auth initialization failed:', error);
+      logger.error('Auth initialization failed:', error);
     }
     // Offline fallback (best-effort)
     const storedAuth = storage.get('auth');
@@ -125,7 +125,7 @@ export async function login(email, password) {
 
     return { success: false, error: 'Invalid response from server' };
   } catch (error) {
-    console.error('Login failed:', error);
+    logger.error('Login failed:', error);
 
     // Check for 403 with email_verified flag
     if (error.status === 403) {
@@ -195,7 +195,7 @@ export async function register(userData) {
 
     return { success: false, error: 'Invalid response from server' };
   } catch (error) {
-    console.error('Registration failed:', error);
+    logger.error('Registration failed:', error);
     return {
       success: false,
       error: error.message || 'Registration failed. Please try again.'
@@ -221,7 +221,7 @@ export function loginWithGoogle(returnTo = null) {
     window.location.href = googleUrl;
     return { success: true };
   } catch (error) {
-    console.error('Google OAuth failed:', error);
+    logger.error('Google OAuth failed:', error);
     return {
       success: false,
       error: error.message || 'Google OAuth is not available. Please try again later.'
@@ -240,7 +240,7 @@ export async function requestPasswordReset(email) {
       message: (response && response.message) || 'If the account exists, reset instructions were sent.'
     };
   } catch (error) {
-    console.error('Password reset request failed:', error);
+    logger.error('Password reset request failed:', error);
     return {
       success: false,
       error: error.message || 'Could not request password reset.'
@@ -259,7 +259,7 @@ export async function resetPasswordWithToken(token, newPassword) {
       message: (response && response.message) || 'Password has been reset.'
     };
   } catch (error) {
-    console.error('Password reset confirm failed:', error);
+    logger.error('Password reset confirm failed:', error);
     return {
       success: false,
       error: error.message || 'Could not reset password.'
@@ -278,7 +278,7 @@ export async function getActiveSessions() {
     }
     return { success: false, error: 'Failed to fetch sessions' };
   } catch (error) {
-    console.error('Get sessions failed:', error);
+    logger.error('Get sessions failed:', error);
     return {
       success: false,
       error: error.message || 'Could not fetch sessions.'
@@ -297,7 +297,7 @@ export async function revokeSession(tokenId) {
       message: (response && response.message) || 'Session revoked successfully.'
     };
   } catch (error) {
-    console.error('Revoke session failed:', error);
+    logger.error('Revoke session failed:', error);
     return {
       success: false,
       error: error.message || 'Could not revoke session.'
@@ -317,7 +317,7 @@ export async function revokeAllOtherSessions() {
       revokedCount: response && response.revoked_count
     };
   } catch (error) {
-    console.error('Revoke all sessions failed:', error);
+    logger.error('Revoke all sessions failed:', error);
     return {
       success: false,
       error: error.message || 'Could not revoke sessions.'
@@ -332,7 +332,7 @@ export async function logout() {
   try {
     await authApi.logout();
   } catch (error) {
-    console.error('Logout API call failed:', error);
+    logger.error('Logout API call failed:', error);
   } finally {
     // Clear auth state regardless of API result
     deleteCookie('goalixa_access');
@@ -417,10 +417,10 @@ export function report401AfterRefresh() {
   // Only count if the 401 happened within 5 seconds of a successful refresh
   if (timeSinceRefresh < 5000 && lastSuccessfulRefreshTime > 0) {
     consecutive401AfterRefresh++;
-    console.warn(`401 occurred ${timeSinceRefresh}ms after successful refresh (count: ${consecutive401AfterRefresh}/${MAX_401_AFTER_REFRESH})`);
+    logger.warn(`401 occurred ${timeSinceRefresh}ms after successful refresh (count: ${consecutive401AfterRefresh}/${MAX_401_AFTER_REFRESH})`);
 
     if (consecutive401AfterRefresh >= MAX_401_AFTER_REFRESH) {
-      console.error('Too many 401s after successful refresh. Token may be invalid. Logging out...');
+      logger.error('Too many 401s after successful refresh. Token may be invalid. Logging out...');
       logout();
       return false; // Indicates auth is invalid
     }
@@ -443,7 +443,7 @@ export async function refreshToken() {
 
   // Check if we've exceeded max attempts
   if (refreshAttempts >= MAX_REFRESH_ATTEMPTS) {
-    console.error('Token refresh failed: max attempts exceeded');
+    logger.error('Token refresh failed: max attempts exceeded');
     await logout();
     return { success: false, error: 'Session expired. Please login again.' };
   }
@@ -468,20 +468,20 @@ export async function refreshToken() {
       refreshAttempts++;
       const backoffDelay = REFRESH_BACKOFF_MS[Math.min(refreshAttempts - 1, REFRESH_BACKOFF_MS.length - 1)];
 
-      console.warn(`Token refresh failed, retrying in ${backoffDelay}ms (attempt ${refreshAttempts}/${MAX_REFRESH_ATTEMPTS})`);
+      logger.warn(`Token refresh failed, retrying in ${backoffDelay}ms (attempt ${refreshAttempts}/${MAX_REFRESH_ATTEMPTS})`);
 
       await new Promise(resolve => setTimeout(resolve, backoffDelay));
       return refreshToken();
 
     } catch (error) {
-      console.error('Token refresh failed:', error);
+      logger.error('Token refresh failed:', error);
 
       // Retry with backoff on network error
       refreshAttempts++;
       const backoffDelay = REFRESH_BACKOFF_MS[Math.min(refreshAttempts - 1, REFRESH_BACKOFF_MS.length - 1)];
 
       if (refreshAttempts < MAX_REFRESH_ATTEMPTS) {
-        console.warn(`Token refresh error, retrying in ${backoffDelay}ms (attempt ${refreshAttempts}/${MAX_REFRESH_ATTEMPTS})`);
+        logger.warn(`Token refresh error, retrying in ${backoffDelay}ms (attempt ${refreshAttempts}/${MAX_REFRESH_ATTEMPTS})`);
         await new Promise(resolve => setTimeout(resolve, backoffDelay));
         return refreshToken();
       }
@@ -507,7 +507,7 @@ function startProactiveRefresh() {
 
   proactiveRefreshTimer = setInterval(async () => {
     if (authState.isAuthenticated) {
-      console.log('Proactively refreshing token before expiration');
+      logger.log('Proactively refreshing token before expiration');
       await refreshToken();
     }
   }, PROACTIVE_REFRESH_INTERVAL);
@@ -537,7 +537,7 @@ export function shareAuthWithIframe(iframe) {
       user: authState.user
     }, '*');
   } catch (error) {
-    console.error('Failed to share auth with iframe:', error);
+    logger.error('Failed to share auth with iframe:', error);
   }
 }
 
@@ -570,9 +570,9 @@ export function listenForIframeMessages() {
 
       case 'AUTH_EXPIRED':
         // Iframe reports auth expired - attempt refresh with retry
-        console.log('Auth expired notification from iframe, refreshing...');
+        logger.log('Auth expired notification from iframe, refreshing...');
         refreshToken().catch(err => {
-          console.error('Failed to refresh after iframe notification:', err);
+          logger.error('Failed to refresh after iframe notification:', err);
         });
         break;
 

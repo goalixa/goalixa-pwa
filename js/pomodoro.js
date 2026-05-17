@@ -29,6 +29,8 @@
  *  - getTasks: async fn to fetch tasks payload (falls back to initialTasks)
  */
 
+import { escapeHtml, logger } from './utils.js';
+
 export function createPomodoroController(options = {}) {
   const {
     root,
@@ -317,7 +319,7 @@ export function createPomodoroController(options = {}) {
     } catch (error) {
       state.taskRunning = false;
       saveState(state);
-      console.error(error);
+      logger.error(error);
     }
   };
 
@@ -329,7 +331,7 @@ export function createPomodoroController(options = {}) {
     try {
       await appApi.bulkTaskAction(state.taskIds, 'stop');
     } catch (error) {
-      console.error(error);
+      logger.error(error);
     }
   };
 
@@ -814,7 +816,7 @@ export function createPomodoroController(options = {}) {
       if (ui.quickLabel) ui.quickLabel.value = '';
       setQuickTaskFeedback('Task added.', 'success');
     } catch (error) {
-      console.error(error);
+      logger.error(error);
       setQuickTaskFeedback(error.message || 'Saving failed.', 'error');
     } finally {
       if (submitButton) submitButton.disabled = false;
@@ -836,7 +838,7 @@ export function createPomodoroController(options = {}) {
       const tasksPayload = getTasks ? await getTasks() : initialTasks;
       hydrateFromTasks(tasksPayload);
     } catch (error) {
-      console.error(error);
+      logger.error(error);
       if (ui.taskList) {
         ui.taskList.innerHTML = '<div class="timer-empty-state">Failed to load tasks.</div>';
       }
@@ -891,11 +893,4 @@ function selectElements(root) {
   };
 }
 
-function escapeHtml(value) {
-  return String(value)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
+// escapeHtml imported from utils.js

@@ -4,7 +4,7 @@
  */
 
 import { isAuthenticated, initAuth } from './auth.js';
-import { eventBus } from './utils.js';
+import { eventBus, logger } from './utils.js';
 import { initTheme } from './theme.js';
 
 // Route configuration
@@ -13,7 +13,6 @@ const routes = {
   '/auth': { view: 'auth', title: 'Goalixa - Login' },
   '/login': { view: 'auth', title: 'Goalixa - Login' },
   '/signup': { view: 'auth', title: 'Goalixa - Sign Up' },
-  '/singnup': { view: 'auth', title: 'Goalixa - Sign Up' }, // Typo alias kept intentionally.
   '/register': { view: 'auth', title: 'Goalixa - Register' },
   '/forgot-password': { view: 'auth', title: 'Goalixa - Reset Password' },
   '/reset-password': { view: 'auth', title: 'Goalixa - Reset Password' },
@@ -77,7 +76,7 @@ async function loadViewModule(viewName) {
       return viewModules.sessions;
     }
   } catch (err) {
-    console.error(`Failed to load ${viewName} view:`, err);
+    logger.error(`Failed to load ${viewName} view:`, err);
   }
 
   return null;
@@ -93,6 +92,7 @@ export async function initRouter() {
   // Register view modules
   await loadViewModule('auth');
   await loadViewModule('app');
+  await loadViewModule('sessions');
 
   // Handle initial route
   handleRoute();
@@ -265,7 +265,7 @@ async function renderView(viewName, path) {
       await viewModule(container, path, currentParams);
     }
   } catch (error) {
-    console.error(`Error rendering ${viewName} view:`, error);
+    logger.error(`Error rendering ${viewName} view:`, error);
     container.innerHTML = `
       <div class="error-view">
         <h2>Something went wrong</h2>

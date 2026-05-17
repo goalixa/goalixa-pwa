@@ -1,19 +1,10 @@
 import { appApi } from '../../api.js';
-import { showToast } from '../../utils.js';
+import { showToast, escapeHtml, logger } from '../../utils.js';
 import { openTaskEditModal, closeTaskEditModal } from '../../components/task-edit-modal.js';
 import { taskDragDrop } from '../../dragDrop.js';
 import { inlineEditor } from '../../inlineEdit.js';
 
 let tasksViewCleanup = null;
-
-function escapeHtml(value) {
-  return String(value)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
 
 function formatDurationClock(seconds) {
   const safe = Math.max(0, Math.floor(Number(seconds || 0)));
@@ -576,7 +567,7 @@ export async function bindTasksSection(container, initialPayload = {}, projects 
 
         showToast('Task reordered', 'success');
       } catch (error) {
-        console.error('Failed to reorder task:', error);
+        logger.error('Failed to reorder task:', error);
         showToast('Failed to reorder task', 'error');
         // Reload to restore correct order
         paintTaskBoards();
@@ -595,7 +586,7 @@ export async function bindTasksSection(container, initialPayload = {}, projects 
 
         showToast('Task reordered', 'success');
       } catch (error) {
-        console.error('Failed to reorder task:', error);
+        logger.error('Failed to reorder task:', error);
         showToast('Failed to reorder task', 'error');
         paintTaskBoards();
       }
@@ -624,7 +615,7 @@ export async function bindTasksSection(container, initialPayload = {}, projects 
 
         showToast('Task updated', 'success');
       } catch (error) {
-        console.error('Failed to update task:', error);
+        logger.error('Failed to update task:', error);
         showToast(error.message || 'Failed to update task', 'error');
         // Re-throw to show error in inline editor
         throw error;

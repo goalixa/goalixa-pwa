@@ -11,7 +11,7 @@ import {
   requestPasswordReset,
   resetPasswordWithToken
 } from '../auth.js';
-import { showToast } from '../utils.js';
+import { showToast, logger } from '../utils.js';
 import { navigate, redirectAfterLogin } from '../router.js';
 
 /**
@@ -136,10 +136,29 @@ function getFormHTML(mode) {
           <div class="form-group">
             <label class="form-label" for="signupPassword">Password</label>
             <div class="input-wrapper">
-              <input type="password" class="form-input" id="signupPassword" name="password" placeholder="Create a strong password" autocomplete="new-password" required>
+              <input type="password" class="form-input" id="signupPassword" name="password" placeholder="Create a strong password" autocomplete="new-password" required aria-describedby="password-strength-info">
               <button type="button" class="password-toggle" data-password-toggle="signupPassword" aria-label="Toggle password visibility">
                 <i class="fas fa-eye"></i>
               </button>
+            </div>
+            <div class="password-strength" id="password-strength" data-strength="" aria-live="polite">
+              <div class="password-strength-bar">
+                <div class="password-strength-segment"></div>
+                <div class="password-strength-segment"></div>
+                <div class="password-strength-segment"></div>
+                <div class="password-strength-segment"></div>
+              </div>
+              <div class="password-strength-text" id="password-strength-info">
+                <span class="password-strength-label"></span>
+              </div>
+              <div class="password-requirements">
+                <ul>
+                  <li data-req="length">8+ characters</li>
+                  <li data-req="upper">Uppercase</li>
+                  <li data-req="lower">Lowercase</li>
+                  <li data-req="number">Number</li>
+                </ul>
+              </div>
             </div>
           </div>
 
@@ -595,10 +614,77 @@ function initAuthView(container, mode, params) {
         const alert = new VerificationAlert(alertContainer, email, {
           cooldownSeconds: 60,
           onResendSuccess: () => {
-            console.log('Verification email resent successfully');
+            logger.log('Verification email resent successfully');
           }
         });
         alert.render();
+      }
+    });
+  }
+}
+
+/**
+ * Calculate password strength
+ * Returns { strength: 'weak'|'fair'|'good'|'strong', label: string, requirements: object }
+ */
+function calculatePasswordStrength(password) {
+  const requirements = {
+    length: password.length >= 8,
+    upper: /[A-Z]/.test(password),
+    lower: /[a-z]/.test(password),
+    number: /[0-9]/.test(password),
+    special: /[^A-Za-z0-9]/.test(password)
+  };
+
+  const metCount = Object.values(requirements).filter(Boolean).length;
+
+  let strength = 'weak';
+  let label = 'Weak';
+
+  if (metCount >= 5 || (metCount >= 4 && password.length >= 12)) {
+    strength = 'strong';
+    label = 'Strong';
+  } else if (metCount >= 4 || (metCount >= 3 && password.length >= 10)) {
+    strength = 'good';
+    label = 'Good';
+  } else if (metCount >= 3) {
+    strength = 'fair';
+    label = 'Fair';
+  }
+
+  return { strength, label, requirements };
+}
+
+/**
+ * Update password strength indicator UI
+ */
+function updatePasswordStrengthUI(container, password) {
+  const strengthEl = container.querySelector('#password-strength');
+  const labelEl = container.querySelector('.password-strength-label');
+  const requirementsEl = container.querySelector('.password-requirements');
+
+  if (!strengthEl || !labelEl) return;
+
+  if (!password) {
+    strengthEl.setAttribute('data-strength', '');
+    labelEl.textContent = '';
+    if (requirementsEl) {
+      requirementsEl.querySelectorAll('li').forEach(li => li.classList.remove('met'));
+    }
+    return;
+  }
+
+  const { strength, label, requirements } = calculatePasswordStrength(password);
+
+  strengthEl.setAttribute('data-strength', strength);
+  labelEl.textContent = label;
+
+  // Update requirements checkmarks
+  if (requirementsEl) {
+    Object.entries(requirements).forEach(([key, met]) => {
+      const li = requirementsEl.querySelector(`[data-req="${key}"]`);
+      if (li) {
+        li.classList.toggle('met', met);
       }
     });
   }
@@ -625,6 +711,11 @@ function initFormValidation(container, mode) {
 
     // Real-time password strength for signup
     if (mode === 'signup' && input.id === 'signupPassword') {
+      // Update strength indicator on every keystroke
+      input.addEventListener('input', () => {
+        updatePasswordStrengthUI(container, input.value);
+      });
+
       input.addEventListener('blur', () => {
         if (input.value && input.value.length < 8) {
           showFieldError(input, 'Password must be at least 8 characters');
@@ -655,7 +746,7 @@ function isValidEmail(email) {
 }
 
 /**
- * Show field-level error
+ * Show field-level error with ARIA accessibility
  */
 function showFieldError(input, message) {
   if (!input) return;
@@ -663,27 +754,37 @@ function showFieldError(input, message) {
   // Remove existing error
   clearFieldError(input);
 
-  // Add error class to input
+  // Add error class and ARIA attributes to input
   input.classList.add('is-invalid');
+  input.setAttribute('aria-invalid', 'true');
 
-  // Create error message element
+  // Create error message element with unique ID for aria-describedby
   const wrapper = input.closest('.input-wrapper');
   if (wrapper) {
+    const errorId = `${input.id}-error`;
     const error = document.createElement('div');
     error.className = 'field-error';
+    error.id = errorId;
+    error.setAttribute('role', 'alert');
+    error.setAttribute('aria-live', 'assertive');
     error.textContent = message;
     wrapper.style.position = 'relative';
     wrapper.appendChild(error);
+
+    // Link input to error message
+    input.setAttribute('aria-describedby', errorId);
   }
 }
 
 /**
- * Clear field-level error
+ * Clear field-level error and restore ARIA state
  */
 function clearFieldError(input) {
   if (!input) return;
 
   input.classList.remove('is-invalid');
+  input.removeAttribute('aria-invalid');
+  input.removeAttribute('aria-describedby');
 
   const wrapper = input.closest('.input-wrapper');
   if (wrapper) {

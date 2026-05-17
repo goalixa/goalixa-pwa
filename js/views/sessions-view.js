@@ -9,7 +9,7 @@ import {
   revokeAllOtherSessions,
   isAuthenticated
 } from '../auth.js';
-import { showToast } from '../utils.js';
+import { showToast, escapeHtml } from '../utils.js';
 import { navigate } from '../router.js';
 
 function formatTimestamp(timestamp) {
@@ -163,16 +163,18 @@ function createSessionCard(session) {
   const deviceIcon = getDeviceIcon(session.device_type);
   const lastSeen = formatTimestamp(session.last_seen_at);
   const createdAt = formatTimestamp(session.created_at);
+  const sessionId = parseInt(session.id, 10) || 0;
+  const deviceName = escapeHtml(session.device || 'Unknown Device');
 
   return `
-    <div class="session-card ${isCurrent ? 'current' : ''}" data-token-id="${session.id}">
+    <div class="session-card ${isCurrent ? 'current' : ''}" data-token-id="${sessionId}">
       <div class="session-icon">
         ${deviceIcon}
       </div>
 
       <div class="session-info">
         <div class="session-header">
-          <h3>${session.device || 'Unknown Device'}</h3>
+          <h3>${deviceName}</h3>
           ${isCurrent ? '<span class="current-badge">Current</span>' : ''}
         </div>
 
@@ -190,7 +192,7 @@ function createSessionCard(session) {
 
       ${!isCurrent ? `
         <div class="session-actions">
-          <button class="btn btn-sm btn-danger revoke-btn" data-token-id="${session.id}">
+          <button class="btn btn-sm btn-danger revoke-btn" data-token-id="${sessionId}">
             <i class="fas fa-times"></i>
             Revoke
           </button>

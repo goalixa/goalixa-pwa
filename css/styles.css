@@ -4558,6 +4558,108 @@ select {
   margin-bottom: 0;
 }
 
+/* Password Strength Indicator */
+.password-strength {
+  margin-top: 8px;
+  padding: 0;
+}
+
+.password-strength-bar {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.password-strength-segment {
+  flex: 1;
+  height: 4px;
+  background: #e5e7eb;
+  border-radius: 2px;
+  transition: background-color 0.2s ease;
+}
+
+.password-strength[data-strength="weak"] .password-strength-segment:nth-child(1) {
+  background: #ef4444;
+}
+
+.password-strength[data-strength="fair"] .password-strength-segment:nth-child(1),
+.password-strength[data-strength="fair"] .password-strength-segment:nth-child(2) {
+  background: #f59e0b;
+}
+
+.password-strength[data-strength="good"] .password-strength-segment:nth-child(1),
+.password-strength[data-strength="good"] .password-strength-segment:nth-child(2),
+.password-strength[data-strength="good"] .password-strength-segment:nth-child(3) {
+  background: #3b82f6;
+}
+
+.password-strength[data-strength="strong"] .password-strength-segment {
+  background: #10b981;
+}
+
+.password-strength-text {
+  font-size: 0.75rem;
+  color: #6b7280;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.password-strength-label {
+  font-weight: 500;
+}
+
+.password-strength[data-strength="weak"] .password-strength-label {
+  color: #ef4444;
+}
+
+.password-strength[data-strength="fair"] .password-strength-label {
+  color: #f59e0b;
+}
+
+.password-strength[data-strength="good"] .password-strength-label {
+  color: #3b82f6;
+}
+
+.password-strength[data-strength="strong"] .password-strength-label {
+  color: #10b981;
+}
+
+.password-requirements {
+  margin-top: 8px;
+  font-size: 0.7rem;
+  color: #9ca3af;
+}
+
+.password-requirements ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+
+.password-requirements li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.password-requirements li::before {
+  content: '○';
+  color: #d1d5db;
+}
+
+.password-requirements li.met::before {
+  content: '●';
+  color: #10b981;
+}
+
+.password-requirements li.met {
+  color: #6b7280;
+}
+
 /* ============================================
    LANDING VIEW STYLES (Synced with landing page)
    ============================================ */
