@@ -2802,7 +2802,7 @@ select {
 .overview-metric-label {
   font-size: 0.8rem;
   color: var(--text-tertiary);
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
@@ -2857,7 +2857,7 @@ select {
 .overview-inline-meta {
   font-size: 0.82rem;
   color: #1f2a44;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .goals-card {
@@ -2878,7 +2878,7 @@ select {
   text-transform: uppercase;
   letter-spacing: 0.12em;
   color: #60708a;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .goals-title {
@@ -2904,7 +2904,7 @@ select {
 .goal-stat-label {
   font-size: 0.8rem;
   color: #5f6f89;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .goal-stat-value {
@@ -2976,7 +2976,7 @@ select {
 
 .overview-list-meta {
   font-size: 0.82rem;
-  font-weight: 600;
+  font-weight: 700;
   color: #1f2a44;
 }
 
@@ -3096,7 +3096,7 @@ select {
   color: #4d5c76;
   padding: 4px 10px;
   font-size: 0.78rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
 }
 
@@ -4205,7 +4205,7 @@ select {
 .auth-view.auth-ui .auth-header h1 {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   font-size: 1.75rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: -0.01em;
   margin-top: 16px;
   margin-bottom: 0;
@@ -4682,7 +4682,7 @@ select {
   letter-spacing: 0.25em;
   text-transform: uppercase;
   color: var(--primary-dark);
-  font-weight: 600;
+  font-weight: 700;
   margin-bottom: 12px;
 }
 
@@ -4749,7 +4749,7 @@ select {
   align-items: center;
   gap: 10px;
   font-size: 1.8rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--primary);
 }
 
@@ -4759,7 +4759,7 @@ select {
 
 .brand-name {
   font-family: 'Montserrat', sans-serif;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .nav-menu {
@@ -5387,7 +5387,7 @@ select {
 
 .price {
   font-size: 2.2rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--primary);
   margin: 10px 0;
 }
@@ -5421,7 +5421,7 @@ select {
   position: absolute;
   left: 0;
   color: var(--primary);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .pricing-note {
@@ -5905,7 +5905,7 @@ footer {
 }
 
 .tasks-page .label-picker-title {
-  font-weight: 600;
+  font-weight: 700;
   font-size: 0.9rem;
   color: var(--text-primary);
 }
@@ -6253,7 +6253,7 @@ footer {
   padding: 3px 8px;
   border-radius: 999px;
   font-size: 0.7rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
 }
 
@@ -6309,7 +6309,7 @@ footer {
   padding: 4px 9px;
   border-radius: 999px;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   background: rgba(34, 197, 94, 0.12);
   color: #15803d;
 }
@@ -7129,7 +7129,7 @@ footer {
 
 .focus-time {
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-primary);
   min-width: 96px;
   display: inline-flex;
@@ -7364,7 +7364,7 @@ footer {
 .pomodoro-mode {
   margin: 0;
   font-size: 1.6rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .pomodoro-status {
@@ -7453,7 +7453,7 @@ footer {
 
 .pomodoro-dial {
   font-size: 2.4rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.08em;
   color: var(--timer-accent);
   font-variant-numeric: tabular-nums;
@@ -7989,7 +7989,7 @@ footer {
   color: var(--text-secondary);
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .calendar-filter select {
@@ -8009,7 +8009,7 @@ footer {
   font-size: 0.82rem;
   color: var(--text-secondary);
   background: var(--background-subtle);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .calendar-board-panel {
@@ -8352,7 +8352,7 @@ footer {
 .timesheet-title {
   margin: 0;
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-primary);
 }
 
@@ -8388,7 +8388,7 @@ footer {
 
 .timesheet-target-congrats {
   color: #166534;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .timesheet-table {
@@ -8705,7 +8705,7 @@ footer {
   justify-content: center;
   position: relative;
   font-size: 0.7rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .goals-page .deadline-ring::before {
@@ -8729,7 +8729,7 @@ footer {
   padding: 4px 9px;
   border-radius: 999px;
   font-size: 0.72rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -9544,12 +9544,12 @@ footer {
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .habits-page .habit-stat-value {
   font-size: 1.5rem;
-  font-weight: 600;
+  font-weight: 700;
   background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -10427,7 +10427,7 @@ footer {
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .planner-page .planner-stat-value {
@@ -10475,7 +10475,7 @@ footer {
   background: transparent;
   color: var(--text-secondary);
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -10518,7 +10518,7 @@ footer {
   background: var(--background-subtle);
   color: var(--text-secondary);
   font-size: 0.78rem;
-  font-weight: 600;
+  font-weight: 700;
   padding: 6px 10px;
 }
 
@@ -10606,7 +10606,7 @@ footer {
 
 .planner-page .planner-habit-name {
   font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-primary);
 }
 
@@ -10625,7 +10625,7 @@ footer {
   align-items: center;
   gap: 5px;
   font-size: 0.78rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-secondary);
   background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(59, 130, 246, 0.04) 100%);
   border: 1px solid rgba(59, 130, 246, 0.15);
@@ -10696,7 +10696,7 @@ footer {
 
 .planner-page .planner-task-title {
   font-size: 0.92rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-primary);
 }
 
@@ -10894,7 +10894,7 @@ footer {
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .reminders-page .reminder-stat-value {
@@ -10952,7 +10952,7 @@ footer {
   gap: 6px;
   font-size: 0.8rem;
   color: var(--text-secondary);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .reminders-page .reminder-field input,
@@ -11330,7 +11330,7 @@ footer {
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .labels-page .label-stat-value {
@@ -11409,7 +11409,7 @@ footer {
 .labels-page .label-field span {
   font-size: 0.8rem;
   color: var(--text-secondary);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .labels-page .label-field input {
@@ -11439,7 +11439,7 @@ footer {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--text-secondary);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .labels-page .label-color-picker {
@@ -11610,7 +11610,7 @@ footer {
   border-radius: 999px;
   color: #ffffff;
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .labels-page .label-hex {
@@ -11618,7 +11618,7 @@ footer {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--text-secondary);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .labels-page .label-item-actions {
@@ -11830,7 +11830,7 @@ footer {
   color: #3B82F6;
   padding: 4px 10px;
   font-size: 0.74rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -11864,14 +11864,14 @@ footer {
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.07em;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .account-page .meta-value {
   margin: 2px 0 0;
   font-size: 0.88rem;
   color: var(--text-primary);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .account-page .profile-actions-vertical {
@@ -11902,7 +11902,7 @@ footer {
   gap: 6px;
   font-size: 0.8rem;
   color: var(--text-secondary);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .account-page .profile-field-card input,
@@ -12415,7 +12415,7 @@ footer {
 
 .timer-display {
   font-size: 4rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--primary);
   margin-bottom: 20px;
 }
@@ -13442,7 +13442,7 @@ footer {
   border-radius: 999px;
   font-size: 0.72rem;
   padding: 3px 8px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .goal-status-lite.success {
@@ -14427,7 +14427,7 @@ footer {
 
 .project-stat-value {
   font-size: 1.6rem;
-  font-weight: 600;
+  font-weight: 700;
   color: #1f2a44;
   line-height: 1.2;
 }
@@ -14467,7 +14467,7 @@ footer {
 .reports-chart-card .goals-title {
   font-size: 1.1rem;
   color: #1f2a44;
-  font-weight: 600;
+  font-weight: 700;
   margin: 0;
 }
 
@@ -14988,7 +14988,7 @@ footer {
 
 .auth-view.auth-ui .auth-header h1 {
   font-size: 1.75rem !important;
-  font-weight: 600 !important;
+  font-weight: 700 !important;
   color: #111827 !important;
   margin-top: 16px !important;
 }
@@ -16451,7 +16451,7 @@ footer {
 .pwa-update-modal-title {
   margin: 0 0 12px;
   font-size: 1.5rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-primary);
   line-height: 1.3;
 }
@@ -16627,7 +16627,7 @@ footer {
 
 .dashboard-hero-title h2 {
   font-size: 2rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--dark);
   margin-bottom: 4px;
 }
@@ -16674,7 +16674,7 @@ footer {
 
 .dashboard-kpi-value {
   font-size: 1.75rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--dark);
   margin-bottom: 4px;
 }
@@ -16909,7 +16909,7 @@ footer {
 .dashboard-list-checkbox.checked::after {
   content: '✓';
   font-size: 0.7rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .dashboard-list-content {
@@ -16960,7 +16960,7 @@ footer {
   color: white;
   border-radius: 999px;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .dashboard-streak-badge i {
@@ -17062,7 +17062,7 @@ footer {
 
 .dashboard-card-pomodoro .pomodoro-mode {
   font-size: 1.75rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--dark);
   margin: 0;
 }
@@ -17114,7 +17114,7 @@ footer {
 
 .dashboard-chart-metric-value {
   font-size: 1.25rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--dark);
 }
 
@@ -17540,7 +17540,7 @@ footer {
 
 .sessions-view .view-header h1 {
   font-size: 28px;
-  font-weight: 600;
+  font-weight: 700;
   margin-bottom: 8px;
   color: var(--text-primary);
 }

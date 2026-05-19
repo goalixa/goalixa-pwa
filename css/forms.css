@@ -1,0 +1,737 @@
+/**
+ * Goalixa PWA - Modern Form System
+ * Clean, minimal, responsive forms for create/edit modals
+ *
+ * Design Philosophy:
+ * - Clean & spacious: Generous padding, clear hierarchy
+ * - Modern inputs: Subtle borders, smooth transitions
+ * - Responsive: Mobile-first, adapts beautifully
+ * - Accessible: Proper labels, focus states, error handling
+ */
+
+/* ============================================
+   MODAL OVERLAYS
+   ============================================ */
+
+.modal-overlay,
+.task-edit-modal-overlay,
+.project-edit-modal-overlay,
+.goal-edit-modal-overlay,
+.habit-edit-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+  opacity: 0;
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+
+.modal-overlay.closing,
+.task-edit-modal-overlay.closing,
+.project-edit-modal-overlay.closing,
+.goal-edit-modal-overlay.closing,
+.habit-edit-modal-overlay.closing {
+  animation: fadeOut 0.2s ease-out forwards;
+}
+
+@keyframes fadeOut {
+  to { opacity: 0; }
+}
+
+/* ============================================
+   MODAL CONTAINERS
+   ============================================ */
+
+.modal,
+.task-edit-modal,
+.project-edit-modal,
+.goal-edit-modal,
+.habit-edit-modal {
+  background: var(--surface);
+  border-radius: 16px;
+  border: 1px solid var(--border-subtle);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.02),
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 540px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  transform: scale(0.95);
+  animation: scaleIn 0.2s ease-out forwards;
+}
+
+@keyframes scaleIn {
+  to { transform: scale(1); }
+}
+
+/* ============================================
+   MODAL HEADER
+   ============================================ */
+
+.modal-header,
+.task-edit-modal-header,
+.project-edit-modal-header,
+.goal-edit-modal-header,
+.habit-edit-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.modal-header h2,
+.task-edit-modal-header h2,
+.project-edit-modal-header h2,
+.goal-edit-modal-header h2,
+.habit-edit-modal-header h2 {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.modal-close,
+.task-edit-modal-close,
+.project-edit-modal-close,
+.goal-edit-modal-close,
+.habit-edit-modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-size: var(--text-lg);
+}
+
+.modal-close:hover,
+.task-edit-modal-close:hover,
+.project-edit-modal-close:hover,
+.goal-edit-modal-close:hover,
+.habit-edit-modal-close:hover {
+  background: var(--background-subtle);
+  color: var(--text-secondary);
+}
+
+/* ============================================
+   MODAL BODY (Scrollable Content)
+   ============================================ */
+
+.modal-body,
+.task-edit-modal-body,
+.project-edit-modal-body,
+.goal-edit-modal-body,
+.habit-edit-modal-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+  /* Custom scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-default) transparent;
+}
+
+.modal-body::-webkit-scrollbar,
+.task-edit-modal-body::-webkit-scrollbar,
+.project-edit-modal-body::-webkit-scrollbar,
+.goal-edit-modal-body::-webkit-scrollbar,
+.habit-edit-modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-body::-webkit-scrollbar-track,
+.task-edit-modal-body::-webkit-scrollbar-track,
+.project-edit-modal-body::-webkit-scrollbar-track,
+.goal-edit-modal-body::-webkit-scrollbar-track,
+.habit-edit-modal-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.modal-body::-webkit-scrollbar-thumb,
+.task-edit-modal-body::-webkit-scrollbar-thumb,
+.project-edit-modal-body::-webkit-scrollbar-thumb,
+.goal-edit-modal-body::-webkit-scrollbar-thumb,
+.habit-edit-modal-body::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: 3px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover,
+.task-edit-modal-body::-webkit-scrollbar-thumb:hover,
+.project-edit-modal-body::-webkit-scrollbar-thumb:hover,
+.goal-edit-modal-body::-webkit-scrollbar-thumb:hover,
+.habit-edit-modal-body::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
+}
+
+/* ============================================
+   FORM FIELDS
+   ============================================ */
+
+.form-field,
+.task-edit-field,
+.project-edit-field,
+.goal-edit-field,
+.habit-edit-field {
+  margin-bottom: 1.25rem;
+}
+
+.form-field:last-child,
+.task-edit-field:last-child,
+.project-edit-field:last-child,
+.goal-edit-field:last-child,
+.habit-edit-field:last-child {
+  margin-bottom: 0;
+}
+
+/* Form Labels */
+.form-label,
+.task-edit-field-label,
+.project-edit-field-label,
+.goal-edit-field-label,
+.habit-edit-field-label {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.005em;
+}
+
+.required-indicator {
+  color: var(--danger);
+  margin-left: 0.25rem;
+}
+
+/* ============================================
+   TEXT INPUTS & TEXTAREAS
+   ============================================ */
+
+.form-input,
+.form-textarea,
+.task-edit-input,
+.task-edit-textarea,
+.project-edit-input,
+.project-edit-textarea,
+.goal-edit-input,
+.goal-edit-textarea,
+.habit-edit-input,
+.habit-edit-textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  font-weight: var(--font-normal);
+  color: var(--text-primary);
+  background: var(--surface);
+  border: 1.5px solid var(--border-default);
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder,
+.task-edit-input::placeholder,
+.task-edit-textarea::placeholder,
+.project-edit-input::placeholder,
+.project-edit-textarea::placeholder,
+.goal-edit-input::placeholder,
+.goal-edit-textarea::placeholder,
+.habit-edit-input::placeholder,
+.habit-edit-textarea::placeholder {
+  color: var(--text-tertiary);
+}
+
+.form-input:hover,
+.form-textarea:hover,
+.task-edit-input:hover,
+.task-edit-textarea:hover,
+.project-edit-input:hover,
+.project-edit-textarea:hover,
+.goal-edit-input:hover,
+.goal-edit-textarea:hover,
+.habit-edit-input:hover,
+.habit-edit-textarea:hover {
+  border-color: var(--primary);
+}
+
+.form-input:focus,
+.form-textarea:focus,
+.task-edit-input:focus,
+.task-edit-textarea:focus,
+.project-edit-input:focus,
+.project-edit-textarea:focus,
+.goal-edit-input:focus,
+.goal-edit-textarea:focus,
+.habit-edit-input:focus,
+.habit-edit-textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-textarea,
+.task-edit-textarea,
+.project-edit-textarea,
+.goal-edit-textarea,
+.habit-edit-textarea {
+  min-height: 100px;
+  resize: vertical;
+  line-height: var(--leading-relaxed);
+}
+
+/* ============================================
+   SELECT DROPDOWNS
+   ============================================ */
+
+.form-select,
+.task-edit-select,
+.project-edit-select,
+.goal-edit-select,
+.habit-edit-select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  padding-right: 2.5rem;
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  font-weight: var(--font-normal);
+  color: var(--text-primary);
+  background: var(--surface);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='%236B7280' d='M4.427 5.927l3.396 3.396a.25.25 0 00.354 0l3.396-3.396A.25.25 0 0011.396 5.5H4.604a.25.25 0 00-.177.427z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 16px;
+  border: 1.5px solid var(--border-default);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+.form-select:hover,
+.task-edit-select:hover,
+.project-edit-select:hover,
+.goal-edit-select:hover,
+.habit-edit-select:hover {
+  border-color: var(--primary);
+}
+
+.form-select:focus,
+.task-edit-select:focus,
+.project-edit-select:focus,
+.goal-edit-select:focus,
+.habit-edit-select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* ============================================
+   CHECKBOXES & RADIO BUTTONS (Custom Styled)
+   ============================================ */
+
+.form-checkbox,
+.form-radio {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  cursor: pointer;
+  padding: 0.625rem;
+  border-radius: 8px;
+  transition: background 0.15s ease;
+}
+
+.form-checkbox:hover,
+.form-radio:hover {
+  background: var(--background-subtle);
+}
+
+.form-checkbox input[type="checkbox"],
+.form-radio input[type="radio"] {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+  border: 1.5px solid var(--border-default);
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: var(--surface);
+  position: relative;
+}
+
+.form-radio input[type="radio"] {
+  border-radius: 50%;
+}
+
+.form-checkbox input[type="checkbox"]:hover,
+.form-radio input[type="radio"]:hover {
+  border-color: var(--primary);
+}
+
+.form-checkbox input[type="checkbox"]:checked,
+.form-radio input[type="radio"]:checked {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.form-checkbox input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 12px;
+  height: 12px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='white'%3E%3Cpath d='M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+.form-radio input[type="radio"]:checked::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  background: white;
+  border-radius: 50%;
+}
+
+/* ============================================
+   LABELS & TAGS (Checkboxes for labels/goals)
+   ============================================ */
+
+.labels-list,
+.goals-list,
+.task-edit-labels-list,
+.project-edit-labels-list,
+.project-edit-goals-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.label-item,
+.goal-item,
+.task-edit-label-item,
+.project-edit-label-item,
+.project-edit-goal-item {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  position: relative;
+}
+
+.label-item input[type="checkbox"],
+.goal-item input[type="checkbox"],
+.task-edit-label-item input[type="checkbox"],
+.project-edit-label-item input[type="checkbox"],
+.project-edit-goal-item input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.label-pill,
+.goal-pill,
+.task-edit-label-pill,
+.project-edit-label-pill,
+.project-edit-goal-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.875rem;
+  background: var(--background-subtle);
+  border: 1.5px solid var(--border-subtle);
+  border-radius: 8px;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.label-item:hover .label-pill,
+.goal-item:hover .goal-pill,
+.task-edit-label-item:hover .task-edit-label-pill,
+.project-edit-label-item:hover .project-edit-label-pill,
+.project-edit-goal-item:hover .project-edit-goal-info {
+  border-color: var(--primary);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.label-item input:checked + .label-pill,
+.goal-item input:checked + .goal-pill,
+.task-edit-label-item input:checked + .task-edit-label-pill,
+.project-edit-label-item input:checked + .project-edit-label-pill,
+.project-edit-goal-item input:checked + .project-edit-goal-info {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+.label-swatch,
+.task-edit-label-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.label-item input:checked + .label-pill .label-swatch,
+.task-edit-label-item input:checked + .task-edit-label-pill .task-edit-label-swatch {
+  opacity: 0.8;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3);
+}
+
+/* Goal info styling */
+.goal-info,
+.project-edit-goal-info {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.goal-name,
+.project-edit-goal-name {
+  font-weight: var(--font-medium);
+}
+
+.goal-description,
+.project-edit-goal-description {
+  font-size: var(--text-xs);
+  opacity: 0.7;
+  line-height: 1.3;
+}
+
+/* No items available message */
+.no-labels,
+.no-goals,
+.task-edit-no-labels,
+.project-edit-no-labels {
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+
+/* ============================================
+   MODAL FOOTER (Action Buttons)
+   ============================================ */
+
+.modal-footer,
+.task-edit-modal-footer,
+.project-edit-modal-footer,
+.goal-edit-modal-footer,
+.habit-edit-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.modal-footer .btn,
+.task-edit-modal-footer .btn,
+.project-edit-modal-footer .btn,
+.goal-edit-modal-footer .btn,
+.habit-edit-modal-footer .btn {
+  min-width: 100px;
+}
+
+/* ============================================
+   FORM VALIDATION & ERRORS
+   ============================================ */
+
+.form-error,
+.field-error {
+  display: block;
+  margin-top: 0.375rem;
+  font-size: var(--text-xs);
+  color: var(--danger);
+  font-weight: var(--font-medium);
+}
+
+.form-input.error,
+.form-textarea.error,
+.form-select.error,
+.task-edit-input.error,
+.task-edit-textarea.error,
+.task-edit-select.error,
+.project-edit-input.error,
+.project-edit-textarea.error,
+.project-edit-select.error {
+  border-color: var(--danger);
+}
+
+.form-input.error:focus,
+.form-textarea.error:focus,
+.form-select.error:focus,
+.task-edit-input.error:focus,
+.task-edit-textarea.error:focus,
+.task-edit-select.error:focus,
+.project-edit-input.error:focus,
+.project-edit-textarea.error:focus,
+.project-edit-select.error:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* ============================================
+   RESPONSIVE: MOBILE OPTIMIZATION
+   ============================================ */
+
+@media (max-width: 640px) {
+  .modal,
+  .task-edit-modal,
+  .project-edit-modal,
+  .goal-edit-modal,
+  .habit-edit-modal {
+    max-width: 100%;
+    border-radius: 12px;
+    max-height: 95vh;
+  }
+
+  .modal-header,
+  .task-edit-modal-header,
+  .project-edit-modal-header,
+  .goal-edit-modal-header,
+  .habit-edit-modal-header {
+    padding: 1rem 1.25rem;
+  }
+
+  .modal-header h2,
+  .task-edit-modal-header h2,
+  .project-edit-modal-header h2,
+  .goal-edit-modal-header h2,
+  .habit-edit-modal-header h2 {
+    font-size: var(--text-base);
+  }
+
+  .modal-body,
+  .task-edit-modal-body,
+  .project-edit-modal-body,
+  .goal-edit-modal-body,
+  .habit-edit-modal-body {
+    padding: 1.25rem;
+  }
+
+  .modal-footer,
+  .task-edit-modal-footer,
+  .project-edit-modal-footer,
+  .goal-edit-modal-footer,
+  .habit-edit-modal-footer {
+    padding: 0.875rem 1.25rem;
+    flex-direction: column-reverse;
+  }
+
+  .modal-footer .btn,
+  .task-edit-modal-footer .btn,
+  .project-edit-modal-footer .btn,
+  .goal-edit-modal-footer .btn,
+  .habit-edit-modal-footer .btn {
+    width: 100%;
+    min-width: auto;
+  }
+
+  .form-input,
+  .form-textarea,
+  .form-select,
+  .task-edit-input,
+  .task-edit-textarea,
+  .task-edit-select,
+  .project-edit-input,
+  .project-edit-textarea,
+  .project-edit-select {
+    font-size: 16px; /* Prevents iOS zoom on focus */
+  }
+}
+
+/* ============================================
+   DARK MODE ADJUSTMENTS
+   ============================================ */
+
+[data-theme="dark"] .modal-overlay,
+[data-theme="dark"] .task-edit-modal-overlay,
+[data-theme="dark"] .project-edit-modal-overlay,
+[data-theme="dark"] .goal-edit-modal-overlay,
+[data-theme="dark"] .habit-edit-modal-overlay {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+[data-theme="dark"] .form-select,
+[data-theme="dark"] .task-edit-select,
+[data-theme="dark"] .project-edit-select,
+[data-theme="dark"] .goal-edit-select,
+[data-theme="dark"] .habit-edit-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='%23CBD5E1' d='M4.427 5.927l3.396 3.396a.25.25 0 00.354 0l3.396-3.396A.25.25 0 0011.396 5.5H4.604a.25.25 0 00-.177.427z'/%3E%3C/svg%3E");
+}
+
+/* ============================================
+   ACCESSIBILITY
+   ============================================ */
+
+/* Focus visible for keyboard navigation */
+.form-input:focus-visible,
+.form-textarea:focus-visible,
+.form-select:focus-visible,
+.form-checkbox:focus-visible,
+.form-radio:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .form-input,
+  .form-textarea,
+  .form-select,
+  .task-edit-input,
+  .task-edit-textarea,
+  .task-edit-select {
+    border-width: 2px;
+  }
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  .modal-overlay,
+  .modal,
+  .form-input,
+  .form-textarea,
+  .form-select {
+    animation: none;
+    transition: none;
+  }
+}
