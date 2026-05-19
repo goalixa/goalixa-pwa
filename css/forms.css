@@ -61,14 +61,14 @@
 .goal-edit-modal,
 .habit-edit-modal {
   background: var(--surface);
-  border-radius: 16px;
+  border-radius: 20px; /* More modern */
   border: 1px solid var(--border-subtle);
   box-shadow:
     0 0 0 1px rgba(0, 0, 0, 0.02),
-    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 8px 16px -4px rgba(0, 0, 0, 0.08),
     0 20px 25px -5px rgba(0, 0, 0, 0.1);
   width: 100%;
-  max-width: 540px;
+  max-width: 560px; /* Slightly wider */
   max-height: 90vh;
   display: flex;
   flex-direction: column;
@@ -92,7 +92,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.25rem 1.5rem;
+  padding: 1.5rem 1.75rem; /* More generous */
   border-bottom: 1px solid var(--border-subtle);
   flex-shrink: 0;
 }
@@ -146,7 +146,7 @@
 .project-edit-modal-body,
 .goal-edit-modal-body,
 .habit-edit-modal-body {
-  padding: 1.5rem;
+  padding: 1.75rem; /* More breathing room */
   overflow-y: auto;
   flex: 1;
   /* Custom scrollbar */
@@ -196,7 +196,7 @@
 .project-edit-field,
 .goal-edit-field,
 .habit-edit-field {
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.5rem; /* More space between fields */
 }
 
 .form-field:last-child,
@@ -241,16 +241,17 @@
 .habit-edit-input,
 .habit-edit-textarea {
   width: 100%;
-  padding: 0.75rem 1rem;
+  padding: 0.875rem 1.125rem; /* More comfortable padding */
   font-family: var(--font-sans);
-  font-size: var(--text-base);
+  font-size: 0.9375rem; /* 15px - better readability */
   font-weight: var(--font-normal);
   color: var(--text-primary);
   background: var(--surface);
   border: 1.5px solid var(--border-default);
-  border-radius: 10px;
+  border-radius: 12px; /* More modern */
   transition: all 0.2s ease;
   outline: none;
+  min-height: 44px; /* Better touch target */
 }
 
 .form-input::placeholder,
@@ -612,6 +613,7 @@
    RESPONSIVE: MOBILE OPTIMIZATION
    ============================================ */
 
+/* Mobile Responsive - Modern, Touch-Friendly */
 @media (max-width: 640px) {
   .modal,
   .task-edit-modal,
@@ -619,8 +621,9 @@
   .goal-edit-modal,
   .habit-edit-modal {
     max-width: 100%;
-    border-radius: 12px;
+    border-radius: 16px; /* Still modern on mobile */
     max-height: 95vh;
+    margin: 0.5rem; /* Small margin from screen edge */
   }
 
   .modal-header,
@@ -628,7 +631,7 @@
   .project-edit-modal-header,
   .goal-edit-modal-header,
   .habit-edit-modal-header {
-    padding: 1rem 1.25rem;
+    padding: 1.25rem 1.5rem; /* Comfortable padding */
   }
 
   .modal-header h2,
@@ -636,7 +639,7 @@
   .project-edit-modal-header h2,
   .goal-edit-modal-header h2,
   .habit-edit-modal-header h2 {
-    font-size: var(--text-base);
+    font-size: 1.125rem; /* 18px - readable */
   }
 
   .modal-body,
@@ -644,7 +647,7 @@
   .project-edit-modal-body,
   .goal-edit-modal-body,
   .habit-edit-modal-body {
-    padding: 1.25rem;
+    padding: 1.5rem; /* Maintain comfortable spacing */
   }
 
   .modal-footer,
@@ -652,8 +655,9 @@
   .project-edit-modal-footer,
   .goal-edit-modal-footer,
   .habit-edit-modal-footer {
-    padding: 0.875rem 1.25rem;
+    padding: 1rem 1.5rem;
     flex-direction: column-reverse;
+    gap: 0.75rem;
   }
 
   .modal-footer .btn,
@@ -663,6 +667,7 @@
   .habit-edit-modal-footer .btn {
     width: 100%;
     min-width: auto;
+    min-height: 48px; /* Better touch target */
   }
 
   .form-input,
@@ -675,6 +680,7 @@
   .project-edit-textarea,
   .project-edit-select {
     font-size: 16px; /* Prevents iOS zoom on focus */
+    min-height: 48px; /* Better touch target */
   }
 }
 

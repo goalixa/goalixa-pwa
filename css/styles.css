@@ -73,27 +73,28 @@
   --gray: #6B7280;
   --light-gray: #E5E7EB;
 
-  /* === SPACING === */
+  /* === SPACING - Modern, Generous === */
   --space-0: 0;
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-5: 1.25rem;
-  --space-6: 1.5rem;
-  --space-8: 2rem;
-  --space-10: 2.5rem;
-  --space-12: 3rem;
-  --space-16: 4rem;
-  --space-20: 5rem;
-  --space-24: 6rem;
+  --space-1: 0.25rem;   /* 4px */
+  --space-2: 0.5rem;    /* 8px */
+  --space-3: 0.75rem;   /* 12px */
+  --space-4: 1rem;      /* 16px */
+  --space-5: 1.5rem;    /* 24px - increased for better breathing room */
+  --space-6: 2rem;      /* 32px - increased */
+  --space-8: 2.5rem;    /* 40px - increased */
+  --space-10: 3rem;     /* 48px */
+  --space-12: 4rem;     /* 64px */
+  --space-16: 5rem;     /* 80px */
+  --space-20: 6rem;     /* 96px */
+  --space-24: 8rem;     /* 128px */
 
-  /* === BORDER RADIUS === */
-  --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
-  --radius-2xl: 1.5rem;
+  /* === BORDER RADIUS - Modern, Soft === */
+  --radius-sm: 0.5rem;    /* 8px - softer */
+  --radius-md: 0.75rem;   /* 12px - modern default */
+  --radius-lg: 1rem;      /* 16px */
+  --radius-xl: 1.25rem;   /* 20px */
+  --radius-2xl: 1.5rem;   /* 24px */
+  --radius-3xl: 2rem;     /* 32px - for large cards */
   --radius-full: 9999px;
 
   /* Legacy */
@@ -491,26 +492,27 @@ a:hover {
 }
 
 /* ============================================
-   BUTTONS
+   BUTTONS - Modern, Minimal Design
    ============================================ */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  padding: var(--space-3) var(--space-5);
-  border-radius: var(--radius-md);
+  padding: 0.875rem 1.5rem; /* Larger, more comfortable */
+  border-radius: 12px; /* Softer, more modern */
   font-family: var(--font-sans);
   font-weight: var(--font-medium);
-  font-size: var(--text-sm);
-  line-height: 1;
-  letter-spacing: 0;
+  font-size: 0.9375rem; /* 15px - slightly larger */
+  line-height: 1.2;
+  letter-spacing: -0.01em;
   text-decoration: none;
   border: none;
   cursor: pointer;
-  transition: var(--transition);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
   user-select: none;
+  min-height: 44px; /* Better touch target */
 }
 
 .btn:disabled {
@@ -519,34 +521,43 @@ a:hover {
   transform: none !important;
 }
 
+/* Primary Button - Main CTAs */
 .btn-primary {
   background-color: var(--primary);
   color: white;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .btn-primary:hover:not(:disabled) {
   background-color: var(--primary-hover);
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
   transform: translateY(-1px);
 }
 
 .btn-primary:active:not(:disabled) {
   transform: translateY(0);
-  box-shadow: var(--shadow-xs);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
+/* Secondary Button - Outlined style */
 .btn-secondary {
   background-color: var(--surface);
   color: var(--text-primary);
   border: 1.5px solid var(--border-default);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
 .btn-secondary:hover:not(:disabled) {
   background-color: var(--background-subtle);
-  border-color: var(--border-default);
+  border-color: var(--primary);
+  color: var(--primary);
 }
 
+.btn-secondary:active:not(:disabled) {
+  background-color: var(--background);
+}
+
+/* Ghost Button - Minimal style */
 .btn-ghost {
   background-color: transparent;
   color: var(--text-secondary);
@@ -557,9 +568,43 @@ a:hover {
   color: var(--text-primary);
 }
 
+/* Success Button */
+.btn-success {
+  background-color: var(--success);
+  color: white;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.btn-success:hover:not(:disabled) {
+  background-color: #0EA472;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+  transform: translateY(-1px);
+}
+
+/* Danger Button */
+.btn-danger {
+  background-color: var(--danger);
+  color: white;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background-color: #B91C1C;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
+  transform: translateY(-1px);
+}
+
+/* Button Sizes */
+.btn-small {
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  min-height: 36px;
+}
+
 .btn-large {
-  padding: var(--space-4) var(--space-6);
-  font-size: var(--text-lg);
+  padding: 1.125rem 2rem;
+  font-size: 1rem;
+  min-height: 52px;
 }
 
 .btn-block {
@@ -2015,21 +2060,20 @@ select {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-/* Improved Task Items */
+/* Modern Task & Project Items */
 .task-item,
 .project-item,
 .event-item {
   border: 1px solid var(--border-subtle);
-  border-radius: 14px;
-  padding: 14px 16px;
+  border-radius: 16px; /* More modern, softer corners */
+  padding: 1.25rem 1.5rem; /* More generous padding */
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
-  margin-bottom: 12px;
-  background: linear-gradient(135deg, var(--surface) 0%, rgba(240, 247, 255, 0.3) 100%);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04),
-              inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  gap: 1rem;
+  margin-bottom: 1rem; /* Better spacing between items */
+  background: var(--surface);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -2037,23 +2081,22 @@ select {
 .project-item:hover,
 .event-item:hover {
   border-color: var(--primary);
-  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.12),
-              0 2px 6px rgba(0, 0, 0, 0.04),
-              inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  transform: translateY(-3px);
-  background: linear-gradient(135deg, var(--surface) 0%, rgba(219, 234, 254, 0.5) 100%);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15),
+              0 2px 4px rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
+  background: var(--surface);
 }
 
 .task-item.compact {
-  padding: 12px 14px;
-  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  border-radius: 14px;
 }
 
 .task-item h5,
 .project-item h5,
 .event-item h5 {
-  margin: 0 0 6px;
-  font-size: 0.95rem;
+  margin: 0 0 0.375rem;
+  font-size: 1rem; /* Slightly larger for better readability */
   font-weight: var(--font-semibold);
   color: var(--text-primary);
   line-height: 1.4;
@@ -2068,70 +2111,69 @@ select {
 .project-item p,
 .event-item p {
   margin: 0;
-  font-size: 0.86rem;
+  font-size: 0.9375rem; /* 15px - more readable */
   color: var(--text-secondary);
   line-height: 1.5;
 }
 
-/* Improved Task State Badges */
+/* Modern Task State Badges */
 .task-state {
   border-radius: 999px;
-  font-size: 0.75rem;
-  padding: 6px 12px;
+  font-size: 0.75rem; /* 12px */
+  padding: 0.5rem 1rem; /* More comfortable */
   font-weight: var(--font-semibold);
   letter-spacing: 0.05em;
   text-transform: uppercase;
   transition: all 0.2s ease;
   flex-shrink: 0;
-  border: 1px solid;
+  border: none; /* Cleaner, no border */
 }
 
 .task-state.running {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.08) 100%);
+  background: rgba(16, 185, 129, 0.1);
   color: var(--success);
-  border-color: var(--success);
-  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.15);
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.2) inset;
 }
 
 .task-state.idle {
-  background: linear-gradient(135deg, var(--background-subtle) 0%, rgba(229, 231, 235, 0.8) 100%);
+  background: var(--background-subtle);
   color: var(--text-secondary);
-  border-color: var(--border-default);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 0 0 1px var(--border-subtle) inset;
 }
 
 .task-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 0.5rem;
   justify-content: flex-end;
 }
 
 .task-actions button,
 .project-item button {
   border: 1px solid var(--border-subtle);
-  border-radius: 8px;
+  border-radius: 10px; /* More modern */
   background: var(--surface);
-  padding: 6px 10px;
+  padding: 0.5rem 0.875rem; /* More comfortable */
   cursor: pointer;
-  font-size: 0.78rem;
+  font-size: 0.875rem; /* 14px - better readability */
   color: var(--text-secondary);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   font-weight: var(--font-medium);
+  min-height: 36px; /* Better touch target */
 }
 
 .task-inline-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .task-actions button:hover,
 .project-item button:hover {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(240, 247, 255, 0.5) 100%);
+  background: rgba(59, 130, 246, 0.05);
   border-color: var(--primary);
   color: var(--primary);
-  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.12);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
   transform: translateY(-1px);
 }
 
@@ -13802,41 +13844,43 @@ footer {
   }
 }
 
-/* Small Mobile (max-width: 480px) */
+/* Small Mobile (max-width: 480px) - Modern, Touch-Friendly */
 @media (max-width: 480px) {
-  /* Task Items */
+  /* Task Items - Maintain comfortable spacing on small screens */
   .task-item,
   .project-item,
   .event-item {
-    padding: 12px;
-    gap: 10px;
+    padding: 1rem; /* Still comfortable, not too cramped */
+    gap: 0.75rem;
+    margin-bottom: 0.875rem;
   }
 
   .task-item.compact {
-    padding: 10px;
+    padding: 0.875rem;
   }
 
   .task-item h5,
   .project-item h5,
   .event-item h5 {
-    font-size: 0.88rem;
+    font-size: 0.9375rem; /* 15px - maintain readability */
   }
 
   .task-item p,
   .project-item p,
   .event-item p {
-    font-size: 0.8rem;
+    font-size: 0.875rem; /* 14px - still readable */
   }
 
   .task-state {
-    font-size: 0.7rem;
-    padding: 4px 10px;
+    font-size: 0.75rem; /* 12px */
+    padding: 0.5rem 0.875rem; /* Better touch target */
   }
 
   .task-actions button,
   .project-item button {
-    font-size: 0.76rem;
-    padding: 7px 10px;
+    font-size: 0.875rem; /* 14px */
+    padding: 0.625rem 1rem; /* Comfortable touch target */
+    min-height: 40px; /* Ensure good touch target */
   }
 
   /* Empty State */
