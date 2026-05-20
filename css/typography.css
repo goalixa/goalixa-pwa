@@ -1,0 +1,294 @@
+/**
+ * Goalixa PWA - Typography System
+ * Modern, minimal, user-friendly font system
+ *
+ * Philosophy:
+ * - Clean, readable, professional
+ * - Consistent hierarchy
+ * - Comfortable sizing (not too big, not too small)
+ * - Legible weights (no unnecessary bold)
+ */
+
+:root {
+  /* === FONT FAMILIES === */
+
+  /* Primary: DM Sans - Clean, modern, excellent readability */
+  --font-primary: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+
+  /* Display: Space Grotesk - Distinctive for headings without being too bold */
+  --font-display: 'Space Grotesk', 'DM Sans', sans-serif;
+
+  /* Mono: JetBrains Mono - For code, data, technical content */
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Consolas', 'Monaco', monospace;
+
+  /* === FONT WEIGHTS === */
+  --font-light: 300;
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+
+  /* === FONT SIZES (Comfortable, not oversized) === */
+
+  /* Display sizes - for hero sections only */
+  --text-display-lg: 2rem;      /* 32px - Rarely used */
+  --text-display: 1.75rem;      /* 28px - Page heroes */
+
+  /* Heading sizes - Clear hierarchy */
+  --text-2xl: 1.5rem;           /* 24px - H1, main page titles */
+  --text-xl: 1.25rem;           /* 20px - H2, section titles */
+  --text-lg: 1.125rem;          /* 18px - H3, card titles */
+
+  /* Body sizes - Core content */
+  --text-base: 0.9375rem;       /* 15px - Primary body text */
+  --text-sm: 0.875rem;          /* 14px - Secondary text, labels */
+  --text-xs: 0.8125rem;         /* 13px - Meta info, captions */
+  --text-2xs: 0.75rem;          /* 12px - Tiny labels, badges */
+
+  /* === LINE HEIGHTS === */
+  --leading-none: 1;
+  --leading-tight: 1.25;
+  --leading-snug: 1.375;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+  --leading-loose: 1.75;
+
+  /* === LETTER SPACING === */
+  --tracking-tighter: -0.02em;
+  --tracking-tight: -0.01em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.01em;
+  --tracking-wider: 0.02em;
+}
+
+/* === BASE TYPOGRAPHY === */
+
+body {
+  font-family: var(--font-primary);
+  font-size: var(--text-base);
+  font-weight: var(--font-normal);
+  line-height: var(--leading-normal);
+  letter-spacing: var(--tracking-normal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* === HEADINGS === */
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: var(--font-semibold);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  margin: 0;
+  color: var(--text-primary);
+}
+
+h1 {
+  font-size: var(--text-2xl);
+  margin-bottom: 1rem;
+}
+
+h2 {
+  font-size: var(--text-xl);
+  margin-bottom: 0.875rem;
+}
+
+h3 {
+  font-size: var(--text-lg);
+  margin-bottom: 0.75rem;
+}
+
+h4 {
+  font-size: var(--text-base);
+  font-weight: var(--font-medium);
+  margin-bottom: 0.5rem;
+}
+
+h5 {
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  margin-bottom: 0.5rem;
+}
+
+h6 {
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+  margin-bottom: 0.5rem;
+}
+
+/* === BODY TEXT === */
+
+p {
+  margin: 0 0 1rem 0;
+  line-height: var(--leading-relaxed);
+}
+
+/* Text utilities */
+.text-display-lg { font-size: var(--text-display-lg); line-height: var(--leading-tight); }
+.text-display { font-size: var(--text-display); line-height: var(--leading-tight); }
+.text-2xl { font-size: var(--text-2xl); line-height: var(--leading-tight); }
+.text-xl { font-size: var(--text-xl); line-height: var(--leading-snug); }
+.text-lg { font-size: var(--text-lg); line-height: var(--leading-snug); }
+.text-base { font-size: var(--text-base); line-height: var(--leading-normal); }
+.text-sm { font-size: var(--text-sm); line-height: var(--leading-normal); }
+.text-xs { font-size: var(--text-xs); line-height: var(--leading-normal); }
+.text-2xs { font-size: var(--text-2xs); line-height: var(--leading-normal); }
+
+/* Weight utilities */
+.font-light { font-weight: var(--font-light); }
+.font-normal { font-weight: var(--font-normal); }
+.font-medium { font-weight: var(--font-medium); }
+.font-semibold { font-weight: var(--font-semibold); }
+
+/* === SPECIFIC COMPONENT OVERRIDES === */
+
+/* Page titles - prominent but not oversized */
+.page-title,
+.view-title {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: var(--font-semibold);
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--leading-tight);
+}
+
+/* Section headers - clear hierarchy */
+.section-title,
+.section-header h2 {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: var(--font-medium);
+  letter-spacing: var(--tracking-tight);
+}
+
+/* Card titles - readable without shouting */
+.card-title,
+.task-title,
+.project-title,
+.goal-title {
+  font-family: var(--font-primary);
+  font-size: var(--text-base);
+  font-weight: var(--font-medium);
+  line-height: var(--leading-snug);
+}
+
+/* Labels and meta text - subtle */
+.label,
+.meta,
+.caption {
+  font-size: var(--text-xs);
+  font-weight: var(--font-normal);
+  color: var(--text-secondary);
+}
+
+/* Buttons - medium weight for clarity */
+.btn,
+button {
+  font-family: var(--font-primary);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  letter-spacing: var(--tracking-normal);
+}
+
+/* Input fields - consistent sizing */
+input,
+textarea,
+select {
+  font-family: var(--font-primary);
+  font-size: var(--text-sm);
+  font-weight: var(--font-normal);
+  line-height: var(--leading-normal);
+}
+
+/* Badges and pills - small, uppercase */
+.badge,
+.pill,
+.tag {
+  font-size: var(--text-2xs);
+  font-weight: var(--font-medium);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+/* Data and numbers - tabular mono */
+.data-value,
+.metric-value,
+.time-value,
+.count {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: var(--font-normal);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Empty state text - friendly, not overwhelming */
+.empty-state-title {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: var(--font-medium);
+  letter-spacing: var(--tracking-tight);
+}
+
+.empty-state-description {
+  font-size: var(--text-sm);
+  font-weight: var(--font-normal);
+  line-height: var(--leading-relaxed);
+}
+
+/* Navigation items - clear, not bold */
+.nav-link,
+.menu-item {
+  font-size: var(--text-sm);
+  font-weight: var(--font-normal);
+  letter-spacing: var(--tracking-normal);
+}
+
+.nav-link.active,
+.menu-item.active {
+  font-weight: var(--font-medium);
+}
+
+/* === MOBILE OPTIMIZATION === */
+
+@media (max-width: 768px) {
+  /* Slightly reduce sizes on mobile for better density */
+  :root {
+    --text-display-lg: 1.75rem;   /* 28px */
+    --text-display: 1.5rem;       /* 24px */
+    --text-2xl: 1.375rem;         /* 22px */
+    --text-xl: 1.125rem;          /* 18px */
+    --text-lg: 1rem;              /* 16px */
+  }
+}
+
+/* === ACCESSIBILITY === */
+
+/* Ensure minimum tap target sizes */
+@media (pointer: coarse) {
+  button,
+  .btn,
+  a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  body {
+    font-weight: var(--font-medium);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: var(--font-semibold);
+  }
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0.01ms !important;
+  }
+}

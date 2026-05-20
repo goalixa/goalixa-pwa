@@ -34,6 +34,8 @@ const CORE_ASSETS = [
   '/index.html',
   '/offline.html',
   '/manifest.webmanifest',
+  '/css/typography.css',
+  '/css/forms.css',
   '/css/styles.css',
   '/js/router.js',
   '/js/theme.js',

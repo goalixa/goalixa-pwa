@@ -73,28 +73,27 @@
   --gray: #6B7280;
   --light-gray: #E5E7EB;
 
-  /* === SPACING - Modern, Generous === */
+  /* === SPACING === */
   --space-0: 0;
-  --space-1: 0.25rem;   /* 4px */
-  --space-2: 0.5rem;    /* 8px */
-  --space-3: 0.75rem;   /* 12px */
-  --space-4: 1rem;      /* 16px */
-  --space-5: 1.5rem;    /* 24px - increased for better breathing room */
-  --space-6: 2rem;      /* 32px - increased */
-  --space-8: 2.5rem;    /* 40px - increased */
-  --space-10: 3rem;     /* 48px */
-  --space-12: 4rem;     /* 64px */
-  --space-16: 5rem;     /* 80px */
-  --space-20: 6rem;     /* 96px */
-  --space-24: 8rem;     /* 128px */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --space-24: 6rem;
 
-  /* === BORDER RADIUS - Modern, Soft === */
-  --radius-sm: 0.5rem;    /* 8px - softer */
-  --radius-md: 0.75rem;   /* 12px - modern default */
-  --radius-lg: 1rem;      /* 16px */
-  --radius-xl: 1.25rem;   /* 20px */
-  --radius-2xl: 1.5rem;   /* 24px */
-  --radius-3xl: 2rem;     /* 32px - for large cards */
+  /* === BORDER RADIUS === */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
   --radius-full: 9999px;
 
   /* Legacy */
@@ -492,27 +491,26 @@ a:hover {
 }
 
 /* ============================================
-   BUTTONS - Modern, Minimal Design
+   BUTTONS
    ============================================ */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  padding: 0.875rem 1.5rem; /* Larger, more comfortable */
-  border-radius: 12px; /* Softer, more modern */
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-md);
   font-family: var(--font-sans);
   font-weight: var(--font-medium);
-  font-size: 0.9375rem; /* 15px - slightly larger */
-  line-height: 1.2;
-  letter-spacing: -0.01em;
+  font-size: var(--text-sm);
+  line-height: 1;
+  letter-spacing: 0;
   text-decoration: none;
   border: none;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: var(--transition);
   white-space: nowrap;
   user-select: none;
-  min-height: 44px; /* Better touch target */
 }
 
 .btn:disabled {
@@ -521,43 +519,34 @@ a:hover {
   transform: none !important;
 }
 
-/* Primary Button - Main CTAs */
 .btn-primary {
   background-color: var(--primary);
   color: white;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-primary:hover:not(:disabled) {
   background-color: var(--primary-hover);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+  box-shadow: var(--shadow-md);
   transform: translateY(-1px);
 }
 
 .btn-primary:active:not(:disabled) {
   transform: translateY(0);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-xs);
 }
 
-/* Secondary Button - Outlined style */
 .btn-secondary {
   background-color: var(--surface);
   color: var(--text-primary);
   border: 1.5px solid var(--border-default);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
 .btn-secondary:hover:not(:disabled) {
   background-color: var(--background-subtle);
-  border-color: var(--primary);
-  color: var(--primary);
+  border-color: var(--border-default);
 }
 
-.btn-secondary:active:not(:disabled) {
-  background-color: var(--background);
-}
-
-/* Ghost Button - Minimal style */
 .btn-ghost {
   background-color: transparent;
   color: var(--text-secondary);
@@ -568,43 +557,9 @@ a:hover {
   color: var(--text-primary);
 }
 
-/* Success Button */
-.btn-success {
-  background-color: var(--success);
-  color: white;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.btn-success:hover:not(:disabled) {
-  background-color: #0EA472;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
-  transform: translateY(-1px);
-}
-
-/* Danger Button */
-.btn-danger {
-  background-color: var(--danger);
-  color: white;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.btn-danger:hover:not(:disabled) {
-  background-color: #B91C1C;
-  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
-  transform: translateY(-1px);
-}
-
-/* Button Sizes */
-.btn-small {
-  padding: 0.625rem 1rem;
-  font-size: 0.875rem;
-  min-height: 36px;
-}
-
 .btn-large {
-  padding: 1.125rem 2rem;
-  font-size: 1rem;
-  min-height: 52px;
+  padding: var(--space-4) var(--space-6);
+  font-size: var(--text-lg);
 }
 
 .btn-block {
@@ -2060,20 +2015,21 @@ select {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-/* Modern Task & Project Items */
+/* Improved Task Items */
 .task-item,
 .project-item,
 .event-item {
   border: 1px solid var(--border-subtle);
-  border-radius: 16px; /* More modern, softer corners */
-  padding: 1.25rem 1.5rem; /* More generous padding */
+  border-radius: 14px;
+  padding: 14px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1rem; /* Better spacing between items */
-  background: var(--surface);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  gap: 14px;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, var(--surface) 0%, rgba(240, 247, 255, 0.3) 100%);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04),
+              inset 0 1px 0 rgba(255, 255, 255, 0.8);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -2081,22 +2037,23 @@ select {
 .project-item:hover,
 .event-item:hover {
   border-color: var(--primary);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15),
-              0 2px 4px rgba(0, 0, 0, 0.05);
-  transform: translateY(-2px);
-  background: var(--surface);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.12),
+              0 2px 6px rgba(0, 0, 0, 0.04),
+              inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transform: translateY(-3px);
+  background: linear-gradient(135deg, var(--surface) 0%, rgba(219, 234, 254, 0.5) 100%);
 }
 
 .task-item.compact {
-  padding: 1rem 1.25rem;
-  border-radius: 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
 }
 
 .task-item h5,
 .project-item h5,
 .event-item h5 {
-  margin: 0 0 0.375rem;
-  font-size: 1rem; /* Slightly larger for better readability */
+  margin: 0 0 6px;
+  font-size: 0.95rem;
   font-weight: var(--font-semibold);
   color: var(--text-primary);
   line-height: 1.4;
@@ -2111,69 +2068,70 @@ select {
 .project-item p,
 .event-item p {
   margin: 0;
-  font-size: 0.9375rem; /* 15px - more readable */
+  font-size: 0.86rem;
   color: var(--text-secondary);
   line-height: 1.5;
 }
 
-/* Modern Task State Badges */
+/* Improved Task State Badges */
 .task-state {
   border-radius: 999px;
-  font-size: 0.75rem; /* 12px */
-  padding: 0.5rem 1rem; /* More comfortable */
+  font-size: 0.75rem;
+  padding: 6px 12px;
   font-weight: var(--font-semibold);
   letter-spacing: 0.05em;
   text-transform: uppercase;
   transition: all 0.2s ease;
   flex-shrink: 0;
-  border: none; /* Cleaner, no border */
+  border: 1px solid;
 }
 
 .task-state.running {
-  background: rgba(16, 185, 129, 0.1);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.08) 100%);
   color: var(--success);
-  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.2) inset;
+  border-color: var(--success);
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.15);
 }
 
 .task-state.idle {
-  background: var(--background-subtle);
+  background: linear-gradient(135deg, var(--background-subtle) 0%, rgba(229, 231, 235, 0.8) 100%);
   color: var(--text-secondary);
-  box-shadow: 0 0 0 1px var(--border-subtle) inset;
+  border-color: var(--border-default);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
 }
 
 .task-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 6px;
   justify-content: flex-end;
 }
 
 .task-actions button,
 .project-item button {
   border: 1px solid var(--border-subtle);
-  border-radius: 10px; /* More modern */
+  border-radius: 8px;
   background: var(--surface);
-  padding: 0.5rem 0.875rem; /* More comfortable */
+  padding: 6px 10px;
   cursor: pointer;
-  font-size: 0.875rem; /* 14px - better readability */
+  font-size: 0.78rem;
   color: var(--text-secondary);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   font-weight: var(--font-medium);
-  min-height: 36px; /* Better touch target */
 }
 
 .task-inline-actions {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 8px;
 }
 
 .task-actions button:hover,
 .project-item button:hover {
-  background: rgba(59, 130, 246, 0.05);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(240, 247, 255, 0.5) 100%);
   border-color: var(--primary);
   color: var(--primary);
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.12);
   transform: translateY(-1px);
 }
 
@@ -2844,7 +2802,7 @@ select {
 .overview-metric-label {
   font-size: 0.8rem;
   color: var(--text-tertiary);
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
@@ -2899,7 +2857,7 @@ select {
 .overview-inline-meta {
   font-size: 0.82rem;
   color: #1f2a44;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .goals-card {
@@ -2920,7 +2878,7 @@ select {
   text-transform: uppercase;
   letter-spacing: 0.12em;
   color: #60708a;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .goals-title {
@@ -2946,7 +2904,7 @@ select {
 .goal-stat-label {
   font-size: 0.8rem;
   color: #5f6f89;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .goal-stat-value {
@@ -3018,7 +2976,7 @@ select {
 
 .overview-list-meta {
   font-size: 0.82rem;
-  font-weight: 600;
+  font-weight: 700;
   color: #1f2a44;
 }
 
@@ -3138,7 +3096,7 @@ select {
   color: #4d5c76;
   padding: 4px 10px;
   font-size: 0.78rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
 }
 
@@ -4247,7 +4205,7 @@ select {
 .auth-view.auth-ui .auth-header h1 {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   font-size: 1.75rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: -0.01em;
   margin-top: 16px;
   margin-bottom: 0;
@@ -4724,7 +4682,7 @@ select {
   letter-spacing: 0.25em;
   text-transform: uppercase;
   color: var(--primary-dark);
-  font-weight: 600;
+  font-weight: 700;
   margin-bottom: 12px;
 }
 
@@ -4791,7 +4749,7 @@ select {
   align-items: center;
   gap: 10px;
   font-size: 1.8rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--primary);
 }
 
@@ -4801,7 +4759,7 @@ select {
 
 .brand-name {
   font-family: 'Montserrat', sans-serif;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .nav-menu {
@@ -5429,7 +5387,7 @@ select {
 
 .price {
   font-size: 2.2rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--primary);
   margin: 10px 0;
 }
@@ -5463,7 +5421,7 @@ select {
   position: absolute;
   left: 0;
   color: var(--primary);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .pricing-note {
@@ -5947,7 +5905,7 @@ footer {
 }
 
 .tasks-page .label-picker-title {
-  font-weight: 600;
+  font-weight: 700;
   font-size: 0.9rem;
   color: var(--text-primary);
 }
@@ -6295,7 +6253,7 @@ footer {
   padding: 3px 8px;
   border-radius: 999px;
   font-size: 0.7rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
 }
 
@@ -6351,7 +6309,7 @@ footer {
   padding: 4px 9px;
   border-radius: 999px;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   background: rgba(34, 197, 94, 0.12);
   color: #15803d;
 }
@@ -7171,7 +7129,7 @@ footer {
 
 .focus-time {
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-primary);
   min-width: 96px;
   display: inline-flex;
@@ -7406,7 +7364,7 @@ footer {
 .pomodoro-mode {
   margin: 0;
   font-size: 1.6rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .pomodoro-status {
@@ -7495,7 +7453,7 @@ footer {
 
 .pomodoro-dial {
   font-size: 2.4rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.08em;
   color: var(--timer-accent);
   font-variant-numeric: tabular-nums;
@@ -8031,7 +7989,7 @@ footer {
   color: var(--text-secondary);
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .calendar-filter select {
@@ -8051,7 +8009,7 @@ footer {
   font-size: 0.82rem;
   color: var(--text-secondary);
   background: var(--background-subtle);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .calendar-board-panel {
@@ -8394,7 +8352,7 @@ footer {
 .timesheet-title {
   margin: 0;
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-primary);
 }
 
@@ -8430,7 +8388,7 @@ footer {
 
 .timesheet-target-congrats {
   color: #166534;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .timesheet-table {
@@ -8747,7 +8705,7 @@ footer {
   justify-content: center;
   position: relative;
   font-size: 0.7rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .goals-page .deadline-ring::before {
@@ -8771,7 +8729,7 @@ footer {
   padding: 4px 9px;
   border-radius: 999px;
   font-size: 0.72rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -9586,12 +9544,12 @@ footer {
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .habits-page .habit-stat-value {
   font-size: 1.5rem;
-  font-weight: 600;
+  font-weight: 700;
   background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -10469,7 +10427,7 @@ footer {
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .planner-page .planner-stat-value {
@@ -10517,7 +10475,7 @@ footer {
   background: transparent;
   color: var(--text-secondary);
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -10560,7 +10518,7 @@ footer {
   background: var(--background-subtle);
   color: var(--text-secondary);
   font-size: 0.78rem;
-  font-weight: 600;
+  font-weight: 700;
   padding: 6px 10px;
 }
 
@@ -10648,7 +10606,7 @@ footer {
 
 .planner-page .planner-habit-name {
   font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-primary);
 }
 
@@ -10667,7 +10625,7 @@ footer {
   align-items: center;
   gap: 5px;
   font-size: 0.78rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-secondary);
   background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(59, 130, 246, 0.04) 100%);
   border: 1px solid rgba(59, 130, 246, 0.15);
@@ -10738,7 +10696,7 @@ footer {
 
 .planner-page .planner-task-title {
   font-size: 0.92rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-primary);
 }
 
@@ -10936,7 +10894,7 @@ footer {
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .reminders-page .reminder-stat-value {
@@ -10994,7 +10952,7 @@ footer {
   gap: 6px;
   font-size: 0.8rem;
   color: var(--text-secondary);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .reminders-page .reminder-field input,
@@ -11372,7 +11330,7 @@ footer {
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .labels-page .label-stat-value {
@@ -11451,7 +11409,7 @@ footer {
 .labels-page .label-field span {
   font-size: 0.8rem;
   color: var(--text-secondary);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .labels-page .label-field input {
@@ -11481,7 +11439,7 @@ footer {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--text-secondary);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .labels-page .label-color-picker {
@@ -11652,7 +11610,7 @@ footer {
   border-radius: 999px;
   color: #ffffff;
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .labels-page .label-hex {
@@ -11660,7 +11618,7 @@ footer {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--text-secondary);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .labels-page .label-item-actions {
@@ -11872,7 +11830,7 @@ footer {
   color: #3B82F6;
   padding: 4px 10px;
   font-size: 0.74rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -11906,14 +11864,14 @@ footer {
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.07em;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .account-page .meta-value {
   margin: 2px 0 0;
   font-size: 0.88rem;
   color: var(--text-primary);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .account-page .profile-actions-vertical {
@@ -11944,7 +11902,7 @@ footer {
   gap: 6px;
   font-size: 0.8rem;
   color: var(--text-secondary);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .account-page .profile-field-card input,
@@ -12457,7 +12415,7 @@ footer {
 
 .timer-display {
   font-size: 4rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--primary);
   margin-bottom: 20px;
 }
@@ -13484,7 +13442,7 @@ footer {
   border-radius: 999px;
   font-size: 0.72rem;
   padding: 3px 8px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .goal-status-lite.success {
@@ -13844,43 +13802,41 @@ footer {
   }
 }
 
-/* Small Mobile (max-width: 480px) - Modern, Touch-Friendly */
+/* Small Mobile (max-width: 480px) */
 @media (max-width: 480px) {
-  /* Task Items - Maintain comfortable spacing on small screens */
+  /* Task Items */
   .task-item,
   .project-item,
   .event-item {
-    padding: 1rem; /* Still comfortable, not too cramped */
-    gap: 0.75rem;
-    margin-bottom: 0.875rem;
+    padding: 12px;
+    gap: 10px;
   }
 
   .task-item.compact {
-    padding: 0.875rem;
+    padding: 10px;
   }
 
   .task-item h5,
   .project-item h5,
   .event-item h5 {
-    font-size: 0.9375rem; /* 15px - maintain readability */
+    font-size: 0.88rem;
   }
 
   .task-item p,
   .project-item p,
   .event-item p {
-    font-size: 0.875rem; /* 14px - still readable */
+    font-size: 0.8rem;
   }
 
   .task-state {
-    font-size: 0.75rem; /* 12px */
-    padding: 0.5rem 0.875rem; /* Better touch target */
+    font-size: 0.7rem;
+    padding: 4px 10px;
   }
 
   .task-actions button,
   .project-item button {
-    font-size: 0.875rem; /* 14px */
-    padding: 0.625rem 1rem; /* Comfortable touch target */
-    min-height: 40px; /* Ensure good touch target */
+    font-size: 0.76rem;
+    padding: 7px 10px;
   }
 
   /* Empty State */
@@ -14471,7 +14427,7 @@ footer {
 
 .project-stat-value {
   font-size: 1.6rem;
-  font-weight: 600;
+  font-weight: 700;
   color: #1f2a44;
   line-height: 1.2;
 }
@@ -14511,7 +14467,7 @@ footer {
 .reports-chart-card .goals-title {
   font-size: 1.1rem;
   color: #1f2a44;
-  font-weight: 600;
+  font-weight: 700;
   margin: 0;
 }
 
@@ -15032,7 +14988,7 @@ footer {
 
 .auth-view.auth-ui .auth-header h1 {
   font-size: 1.75rem !important;
-  font-weight: 600 !important;
+  font-weight: 700 !important;
   color: #111827 !important;
   margin-top: 16px !important;
 }
@@ -16495,7 +16451,7 @@ footer {
 .pwa-update-modal-title {
   margin: 0 0 12px;
   font-size: 1.5rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-primary);
   line-height: 1.3;
 }
@@ -16671,7 +16627,7 @@ footer {
 
 .dashboard-hero-title h2 {
   font-size: 2rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--dark);
   margin-bottom: 4px;
 }
@@ -16718,7 +16674,7 @@ footer {
 
 .dashboard-kpi-value {
   font-size: 1.75rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--dark);
   margin-bottom: 4px;
 }
@@ -16953,7 +16909,7 @@ footer {
 .dashboard-list-checkbox.checked::after {
   content: '✓';
   font-size: 0.7rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .dashboard-list-content {
@@ -17004,7 +16960,7 @@ footer {
   color: white;
   border-radius: 999px;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .dashboard-streak-badge i {
@@ -17106,7 +17062,7 @@ footer {
 
 .dashboard-card-pomodoro .pomodoro-mode {
   font-size: 1.75rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--dark);
   margin: 0;
 }
@@ -17158,7 +17114,7 @@ footer {
 
 .dashboard-chart-metric-value {
   font-size: 1.25rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--dark);
 }
 
@@ -17584,7 +17540,7 @@ footer {
 
 .sessions-view .view-header h1 {
   font-size: 28px;
-  font-weight: 600;
+  font-weight: 700;
   margin-bottom: 8px;
   color: var(--text-primary);
 }

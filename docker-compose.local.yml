@@ -1,0 +1,27 @@
+# Local development docker-compose for goalixa-pwa
+# Auth is bypassed via mock API endpoints in nginx config
+#
+# Usage:
+#   docker compose -f docker-compose.local.yml up
+#
+# Access at: http://localhost:8090
+# Changes to files are reflected immediately (just refresh browser)
+
+services:
+  pwa-dev:
+    image: nginx:alpine
+    volumes:
+      # Mount source files for hot-reload (changes visible on browser refresh)
+      - ./index.html:/usr/share/nginx/html/index.html:ro
+      - ./offline.html:/usr/share/nginx/html/offline.html:ro
+      - ./manifest.webmanifest:/usr/share/nginx/html/manifest.webmanifest:ro
+      - ./sw.js:/usr/share/nginx/html/sw.js:ro
+      - ./css:/usr/share/nginx/html/css:ro
+      - ./js:/usr/share/nginx/html/js:ro
+      - ./icons:/usr/share/nginx/html/icons:ro
+      - ./vendor:/usr/share/nginx/html/vendor:ro
+      # Dev nginx config with mock APIs for auth bypass
+      - ./nginx-local.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "8090:8080"
+    restart: unless-stopped

@@ -294,12 +294,19 @@ function renderShell(container, section) {
   function openMobileMenu() {
     if (nav) nav.classList.add('active');
     if (overlay) overlay.classList.add('active');
+    document.body.classList.add('menu-open');
     document.body.style.overflow = 'hidden';
+    // Focus first nav button for accessibility
+    setTimeout(() => {
+      const firstNavBtn = nav?.querySelector('.app-nav-btn');
+      if (firstNavBtn) firstNavBtn.focus();
+    }, 100);
   }
 
   function closeMobileMenu() {
     if (nav) nav.classList.remove('active');
     if (overlay) overlay.classList.remove('active');
+    document.body.classList.remove('menu-open');
     document.body.style.overflow = '';
   }
 
@@ -1024,11 +1031,11 @@ function renderOverviewDashboardHTML(data) {
             <input type="text" class="dashboard-quick-input" data-dashboard-quick-task placeholder="New task name..." />
             <select class="dashboard-quick-select" data-dashboard-quick-task-project>
               <option value="">No project</option>
-              ${activeProjects.slice(0, 6).map((p) => `
+              ${activeProjects.length > 0 ? activeProjects.slice(0, 6).map((p) => `
                 <option value="${p.id}">${escapeHtml(p.name)}</option>
-              `).join('')}
+              `).join('') : '<option value="" disabled>Create projects first</option>'}
             </select>
-            <button class="dashboard-quick-btn" type="button" data-dashboard-quick-task-submit>
+            <button class="dashboard-quick-btn" type="button" data-dashboard-quick-task-submit title="Create task">
               <i class="bi bi-plus-lg"></i>
             </button>
           </div>
@@ -2326,18 +2333,35 @@ function renderProjects(content, payload) {
         </div>
         <form class="project-form" id="project-create-form">
           <input type="text" id="project-name" placeholder="Project name" required />
-          <select id="project-labels" multiple ${data.labels.length ? '' : 'disabled'}>
-            ${data.labels.map((label) => `
-              <option value="${label.id}">${escapeHtml(label.name)}</option>
-            `).join('')}
-          </select>
-          <select id="project-goals" multiple required>
-            ${data.goals.map((goal) => `
-              <option value="${goal.id}">${escapeHtml(goal.name)}</option>
-            `).join('')}
-          </select>
-          <small class="project-form-hint">At least one goal is required</small>
-          <button class="btn btn-primary" type="submit">Create</button>
+
+          <div class="project-form-field">
+            <label class="project-form-label">Labels <span class="optional-tag">(optional)</span></label>
+            ${data.labels.length > 0 ? `
+              <select id="project-labels" multiple>
+                ${data.labels.map((label) => `
+                  <option value="${label.id}">${escapeHtml(label.name)}</option>
+                `).join('')}
+              </select>
+            ` : `
+              <p class="project-form-empty">No labels yet. <a href="#/app/labels">Create labels</a> to organize projects.</p>
+            `}
+          </div>
+
+          <div class="project-form-field">
+            <label class="project-form-label">Goals <span class="optional-tag">(optional)</span></label>
+            ${data.goals.length > 0 ? `
+              <select id="project-goals" multiple>
+                ${data.goals.map((goal) => `
+                  <option value="${goal.id}">${escapeHtml(goal.name)}</option>
+                `).join('')}
+              </select>
+              <small class="project-form-hint">Link this project to goals for better tracking</small>
+            ` : `
+              <p class="project-form-empty">No goals yet. <a href="#/app/goals">Create goals</a> to link projects.</p>
+            `}
+          </div>
+
+          <button class="btn btn-primary" type="submit">Create Project</button>
         </form>
       </section>
 
@@ -2404,10 +2428,7 @@ async function bindProjectActions(container, currentPath, initialPayload) {
         ? Array.from(goalsInput.selectedOptions).map((option) => option.value).filter(Boolean)
         : [];
 
-      if (goalIds.length === 0) {
-        showToast('Please select at least one goal', 'warning');
-        return;
-      }
+      // Goals are now optional - no validation required
 
       try {
         await appApi.createProject(name, labelIds, goalIds);
@@ -4402,22 +4423,48 @@ function renderGoals(content, payload, viewMode = 'overview') {
         <form id="goal-create-form" class="goals-create-form">
           <input id="goal-name" type="text" placeholder="Goal name" required />
           <input id="goal-description" type="text" placeholder="Description (optional)" />
-          <input id="goal-target-date" type="date" />
-          <input id="goal-target-hours" type="number" min="0" step="0.5" placeholder="Target hours" />
-          <select id="goal-label" ${hasLabels ? 'required' : 'disabled'}>
-            ${hasLabels
-              ? '<option value="">Select label</option>'
-              : '<option value="">Create a label first</option>'}
-            ${labels.map((label) => `<option value="${label.id}">${escapeHtml(label.name)}</option>`).join('')}
-          </select>
-          <select id="goal-project">
-            <option value="">Project (optional)</option>
-            ${projects.map((project) => `<option value="${project.id}">${escapeHtml(project.name)}</option>`).join('')}
-          </select>
-          <select id="goal-task">
-            <option value="">Task (optional)</option>
-            ${tasks.map((task) => `<option value="${task.id}">${escapeHtml(task.name)}</option>`).join('')}
-          </select>
+          <input id="goal-target-date" type="date" placeholder="Target date (optional)" />
+          <input id="goal-target-hours" type="number" min="0" step="0.5" placeholder="Target hours (optional)" />
+
+          <div class="goal-form-field">
+            <label class="goal-form-label">Label <span class="optional-tag">(optional)</span></label>
+            ${hasLabels ? `
+              <select id="goal-label">
+                <option value="">None</option>
+                ${labels.map((label) => `<option value="${label.id}">${escapeHtml(label.name)}</option>`).join('')}
+              </select>
+            ` : `
+              <p class="goal-form-empty">No labels yet. <a href="#/app/labels">Create labels</a> to categorize goals.</p>
+              <input id="goal-label" type="hidden" value="" />
+            `}
+          </div>
+
+          <div class="goal-form-field">
+            <label class="goal-form-label">Project <span class="optional-tag">(optional)</span></label>
+            ${projects.length > 0 ? `
+              <select id="goal-project">
+                <option value="">None</option>
+                ${projects.map((project) => `<option value="${project.id}">${escapeHtml(project.name)}</option>`).join('')}
+              </select>
+            ` : `
+              <p class="goal-form-empty">No projects yet. <a href="#/app/projects">Create projects</a> to link.</p>
+              <input id="goal-project" type="hidden" value="" />
+            `}
+          </div>
+
+          <div class="goal-form-field">
+            <label class="goal-form-label">Task <span class="optional-tag">(optional)</span></label>
+            ${tasks.length > 0 ? `
+              <select id="goal-task">
+                <option value="">None</option>
+                ${tasks.map((task) => `<option value="${task.id}">${escapeHtml(task.name)}</option>`).join('')}
+              </select>
+            ` : `
+              <p class="goal-form-empty">No tasks yet. <a href="#/app/tasks">Create tasks</a> to link.</p>
+              <input id="goal-task" type="hidden" value="" />
+            `}
+          </div>
+
           <button class="btn btn-primary" type="submit">Create Goal</button>
         </form>
       </section>
@@ -5257,26 +5304,47 @@ function renderHabits(content, payload) {
 
         <form id="habit-create-form" class="habit-create-form">
           <input id="habit-name" type="text" placeholder="Habit name" required />
+
           <select id="habit-frequency">
             <option value="Daily">Daily</option>
             <option value="Weekdays">Weekdays</option>
             <option value="Weekends">Weekends</option>
             <option value="Custom">Custom</option>
           </select>
+
           <select id="habit-time">
             <option value="">Anytime</option>
             <option value="Morning">Morning</option>
             <option value="Afternoon">Afternoon</option>
             <option value="Evening">Evening</option>
           </select>
-          <select id="habit-goal-name">
-            ${renderGoalNameOptions(goals)}
-          </select>
-          <select id="habit-subgoal-name">
-            ${renderSubgoalOptions(goals)}
-          </select>
-          <input id="habit-reminder" type="time" value="" />
-          <button class="btn btn-primary btn-sm" type="submit">Add habit</button>
+
+          <div class="habit-form-field">
+            <label class="habit-form-label">Link to Goal <span class="optional-tag">(optional)</span></label>
+            ${goals.length > 0 ? `
+              <select id="habit-goal-name">
+                ${renderGoalNameOptions(goals)}
+              </select>
+            ` : `
+              <p class="habit-form-empty">No goals yet. <a href="#/app/goals">Create goals</a> to link habits.</p>
+              <input id="habit-goal-name" type="hidden" value="" />
+            `}
+          </div>
+
+          <div class="habit-form-field">
+            <label class="habit-form-label">Sub-goal <span class="optional-tag">(optional)</span></label>
+            ${goals.length > 0 ? `
+              <select id="habit-subgoal-name">
+                ${renderSubgoalOptions(goals)}
+              </select>
+            ` : `
+              <p class="habit-form-empty">Links to sub-goals when available.</p>
+              <input id="habit-subgoal-name" type="hidden" value="" />
+            `}
+          </div>
+
+          <input id="habit-reminder" type="time" placeholder="Reminder time (optional)" value="" />
+          <button class="btn btn-primary btn-sm" type="submit">Add Habit</button>
         </form>
 
         <div class="habit-list" id="habit-list">
