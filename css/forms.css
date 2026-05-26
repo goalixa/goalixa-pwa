@@ -17,7 +17,8 @@
 .task-edit-modal-overlay,
 .project-edit-modal-overlay,
 .goal-edit-modal-overlay,
-.habit-edit-modal-overlay {
+.habit-edit-modal-overlay,
+.task-picker-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -43,7 +44,8 @@
 .task-edit-modal-overlay.closing,
 .project-edit-modal-overlay.closing,
 .goal-edit-modal-overlay.closing,
-.habit-edit-modal-overlay.closing {
+.habit-edit-modal-overlay.closing,
+.task-picker-modal-overlay.closing {
   animation: fadeOut 0.2s ease-out forwards;
 }
 
@@ -59,7 +61,8 @@
 .task-edit-modal,
 .project-edit-modal,
 .goal-edit-modal,
-.habit-edit-modal {
+.habit-edit-modal,
+.task-picker-modal {
   background: var(--surface);
   border-radius: 20px; /* More modern */
   border: 1px solid var(--border-subtle);
@@ -76,6 +79,11 @@
   animation: scaleIn 0.2s ease-out forwards;
 }
 
+/* Task picker modal uses wider width for better task display */
+.task-picker-modal {
+  max-width: 600px;
+}
+
 @keyframes scaleIn {
   to { transform: scale(1); }
 }
@@ -88,7 +96,8 @@
 .task-edit-modal-header,
 .project-edit-modal-header,
 .goal-edit-modal-header,
-.habit-edit-modal-header {
+.habit-edit-modal-header,
+.task-picker-modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -101,7 +110,8 @@
 .task-edit-modal-header h2,
 .project-edit-modal-header h2,
 .goal-edit-modal-header h2,
-.habit-edit-modal-header h2 {
+.habit-edit-modal-header h2,
+.task-picker-modal-header h2 {
   margin: 0;
   font-size: var(--text-lg);
   font-weight: var(--font-semibold);
@@ -113,7 +123,8 @@
 .task-edit-modal-close,
 .project-edit-modal-close,
 .goal-edit-modal-close,
-.habit-edit-modal-close {
+.habit-edit-modal-close,
+.task-picker-modal-close {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -132,7 +143,8 @@
 .task-edit-modal-close:hover,
 .project-edit-modal-close:hover,
 .goal-edit-modal-close:hover,
-.habit-edit-modal-close:hover {
+.habit-edit-modal-close:hover,
+.task-picker-modal-close:hover {
   background: var(--background-subtle);
   color: var(--text-secondary);
 }
@@ -145,7 +157,8 @@
 .task-edit-modal-body,
 .project-edit-modal-body,
 .goal-edit-modal-body,
-.habit-edit-modal-body {
+.habit-edit-modal-body,
+.task-picker-modal-body {
   padding: 1.75rem; /* More breathing room */
   overflow-y: auto;
   flex: 1;
@@ -158,7 +171,8 @@
 .task-edit-modal-body::-webkit-scrollbar,
 .project-edit-modal-body::-webkit-scrollbar,
 .goal-edit-modal-body::-webkit-scrollbar,
-.habit-edit-modal-body::-webkit-scrollbar {
+.habit-edit-modal-body::-webkit-scrollbar,
+.task-picker-modal-body::-webkit-scrollbar {
   width: 6px;
 }
 
@@ -166,7 +180,8 @@
 .task-edit-modal-body::-webkit-scrollbar-track,
 .project-edit-modal-body::-webkit-scrollbar-track,
 .goal-edit-modal-body::-webkit-scrollbar-track,
-.habit-edit-modal-body::-webkit-scrollbar-track {
+.habit-edit-modal-body::-webkit-scrollbar-track,
+.task-picker-modal-body::-webkit-scrollbar-track {
   background: transparent;
 }
 
@@ -174,7 +189,8 @@
 .task-edit-modal-body::-webkit-scrollbar-thumb,
 .project-edit-modal-body::-webkit-scrollbar-thumb,
 .goal-edit-modal-body::-webkit-scrollbar-thumb,
-.habit-edit-modal-body::-webkit-scrollbar-thumb {
+.habit-edit-modal-body::-webkit-scrollbar-thumb,
+.task-picker-modal-body::-webkit-scrollbar-thumb {
   background: var(--border-default);
   border-radius: 3px;
 }
@@ -183,7 +199,8 @@
 .task-edit-modal-body::-webkit-scrollbar-thumb:hover,
 .project-edit-modal-body::-webkit-scrollbar-thumb:hover,
 .goal-edit-modal-body::-webkit-scrollbar-thumb:hover,
-.habit-edit-modal-body::-webkit-scrollbar-thumb:hover {
+.habit-edit-modal-body::-webkit-scrollbar-thumb:hover,
+.task-picker-modal-body::-webkit-scrollbar-thumb:hover {
   background: var(--text-tertiary);
 }
 
@@ -554,7 +571,8 @@
 .task-edit-modal-footer,
 .project-edit-modal-footer,
 .goal-edit-modal-footer,
-.habit-edit-modal-footer {
+.habit-edit-modal-footer,
+.task-picker-modal-footer {
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -568,8 +586,30 @@
 .task-edit-modal-footer .btn,
 .project-edit-modal-footer .btn,
 .goal-edit-modal-footer .btn,
-.habit-edit-modal-footer .btn {
+.habit-edit-modal-footer .btn,
+.task-picker-modal-footer .btn {
   min-width: 100px;
+}
+
+/* Task picker modal footer layout */
+.task-picker-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.task-picker-selection-info {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  flex: 1;
+}
+
+.task-picker-modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
 /* ============================================
@@ -610,6 +650,251 @@
 }
 
 /* ============================================
+   TASK PICKER MODAL SPECIFIC STYLES
+   ============================================ */
+
+.task-picker-modal-filters {
+  display: flex;
+  gap: 1rem;
+  padding: 0 1.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.task-picker-search-wrapper {
+  flex: 1;
+  min-width: 200px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.task-picker-search-wrapper i {
+  position: absolute;
+  left: 1rem;
+  color: var(--text-tertiary);
+  pointer-events: none;
+  font-size: var(--text-base);
+}
+
+.task-picker-search {
+  width: 100%;
+  padding: 0.75rem 1rem 0.75rem 2.5rem;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  background: var(--background-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.task-picker-search:hover {
+  border-color: var(--border-default);
+}
+
+.task-picker-search:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.task-picker-select {
+  padding: 0.75rem 1rem;
+  padding-right: 2.5rem;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  background: var(--background-subtle);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='%236B7280' d='M4.427 5.927l3.396 3.396a.25.25 0 00.354 0l3.396-3.396A.25.25 0 0011.396 5.5H4.604a.25.25 0 00-.177.427z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 16px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  min-width: 150px;
+}
+
+.task-picker-select:hover {
+  border-color: var(--border-default);
+}
+
+.task-picker-select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Task groups */
+.task-picker-project-group {
+  margin-bottom: 2rem;
+}
+
+.task-picker-project-group:last-child {
+  margin-bottom: 0;
+}
+
+.task-picker-project-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  padding: 0 0.5rem;
+}
+
+.task-picker-project-name {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.task-picker-project-count {
+  display: inline-block;
+  background: var(--background-subtle);
+  color: var(--text-tertiary);
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.task-picker-tasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Task item */
+.task-picker-task-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: var(--background-subtle);
+  border: 1px solid transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.task-picker-task-item:hover {
+  background: var(--background);
+  border-color: var(--border-subtle);
+}
+
+.task-picker-task-item.selected {
+  background: rgba(59, 130, 246, 0.05);
+  border-color: var(--primary);
+}
+
+.task-picker-checkbox {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+  border: 1.5px solid var(--border-default);
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: var(--surface);
+  position: relative;
+}
+
+.task-picker-checkbox:hover {
+  border-color: var(--primary);
+}
+
+.task-picker-checkbox:checked {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.task-picker-checkbox:checked::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 12px;
+  height: 12px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='white'%3E%3Cpath d='M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+.task-picker-task-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.task-picker-task-name {
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--text-primary);
+  word-break: break-word;
+}
+
+.task-picker-task-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  text-transform: capitalize;
+}
+
+.task-picker-task-meta i {
+  font-size: var(--text-xs);
+}
+
+/* Empty state */
+.task-picker-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 3rem 1rem;
+  color: var(--text-tertiary);
+  text-align: center;
+}
+
+.task-picker-empty-state i {
+  font-size: 2.5rem;
+  color: var(--border-default);
+  opacity: 0.5;
+}
+
+.task-picker-empty-state p {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--text-secondary);
+}
+
+.task-picker-empty-state small {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+/* ============================================
    RESPONSIVE: MOBILE OPTIMIZATION
    ============================================ */
 
@@ -619,7 +904,8 @@
   .task-edit-modal,
   .project-edit-modal,
   .goal-edit-modal,
-  .habit-edit-modal {
+  .habit-edit-modal,
+  .task-picker-modal {
     max-width: 100%;
     border-radius: 16px; /* Still modern on mobile */
     max-height: 95vh;
@@ -654,7 +940,8 @@
   .task-edit-modal-footer,
   .project-edit-modal-footer,
   .goal-edit-modal-footer,
-  .habit-edit-modal-footer {
+  .habit-edit-modal-footer,
+  .task-picker-modal-footer {
     padding: 1rem 1.5rem;
     flex-direction: column-reverse;
     gap: 0.75rem;
@@ -664,10 +951,44 @@
   .task-edit-modal-footer .btn,
   .project-edit-modal-footer .btn,
   .goal-edit-modal-footer .btn,
-  .habit-edit-modal-footer .btn {
+  .habit-edit-modal-footer .btn,
+  .task-picker-modal-footer .btn {
     width: 100%;
     min-width: auto;
     min-height: 48px; /* Better touch target */
+  }
+
+  .task-picker-modal-footer {
+    flex-direction: column;
+  }
+
+  .task-picker-selection-info {
+    text-align: center;
+    width: 100%;
+  }
+
+  .task-picker-modal-actions {
+    width: 100%;
+    flex-direction: column-reverse;
+  }
+
+  .task-picker-modal-actions .btn {
+    width: 100%;
+  }
+
+  .task-picker-modal-filters {
+    padding: 0 1.5rem;
+    margin-bottom: 1rem;
+    flex-direction: column;
+  }
+
+  .task-picker-search-wrapper {
+    min-width: auto;
+  }
+
+  .task-picker-select {
+    min-width: auto;
+    width: 100%;
   }
 
   .form-input,
@@ -692,7 +1013,8 @@
 [data-theme="dark"] .task-edit-modal-overlay,
 [data-theme="dark"] .project-edit-modal-overlay,
 [data-theme="dark"] .goal-edit-modal-overlay,
-[data-theme="dark"] .habit-edit-modal-overlay {
+[data-theme="dark"] .habit-edit-modal-overlay,
+[data-theme="dark"] .task-picker-modal-overlay {
   background: rgba(0, 0, 0, 0.8);
 }
 
@@ -700,7 +1022,8 @@
 [data-theme="dark"] .task-edit-select,
 [data-theme="dark"] .project-edit-select,
 [data-theme="dark"] .goal-edit-select,
-[data-theme="dark"] .habit-edit-select {
+[data-theme="dark"] .habit-edit-select,
+[data-theme="dark"] .task-picker-select {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='%23CBD5E1' d='M4.427 5.927l3.396 3.396a.25.25 0 00.354 0l3.396-3.396A.25.25 0 0011.396 5.5H4.604a.25.25 0 00-.177.427z'/%3E%3C/svg%3E");
 }
 
