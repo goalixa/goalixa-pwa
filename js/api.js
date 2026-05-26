@@ -728,6 +728,68 @@ export const appApi = {
 
   async getCalendarEvents(start, end) {
     return this.getTimerEntries({ start, end });
+  },
+
+  // ===== DAILY FOCUS =====
+
+  async getDailyFocus(date = null) {
+    const params = date ? `?date=${date}` : '';
+    return apiRequest(buildUrl(`/app/daily-focus${params}`));
+  },
+
+  async addToDailyFocus(taskIds, timeBlock = 'unscheduled', date = null) {
+    const today = date || new Date().toISOString().split('T')[0];
+    return apiRequest(buildUrl('/app/daily-focus'), {
+      method: 'POST',
+      body: {
+        date: today,
+        task_ids: taskIds,
+        time_block: timeBlock
+      }
+    });
+  },
+
+  async reorderDailyFocus(items, date = null) {
+    const today = date || new Date().toISOString().split('T')[0];
+    return apiRequest(buildUrl('/app/daily-focus/reorder'), {
+      method: 'PUT',
+      body: { date: today, items }
+    });
+  },
+
+  async updateDailyFocusItem(itemId, updates) {
+    return apiRequest(buildUrl(`/app/daily-focus/${itemId}`), {
+      method: 'PUT',
+      body: updates
+    });
+  },
+
+  async removeFromDailyFocus(itemId) {
+    return apiRequest(buildUrl(`/app/daily-focus/${itemId}`), {
+      method: 'DELETE'
+    });
+  },
+
+  async completeDailyFocusItem(itemId) {
+    return apiRequest(buildUrl(`/app/daily-focus/${itemId}/complete`), {
+      method: 'POST'
+    });
+  },
+
+  async autoFillDailyFocus(maxTasks = 5, priority = 'high', date = null) {
+    const today = date || new Date().toISOString().split('T')[0];
+    return apiRequest(buildUrl('/app/daily-focus/auto-fill'), {
+      method: 'POST',
+      body: { date: today, max_tasks: maxTasks, priority }
+    });
+  },
+
+  async carryOverDailyFocus(fromDate, toDate = null) {
+    const today = toDate || new Date().toISOString().split('T')[0];
+    return apiRequest(buildUrl('/app/daily-focus/carry-over'), {
+      method: 'POST',
+      body: { from_date: fromDate, to_date: today }
+    });
   }
 };
 
