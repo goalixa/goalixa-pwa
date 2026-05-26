@@ -803,10 +803,22 @@ export async function bindTasksSection(container, initialPayload = {}, projects 
       if (action === 'daily-check') response = await appApi.setTaskDailyCheck(taskId);
       if (action === 'complete') response = await appApi.completeTask(taskId);
       if (action === 'reopen') response = await appApi.reopenTask(taskId);
-      if (action === 'delete') response = await appApi.deleteTask(taskId);
+      if (action === 'delete') {
+        response = await appApi.deleteTask(taskId);
+        // Emit event for other views (e.g., Today's Focus panel) to listen to
+        window.dispatchEvent(new CustomEvent('task-deleted', {
+          detail: { taskId }
+        }));
+      }
       if (response) {
         tasksPayload = normalizeTaskCollections(response);
         paintTaskBoards();
+      }
+      // Emit event when task is updated
+      if (action !== 'delete') {
+        window.dispatchEvent(new CustomEvent('task-updated', {
+          detail: { taskId, action }
+        }));
       }
       showToast('Task updated', 'success');
     } catch (error) {

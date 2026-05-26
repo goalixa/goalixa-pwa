@@ -316,6 +316,14 @@ export function createPomodoroController(options = {}) {
     saveState(state);
     try {
       await appApi.bulkTaskAction(state.taskIds, 'start');
+      // Emit event for focus panel to listen to
+      window.dispatchEvent(new CustomEvent('focus-task-started', {
+        detail: {
+          taskId: state.taskId,
+          taskIds: state.taskIds,
+          taskName: state.taskName
+        }
+      }));
     } catch (error) {
       state.taskRunning = false;
       saveState(state);
@@ -330,6 +338,14 @@ export function createPomodoroController(options = {}) {
     saveState(state);
     try {
       await appApi.bulkTaskAction(state.taskIds, 'stop');
+      // Emit event for focus panel to listen to
+      window.dispatchEvent(new CustomEvent('focus-task-stopped', {
+        detail: {
+          taskId: state.taskId,
+          taskIds: state.taskIds,
+          taskName: state.taskName
+        }
+      }));
     } catch (error) {
       logger.error(error);
     }
@@ -347,6 +363,18 @@ export function createPomodoroController(options = {}) {
       if (state.remaining <= 0) {
         if (state.mode === 'work') {
           stopTaskTimer(state);
+          // Emit event for focus panel when work session completes
+          normalizeStateTaskIds(state);
+          if (state.taskIds.length > 0) {
+            window.dispatchEvent(new CustomEvent('focus-task-session-completed', {
+              detail: {
+                taskId: state.taskId,
+                taskIds: state.taskIds,
+                taskName: state.taskName,
+                mode: state.mode
+              }
+            }));
+          }
         }
         notifyPomodoro(state.mode);
         state.remaining = 0;
@@ -549,6 +577,14 @@ export function createPomodoroController(options = {}) {
       } else {
         await appApi.bulkTaskAction(state.taskIds, 'daily-check');
       }
+      // Emit event for focus panel to listen to
+      window.dispatchEvent(new CustomEvent('focus-task-completed', {
+        detail: {
+          taskId: state.taskId,
+          taskIds: state.taskIds,
+          taskName: state.taskName
+        }
+      }));
       showToast(`${state.taskIds.length} task(s) checked off for today.`, 'success');
     } catch (error) {
       showToast(error.message || 'Failed to mark task done', 'error');

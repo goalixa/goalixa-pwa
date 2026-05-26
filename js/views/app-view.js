@@ -3596,7 +3596,15 @@ function renderFocusTask(task, isUpNext = false) {
 }
 
 async function bindTodayFocusActions(container, content, signal, pomodoroState = {}) {
-  // Sync with Pomodoro state
+  const today = new Date().toISOString().split('T')[0];
+  let periodicRefreshInterval = null;
+  let timeUpdateInterval = null;
+  let currentRunningTaskId = null;
+  let taskStartTime = null;
+
+  /**
+   * Sync UI with Pomodoro state
+   */
   const syncPomodoroState = () => {
     const taskPicker = content.querySelector('#task-picker');
     const currentTaskId = taskPicker?.value;
@@ -3608,8 +3616,227 @@ async function bindTodayFocusActions(container, content, signal, pomodoroState =
       const isCurrentTask = String(itemTaskId) === String(currentTaskId);
       const isRunning = isCurrentTask && (pomodoroState.isRunning || false);
       item.classList.toggle('is-running', isRunning);
+
+      // Update running indicator
+      if (isRunning && isCurrentTask) {
+        currentRunningTaskId = itemTaskId;
+        taskStartTime = Date.now();
+        startTimeUpdater(item);
+      } else if (!isRunning && currentRunningTaskId === itemTaskId) {
+        currentRunningTaskId = null;
+        taskStartTime = null;
+        stopTimeUpdater();
+      }
     });
   };
+
+  /**
+   * Start updating time tracked every second for running task
+   */
+  const startTimeUpdater = (taskElement) => {
+    stopTimeUpdater();
+    const timeEl = taskElement.querySelector('.today-focus-task-time');
+    if (!timeEl) return;
+
+    // Initial update
+    const baseTime = parseInt(taskElement.dataset.baseTime || 0) || 0;
+    const updateTime = () => {
+      const elapsed = Math.floor((Date.now() - taskStartTime) / 1000);
+      const totalSeconds = baseTime + elapsed;
+      timeEl.textContent = formatDurationClock(totalSeconds);
+    };
+    updateTime();
+
+    // Update every second
+    timeUpdateInterval = setInterval(updateTime, 1000);
+  };
+
+  /**
+   * Stop updating time tracked
+   */
+  const stopTimeUpdater = () => {
+    if (timeUpdateInterval) {
+      clearInterval(timeUpdateInterval);
+      timeUpdateInterval = null;
+    }
+  };
+
+  /**
+   * Refresh focus data from API
+   */
+  const refreshFocusData = async () => {
+    try {
+      const response = await appApi.getDailyFocus(today);
+      const focusBlocks = container.querySelector('#today-focus-blocks');
+      if (!focusBlocks) return;
+
+      // Store current running task info
+      const wasRunning = currentRunningTaskId !== null;
+      const previousRunningId = currentRunningTaskId;
+
+      // Re-render the focus panel
+      renderTodayFocus(container, response);
+
+      // If task was running, restore running state and time updater
+      if (wasRunning && previousRunningId) {
+        const taskElement = container.querySelector(`[data-focus-item-id][data-task-id="${previousRunningId}"]`);
+        if (taskElement) {
+          taskElement.classList.add('is-running');
+          // Store base time from API response for next update cycle
+          const timeStr = taskElement.querySelector('.today-focus-task-time')?.textContent || '0:00';
+          const parts = timeStr.split(':').map(Number);
+          const baseSeconds = parts.length === 2 ? parts[0] * 60 + parts[1] : 0;
+          taskElement.dataset.baseTime = baseSeconds;
+          startTimeUpdater(taskElement);
+        }
+      }
+    } catch (error) {
+      logger.warn('Failed to refresh focus data:', error);
+    }
+  };
+
+  /**
+   * Start periodic refresh every 30 seconds
+   */
+  const startPeriodicRefresh = () => {
+    if (periodicRefreshInterval) return;
+    periodicRefreshInterval = setInterval(refreshFocusData, 30000);
+  };
+
+  /**
+   * Stop periodic refresh
+   */
+  const stopPeriodicRefresh = () => {
+    if (periodicRefreshInterval) {
+      clearInterval(periodicRefreshInterval);
+      periodicRefreshInterval = null;
+    }
+  };
+
+  /**
+   * Handle task started event from Pomodoro
+   */
+  const handleTaskStarted = (event) => {
+    const taskId = event.detail?.taskId || event.detail?.taskIds?.[0];
+    if (!taskId) return;
+
+    const focusItem = container.querySelector(`[data-focus-item-id][data-task-id="${taskId}"]`);
+    if (focusItem) {
+      focusItem.classList.add('is-running');
+      currentRunningTaskId = taskId;
+      taskStartTime = Date.now();
+      // Get the current time from display
+      const timeStr = focusItem.querySelector('.today-focus-task-time')?.textContent || '0:00';
+      const parts = timeStr.split(':').map(Number);
+      const baseSeconds = parts.length === 2 ? parts[0] * 60 + parts[1] : 0;
+      focusItem.dataset.baseTime = baseSeconds;
+      startTimeUpdater(focusItem);
+    }
+  };
+
+  /**
+   * Handle task stopped event from Pomodoro
+   */
+  const handleTaskStopped = (event) => {
+    const taskId = event.detail?.taskId || event.detail?.taskIds?.[0];
+    if (!taskId) return;
+
+    const focusItem = container.querySelector(`[data-focus-item-id][data-task-id="${taskId}"]`);
+    if (focusItem) {
+      focusItem.classList.remove('is-running');
+      currentRunningTaskId = null;
+      taskStartTime = null;
+      stopTimeUpdater();
+    }
+
+    // Refresh to get updated time_tracked
+    refreshFocusData();
+  };
+
+  /**
+   * Handle task completed event from Pomodoro
+   */
+  const handleTaskCompleted = (event) => {
+    const taskId = event.detail?.taskId || event.detail?.taskIds?.[0];
+    if (!taskId) return;
+
+    const focusItem = container.querySelector(`[data-focus-item-id][data-task-id="${taskId}"]`);
+    if (focusItem) {
+      focusItem.classList.remove('is-running');
+      focusItem.classList.add('is-completed');
+      currentRunningTaskId = null;
+      taskStartTime = null;
+      stopTimeUpdater();
+
+      // Mark as completed in API
+      const focusItemId = parseInt(focusItem.dataset.focusItemId);
+      appApi.completeDailyFocusItem(focusItemId).catch(error => {
+        logger.warn('Failed to mark focus item complete:', error);
+      });
+
+      // Update progress
+      updateFocusProgress(container);
+
+      // Find and highlight next incomplete task
+      const focusBlocks = container.querySelector('#today-focus-blocks');
+      const blockOrder = ['morning', 'afternoon', 'evening', 'unscheduled'];
+      for (const blockKey of blockOrder) {
+        const items = focusBlocks.querySelectorAll(`[data-time-block="${blockKey}"] [data-focus-item-id]`);
+        const firstIncomplete = Array.from(items).find(item => !item.classList.contains('is-completed'));
+        if (firstIncomplete) {
+          // Remove up-next from all
+          focusBlocks.querySelectorAll('[data-focus-item-id].is-up-next').forEach(el => {
+            el.classList.remove('is-up-next');
+          });
+          // Add to new next task
+          firstIncomplete.classList.add('is-up-next');
+          break;
+        }
+      }
+    }
+
+    // Refresh to sync state
+    refreshFocusData();
+  };
+
+  /**
+   * Handle task deleted event
+   */
+  const handleTaskDeleted = (event) => {
+    const taskId = event.detail?.taskId;
+    if (!taskId) return;
+
+    const focusItem = container.querySelector(`[data-focus-item-id][data-task-id="${taskId}"]`);
+    if (focusItem) {
+      focusItem.remove();
+      updateFocusProgress(container);
+
+      // If this was the running task, stop updates
+      if (currentRunningTaskId === taskId) {
+        currentRunningTaskId = null;
+        taskStartTime = null;
+        stopTimeUpdater();
+      }
+    }
+  };
+
+  /**
+   * Handle task updated event
+   */
+  const handleTaskUpdated = (event) => {
+    const taskId = event.detail?.taskId;
+    if (!taskId) return;
+
+    // Just refresh to pick up any changes
+    refreshFocusData();
+  };
+
+  // Register event listeners
+  window.addEventListener('focus-task-started', handleTaskStarted, { signal });
+  window.addEventListener('focus-task-stopped', handleTaskStopped, { signal });
+  window.addEventListener('focus-task-completed', handleTaskCompleted, { signal });
+  window.addEventListener('task-deleted', handleTaskDeleted, { signal });
+  window.addEventListener('task-updated', handleTaskUpdated, { signal });
 
   // Listen for Pomodoro state changes
   const taskPicker = content.querySelector('#task-picker');
@@ -3626,9 +3853,20 @@ async function bindTodayFocusActions(container, content, signal, pomodoroState =
       setTimeout(() => {
         syncPomodoroState();
         // Reload focus data to sync time_tracked
-        initTodayFocusPanel(container, content, signal);
+        refreshFocusData();
       }, 100);
     }, { signal });
+  }
+
+  // Start periodic refresh (30 second fallback)
+  startPeriodicRefresh();
+
+  // Cleanup on signal abort
+  if (signal) {
+    signal.addEventListener('abort', () => {
+      stopPeriodicRefresh();
+      stopTimeUpdater();
+    });
   }
 
   // Add Tasks button
@@ -3880,26 +4118,46 @@ async function bindTodayFocusActions(container, content, signal, pomodoroState =
         showToast('Task removed', 'success');
       } else if (action === 'start-focus') {
         const taskId = focusItem.dataset.taskId;
+        const taskName = focusItem.querySelector('.today-focus-task-name')?.textContent || '';
 
-        if (taskId) {
-          // Set the Pomodoro task picker to this task
-          const taskPicker = content.querySelector('#task-picker');
-          if (taskPicker) {
-            taskPicker.value = taskId;
-            taskPicker.dispatchEvent(new Event('input', { bubbles: true }));
-            taskPicker.dispatchEvent(new Event('change', { bubbles: true }));
-          }
+        if (!taskId) return;
 
-          // Start the Pomodoro timer
-          const pomodoroToggle = content.querySelector('[data-pomodoro-toggle]');
-          if (pomodoroToggle) {
-            // Only click if not already running
-            const isRunning = pomodoroToggle.classList.contains('is-running');
-            if (!isRunning) {
-              pomodoroToggle.click();
-              showToast('Started Pomodoro timer', 'success');
-            }
-          }
+        const taskPicker = content.querySelector('#task-picker');
+        const pomodoroToggle = content.querySelector('[data-pomodoro-toggle]');
+
+        if (!taskPicker || !pomodoroToggle) return;
+
+        // Check current Pomodoro state
+        const isRunning = pomodoroToggle.classList.contains('is-running');
+        const currentTaskId = taskPicker.value;
+        const isSameTask = String(currentTaskId) === String(taskId);
+
+        // If already running on same task, do nothing
+        if (isRunning && isSameTask) {
+          showToast('Timer already running on this task', 'info');
+          return;
+        }
+
+        // Set the new task - triggers task picker change event
+        // The change event handler (selectTask) will:
+        // 1. Pause the timer if one was running on a different task
+        // 2. Update Pomodoro state with new task
+        // 3. Reset timer to work mode (25min)
+        taskPicker.value = taskId;
+        taskPicker.dispatchEvent(new Event('input', { bubbles: true }));
+        taskPicker.dispatchEvent(new Event('change', { bubbles: true }));
+
+        // Wait for task picker change event to process
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Start the Pomodoro timer (should be paused after task change)
+        const shouldBeRunning = pomodoroToggle.classList.contains('is-running');
+        if (!shouldBeRunning) {
+          pomodoroToggle.click();
+          showToast(`Started Pomodoro on "${taskName}"`, 'success');
+        } else {
+          // This shouldn't happen unless timer didn't stop as expected
+          showToast(`Task switched to "${taskName}"`, 'info');
         }
       }
     } catch (error) {
