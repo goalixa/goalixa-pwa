@@ -3831,10 +3831,31 @@ async function bindTodayFocusActions(container, content, signal, pomodoroState =
     refreshFocusData();
   };
 
+  /**
+   * Handle work session completed (Pomodoro timer reached 0)
+   */
+  const handleSessionCompleted = (event) => {
+    const taskId = event.detail?.taskId || event.detail?.taskIds?.[0];
+    if (!taskId) return;
+
+    const focusItem = container.querySelector(`[data-focus-item-id][data-task-id="${taskId}"]`);
+    if (focusItem) {
+      // Remove running state when session completes
+      focusItem.classList.remove('is-running');
+      currentRunningTaskId = null;
+      taskStartTime = null;
+      stopTimeUpdater();
+
+      // Refresh to get updated time tracking
+      refreshFocusData();
+    }
+  };
+
   // Register event listeners
   window.addEventListener('focus-task-started', handleTaskStarted, { signal });
   window.addEventListener('focus-task-stopped', handleTaskStopped, { signal });
   window.addEventListener('focus-task-completed', handleTaskCompleted, { signal });
+  window.addEventListener('focus-task-session-completed', handleSessionCompleted, { signal });
   window.addEventListener('task-deleted', handleTaskDeleted, { signal });
   window.addEventListener('task-updated', handleTaskUpdated, { signal });
 
