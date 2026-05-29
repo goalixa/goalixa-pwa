@@ -3130,57 +3130,118 @@ function renderTimer(content, payload) {
           </div>
         </section>
 
-        <section class="timer-range-section">
-          <div class="card pomodoro-card" data-tour-id="pomodoro">
-            <div class="focus-progress" aria-live="polite">
+        <!-- Unified Focus Workspace -->
+        <section class="focus-workspace" data-tour-id="focus-workspace">
+          <!-- Left Column: Timer Hero -->
+          <div class="focus-workspace-primary">
+            <div class="focus-timer-hero">
+              <!-- Mode & Session Info -->
+              <div class="focus-timer-meta">
+                <span class="focus-timer-mode" id="pomodoro-mode">Focus</span>
+                <span class="focus-timer-session" id="pomodoro-meta">Session 1 of 4</span>
+              </div>
+
+              <!-- Timer Ring -->
+              <div class="focus-timer-ring" id="pomodoro-ring">
+                <div class="focus-timer-display">
+                  <span class="focus-timer-minutes" id="pomodoro-minutes">25</span>
+                  <span class="focus-timer-separator">:</span>
+                  <span class="focus-timer-seconds" id="pomodoro-seconds">00</span>
+                </div>
+                <span class="focus-timer-caption">remaining</span>
+              </div>
+
+              <!-- Session Dots -->
+              <div class="focus-session-dots" aria-hidden="true">
+                <span class="focus-session-dot" data-session-dot="1"></span>
+                <span class="focus-session-dot" data-session-dot="2"></span>
+                <span class="focus-session-dot" data-session-dot="3"></span>
+                <span class="focus-session-dot" data-session-dot="4"></span>
+              </div>
+
+              <!-- Current Task Display -->
+              <div class="focus-current-task">
+                <span class="focus-task-label">Currently focusing on</span>
+                <span class="focus-task-name" id="pomodoro-task">Select a task to begin</span>
+              </div>
+
+              <!-- Primary Controls -->
+              <div class="focus-primary-actions">
+                <button class="focus-btn focus-btn-start" type="button" id="pomodoro-toggle" data-pomodoro-toggle>
+                  <i class="bi bi-play-fill" id="pomodoro-toggle-icon"></i>
+                  <span id="pomodoro-toggle-text">Start Focus</span>
+                </button>
+                <button class="focus-btn focus-btn-secondary" type="button" id="pomodoro-skip" title="Skip to next session">
+                  <i class="bi bi-skip-forward-fill"></i>
+                </button>
+                <button class="focus-btn focus-btn-secondary" type="button" id="pomodoro-reset" title="Reset timer">
+                  <i class="bi bi-arrow-counterclockwise"></i>
+                </button>
+                <button class="focus-btn focus-btn-success" type="button" id="pomodoro-done" title="Mark task complete">
+                  <i class="bi bi-check-lg"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Daily Progress Bar -->
+            <div class="focus-daily-progress">
+              <div class="focus-progress-info">
+                <span class="focus-progress-label">Daily progress</span>
+                <span class="focus-progress-value">${formatDurationClock(todayTotalSeconds)} / ${formatDurationClock(todayTargetSeconds)}</span>
+              </div>
               <div class="focus-progress-bar" aria-label="Daily focus progress">
                 <div class="focus-progress-fill" style="width: ${progress}%;"></div>
               </div>
             </div>
-            <div class="pomodoro-header">
-              <div class="pomodoro-copy">
-                <p class="pomodoro-label">Pomodoro</p>
-                <h2 class="pomodoro-mode" id="pomodoro-mode">Focus</h2>
-                <div class="pomodoro-status">
-                  <p class="pomodoro-task" id="pomodoro-task">No task selected</p>
-                  <p class="pomodoro-meta" id="pomodoro-meta" aria-live="polite">Session 1 of 4</p>
-                </div>
-                <div class="pomodoro-dots" aria-hidden="true">
-                  <span data-session-dot="1"></span>
-                  <span data-session-dot="2"></span>
-                  <span data-session-dot="3"></span>
-                  <span data-session-dot="4"></span>
+          </div>
+
+          <!-- Right Column: Task List -->
+          <div class="focus-workspace-secondary">
+            <!-- List Header -->
+            <div class="focus-list-header">
+              <div class="focus-list-title-group">
+                <h2 class="focus-list-title">Today's Focus</h2>
+                <div class="focus-list-meta">
+                  <span class="focus-list-date" id="today-focus-date">${escapeHtml(payload.today_date || '')}</span>
+                  <span class="focus-list-progress" id="today-focus-progress">0/0 done</span>
                 </div>
               </div>
-              <div class="pomodoro-clock">
-                <div class="pomodoro-ring">
-                  <div class="pomodoro-dial" id="pomodoro-display" role="timer" aria-live="polite">25:00</div>
-                  <span class="pomodoro-caption">Remaining</span>
+              <button class="focus-btn focus-btn-add" id="today-focus-add-btn">
+                <i class="bi bi-plus-lg"></i>
+                <span>Add Tasks</span>
+              </button>
+            </div>
+
+            <!-- Task List -->
+            <div class="focus-task-list-wrapper" id="today-focus-list-wrapper">
+              <div class="focus-task-list" id="today-focus-blocks">
+                <!-- Tasks rendered dynamically -->
+                <div class="focus-empty-state" id="today-focus-empty">
+                  <i class="bi bi-calendar-check"></i>
+                  <p>No tasks planned for today</p>
+                  <button class="focus-btn focus-btn-outline" id="today-focus-quick-add">
+                    <i class="bi bi-plus-lg"></i>
+                    Plan your day
+                  </button>
                 </div>
               </div>
             </div>
-            <div class="pomodoro-controls">
-              <button class="btn btn-primary btn-sm" type="button" id="pomodoro-toggle">
-                <i class="bi bi-play-fill" id="pomodoro-toggle-icon"></i>
-                <span id="pomodoro-toggle-text">Start</span>
-              </button>
-              <button class="btn btn-outline-secondary btn-sm" type="button" id="pomodoro-reset">
-                <i class="bi bi-arrow-counterclockwise"></i>
-                <span class="btn-text">Reset</span>
-              </button>
-              <button class="btn btn-outline-secondary btn-sm" type="button" id="pomodoro-skip">
-                <i class="bi bi-skip-forward-fill"></i>
-                <span class="btn-text">Skip</span>
-              </button>
-              <button class="btn btn-outline-success btn-sm" type="button" id="pomodoro-done">
-                <i class="bi bi-check2-circle"></i>
-                <span class="btn-text">Done today</span>
-              </button>
-            </div>
-            <div class="pomodoro-presets">
-              <button class="btn btn-light btn-sm" type="button" data-pomodoro-mode="work">Focus 25</button>
-              <button class="btn btn-light btn-sm" type="button" data-pomodoro-mode="short">Break 5</button>
-              <button class="btn btn-light btn-sm" type="button" data-pomodoro-mode="long">Break 15</button>
+
+            <!-- Secondary Actions -->
+            <div class="focus-list-actions">
+              <div class="focus-action-overflow">
+                <button class="focus-action-btn" id="today-focus-autofill" title="Auto-fill with high priority tasks">
+                  <i class="bi bi-lightning"></i>
+                  <span>Auto-fill</span>
+                </button>
+                <button class="focus-action-btn" id="today-focus-carryover" title="Carry over from yesterday">
+                  <i class="bi bi-arrow-return-left"></i>
+                  <span>Carry Over</span>
+                </button>
+                <button class="focus-action-btn focus-action-danger" id="today-focus-clear" title="Clear all tasks">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
             </div>
           </div>
         </section>
@@ -3386,52 +3447,6 @@ function renderTimer(content, payload) {
             ` : '<div class="timer-empty-state">No timesheet data yet.</div>'}
           </div>
         </section>
-
-        <!-- Today's Focus Section -->
-        <section class="timer-range-section today-focus-section" data-tour-id="today-focus">
-          <div class="card today-focus-card">
-            <div class="today-focus-header">
-              <div class="today-focus-title-row">
-                <div>
-                  <p class="today-focus-label">Daily Planning</p>
-                  <h2 class="today-focus-title">Today's Focus</h2>
-                </div>
-                <div class="today-focus-meta">
-                  <span class="today-focus-date" id="today-focus-date">${escapeHtml(payload.today_date || '')}</span>
-                  <span class="today-focus-progress" id="today-focus-progress">0/0 done</span>
-                </div>
-              </div>
-              <div class="today-focus-actions">
-                <button class="btn btn-primary btn-sm" id="today-focus-add-btn">
-                  <i class="bi bi-plus-lg"></i> Add Tasks
-                </button>
-              </div>
-            </div>
-
-            <div class="today-focus-blocks" id="today-focus-blocks">
-              <!-- Time blocks rendered dynamically -->
-              <div class="today-focus-empty" id="today-focus-empty">
-                <i class="bi bi-calendar-check"></i>
-                <p>No tasks planned for today</p>
-                <button class="btn btn-outline-primary btn-sm" id="today-focus-quick-add">
-                  Plan your day
-                </button>
-              </div>
-            </div>
-
-            <div class="today-focus-footer">
-              <button class="btn btn-outline-secondary btn-sm" id="today-focus-autofill">
-                <i class="bi bi-lightning"></i> Auto-fill High Priority
-              </button>
-              <button class="btn btn-outline-secondary btn-sm" id="today-focus-carryover">
-                <i class="bi bi-arrow-return-left"></i> Carry Over Yesterday
-              </button>
-              <button class="btn btn-outline-danger btn-sm" id="today-focus-clear">
-                <i class="bi bi-trash"></i> Clear Day
-              </button>
-            </div>
-          </div>
-        </section>
       </div>
     </div>
   `;
@@ -3531,76 +3546,98 @@ function renderTodayFocus(container, focusData) {
     }
   }
 
-  // Render time blocks
+  // Render time blocks with dividers (new unified workspace style)
   const html = blockOrder.map(blockKey => {
     const items = blocks[blockKey] || [];
     if (!items.length) return '';
 
     const blockLabel = blockKey.charAt(0).toUpperCase() + blockKey.slice(1);
-    const itemCount = items.length;
-    const completedCount = items.filter(i => i.is_completed).length;
 
     return `
-      <div class="today-focus-block" data-time-block="${blockKey}">
-        <div class="today-focus-block-header">
-          <div>
-            <span class="today-focus-block-title">${blockLabel}</span>
-            <span class="today-focus-block-meta">${completedCount}/${itemCount}</span>
-          </div>
-        </div>
-        <div class="today-focus-block-tasks" data-tasks-container="${blockKey}">
-          ${items.map(item => renderFocusTask(item, item.id === upNextTaskId)).join('')}
-        </div>
+      <div class="focus-time-divider"><span>${blockLabel}</span></div>
+      <div class="focus-block-tasks" data-time-block="${blockKey}" data-tasks-container="${blockKey}">
+        ${items.map(item => renderFocusTask(item, item.id === upNextTaskId)).join('')}
       </div>
     `;
   }).join('');
 
-  focusBlocks.innerHTML = html || '<div class="today-focus-empty"><p>No tasks planned</p></div>';
+  focusBlocks.innerHTML = html || '<div class="focus-empty-state"><i class="bi bi-calendar-check"></i><p>No tasks planned</p></div>';
+
+  // Dispatch event to update scroll indicators
+  setTimeout(() => {
+    focusBlocks.dispatchEvent(new CustomEvent('focus-list-updated', { bubbles: true }));
+  }, 50);
 }
 
 function renderFocusTask(task, isUpNext = false) {
-  const priorityColor = task.task_priority === 'high' ? 'high' :
-                       task.task_priority === 'medium' ? 'medium' : 'low';
+  const priorityClass = task.task_priority === 'high' ? 'priority-high' :
+                        task.task_priority === 'medium' ? 'priority-medium' : 'priority-low';
 
   return `
-    <div class="today-focus-task ${task.is_completed ? 'is-completed' : ''} ${task.is_running ? 'is-running' : ''} ${isUpNext ? 'is-up-next' : ''}"
+    <div class="focus-task-item ${task.is_completed ? 'is-completed' : ''} ${task.is_running ? 'is-active' : ''} ${isUpNext ? 'is-up-next' : ''}"
          data-focus-item-id="${task.id}"
          data-task-id="${task.task_id}"
+         data-base-time="${task.time_tracked_seconds || 0}"
          draggable="true"
          ${isUpNext ? 'title="This is your next task"' : ''}>
-      <span class="today-focus-drag-handle" title="Drag to reorder">⋮⋮</span>
-      <span class="today-focus-priority ${priorityColor}"></span>
-      <div class="today-focus-task-info">
-        <div class="today-focus-task-name">${escapeHtml(task.task_name || '')}</div>
-        <div class="today-focus-task-meta">
-          <span class="today-focus-task-project">${escapeHtml(task.project_name || 'No project')}</span>
-          ${task.scheduled_start ? `<span class="today-focus-task-time">${task.scheduled_start} - ${task.scheduled_end || '?'}</span>` : ''}
-          <span class="today-focus-task-time">${formatDurationClock(task.time_tracked_seconds || 0)}</span>
-        </div>
-      </div>
-      <div class="today-focus-task-actions">
-        ${!task.is_completed ? `
-          <button class="btn btn-outline-primary btn-sm" data-action="start-focus" data-focus-item-id="${task.id}" title="Start Pomodoro">
-            <i class="bi bi-play-fill"></i>
-          </button>
-        ` : ''}
-        <button class="btn ${task.is_completed ? 'btn-success' : 'btn-outline-secondary'} btn-sm" data-action="complete-focus" data-focus-item-id="${task.id}" title="${task.is_completed ? 'Undo' : 'Complete'}">
-          <i class="bi ${task.is_completed ? 'bi-check2-circle' : 'bi-circle'}"></i>
+      <div class="focus-task-reorder">
+        <button class="focus-task-reorder-btn" data-action="move-up" data-focus-item-id="${task.id}" title="Move up">
+          <i class="bi bi-chevron-up"></i>
         </button>
-        <button class="btn btn-outline-danger btn-sm" data-action="remove-focus" data-focus-item-id="${task.id}" title="Remove">
-          <i class="bi bi-trash"></i>
+        <button class="focus-task-reorder-btn" data-action="move-down" data-focus-item-id="${task.id}" title="Move down">
+          <i class="bi bi-chevron-down"></i>
         </button>
       </div>
+      <button class="focus-task-play" data-action="start-focus" data-focus-item-id="${task.id}" title="${task.is_running ? 'Pause' : 'Start Pomodoro'}">
+        <i class="bi ${task.is_running ? 'bi-pause-fill' : 'bi-play-fill'}"></i>
+      </button>
+      <span class="focus-task-priority ${priorityClass}"></span>
+      <div class="focus-task-content">
+        <span class="focus-task-name">${escapeHtml(task.task_name || '')}</span>
+        <span class="focus-task-project">${escapeHtml(task.project_name || 'No project')}</span>
+      </div>
+      <span class="focus-task-time">${formatDurationClock(task.time_tracked_seconds || 0)}</span>
+      <button class="focus-task-complete" data-action="complete-focus" data-focus-item-id="${task.id}" title="${task.is_completed ? 'Undo' : 'Complete'}">
+        <i class="bi ${task.is_completed ? 'bi-arrow-counterclockwise' : 'bi-check2'}"></i>
+      </button>
     </div>
   `;
 }
 
-async function bindTodayFocusActions(container, content, signal, pomodoroState = {}) {
+async function bindTodayFocusActions(container, content, signal, pomodoroState = {}, showToast = null) {
   const today = new Date().toISOString().split('T')[0];
   let periodicRefreshInterval = null;
   let timeUpdateInterval = null;
   let currentRunningTaskId = null;
   let taskStartTime = null;
+
+  /**
+   * Save current positions to API after reorder
+   */
+  const saveReorderPositions = async (container) => {
+    const focusBlocks = container.querySelector('#today-focus-blocks');
+    if (!focusBlocks) return;
+
+    const positions = [];
+    focusBlocks.querySelectorAll('[data-tasks-container]').forEach(taskContainer => {
+      const blockKey = taskContainer.dataset.tasksContainer;
+      Array.from(taskContainer.querySelectorAll('[data-focus-item-id]')).forEach((element, index) => {
+        const focusItemId = parseInt(element.dataset.focusItemId);
+        positions.push({
+          id: focusItemId,
+          time_block: blockKey,
+          position: index
+        });
+      });
+    });
+
+    try {
+      await appApi.reorderDailyFocus(positions);
+    } catch (error) {
+      logger.error('Failed to save reorder positions:', error);
+      showToast('Failed to save order', 'error');
+    }
+  };
 
   /**
    * Sync UI with Pomodoro state
@@ -3635,7 +3672,7 @@ async function bindTodayFocusActions(container, content, signal, pomodoroState =
    */
   const startTimeUpdater = (taskElement) => {
     stopTimeUpdater();
-    const timeEl = taskElement.querySelector('.today-focus-task-time');
+    const timeEl = taskElement.querySelector('.focus-task-time, .today-focus-task-time');
     if (!timeEl) return;
 
     // Initial update
@@ -3681,9 +3718,9 @@ async function bindTodayFocusActions(container, content, signal, pomodoroState =
       if (wasRunning && previousRunningId) {
         const taskElement = container.querySelector(`[data-focus-item-id][data-task-id="${previousRunningId}"]`);
         if (taskElement) {
-          taskElement.classList.add('is-running');
+          taskElement.classList.add('is-active', 'is-running');
           // Store base time from API response for next update cycle
-          const timeStr = taskElement.querySelector('.today-focus-task-time')?.textContent || '0:00';
+          const timeStr = taskElement.querySelector('.focus-task-time, .today-focus-task-time')?.textContent || '0:00';
           const parts = timeStr.split(':').map(Number);
           const baseSeconds = parts.length === 2 ? parts[0] * 60 + parts[1] : 0;
           taskElement.dataset.baseTime = baseSeconds;
@@ -3722,11 +3759,11 @@ async function bindTodayFocusActions(container, content, signal, pomodoroState =
 
     const focusItem = container.querySelector(`[data-focus-item-id][data-task-id="${taskId}"]`);
     if (focusItem) {
-      focusItem.classList.add('is-running');
+      focusItem.classList.add('is-active', 'is-running');
       currentRunningTaskId = taskId;
       taskStartTime = Date.now();
       // Get the current time from display
-      const timeStr = focusItem.querySelector('.today-focus-task-time')?.textContent || '0:00';
+      const timeStr = focusItem.querySelector('.focus-task-time, .today-focus-task-time')?.textContent || '0:00';
       const parts = timeStr.split(':').map(Number);
       const baseSeconds = parts.length === 2 ? parts[0] * 60 + parts[1] : 0;
       focusItem.dataset.baseTime = baseSeconds;
@@ -3774,24 +3811,14 @@ async function bindTodayFocusActions(container, content, signal, pomodoroState =
         logger.warn('Failed to mark focus item complete:', error);
       });
 
-      // Update progress
+      // Update progress and up-next indicator
       updateFocusProgress(container);
+      updateUpNextIndicator(container);
 
-      // Find and highlight next incomplete task
-      const focusBlocks = container.querySelector('#today-focus-blocks');
-      const blockOrder = ['morning', 'afternoon', 'evening', 'unscheduled'];
-      for (const blockKey of blockOrder) {
-        const items = focusBlocks.querySelectorAll(`[data-time-block="${blockKey}"] [data-focus-item-id]`);
-        const firstIncomplete = Array.from(items).find(item => !item.classList.contains('is-completed'));
-        if (firstIncomplete) {
-          // Remove up-next from all
-          focusBlocks.querySelectorAll('[data-focus-item-id].is-up-next').forEach(el => {
-            el.classList.remove('is-up-next');
-          });
-          // Add to new next task
-          firstIncomplete.classList.add('is-up-next');
-          break;
-        }
+      // Show toast with next task if available
+      const nextTask = findNextIncompleteTask(container);
+      if (nextTask && showToast) {
+        showToast(`Next up: ${nextTask.taskName}`, 'info');
       }
     }
 
@@ -3858,6 +3885,28 @@ async function bindTodayFocusActions(container, content, signal, pomodoroState =
   window.addEventListener('focus-task-session-completed', handleSessionCompleted, { signal });
   window.addEventListener('task-deleted', handleTaskDeleted, { signal });
   window.addEventListener('task-updated', handleTaskUpdated, { signal });
+
+  // Scroll indicator handling
+  const focusListWrapper = container.querySelector('#today-focus-list-wrapper');
+  const focusTaskList = container.querySelector('#today-focus-blocks');
+
+  const updateScrollIndicators = () => {
+    if (!focusListWrapper || !focusTaskList) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = focusTaskList;
+    const canScrollUp = scrollTop > 5;
+    const canScrollDown = scrollTop + clientHeight < scrollHeight - 5;
+
+    focusListWrapper.classList.toggle('can-scroll-up', canScrollUp);
+    focusListWrapper.classList.toggle('can-scroll-down', canScrollDown);
+  };
+
+  if (focusTaskList) {
+    focusTaskList.addEventListener('scroll', updateScrollIndicators, { signal, passive: true });
+    focusTaskList.addEventListener('focus-list-updated', updateScrollIndicators, { signal });
+    // Initial check after content loads
+    setTimeout(updateScrollIndicators, 100);
+  }
 
   // Listen for Pomodoro state changes
   const taskPicker = content.querySelector('#task-picker');
@@ -4124,22 +4173,26 @@ async function bindTodayFocusActions(container, content, signal, pomodoroState =
         await appApi.completeDailyFocusItem(parseInt(focusItemId));
         showToast('Task completed', 'success');
 
-        // Update progress counter
+        // Update progress counter and up-next indicator
         updateFocusProgress(container);
+        updateUpNextIndicator(container);
       } else if (action === 'remove-focus') {
         // Save state for rollback if needed
         savedState = focusItem.parentElement.innerHTML;
 
         // Optimistic update: remove from DOM
         focusItem.remove();
+
+        // Update progress counter and up-next indicator
         updateFocusProgress(container);
+        updateUpNextIndicator(container);
 
         // Make API call
         await appApi.removeFromDailyFocus(parseInt(focusItemId));
         showToast('Task removed', 'success');
       } else if (action === 'start-focus') {
         const taskId = focusItem.dataset.taskId;
-        const taskName = focusItem.querySelector('.today-focus-task-name')?.textContent || '';
+        const taskName = focusItem.querySelector('.focus-task-name, .today-focus-task-name')?.textContent || '';
 
         if (!taskId) return;
 
@@ -4180,6 +4233,46 @@ async function bindTodayFocusActions(container, content, signal, pomodoroState =
           // This shouldn't happen unless timer didn't stop as expected
           showToast(`Task switched to "${taskName}"`, 'info');
         }
+      } else if (action === 'move-up' || action === 'move-down') {
+        // Get the parent container and sibling elements
+        const taskContainer = focusItem.closest('[data-tasks-container]');
+        if (!taskContainer) return;
+
+        const siblings = Array.from(taskContainer.querySelectorAll('[data-focus-item-id]'));
+        const currentIndex = siblings.indexOf(focusItem);
+
+        if (action === 'move-up' && currentIndex > 0) {
+          // Move up - insert before previous sibling
+          const prevSibling = siblings[currentIndex - 1];
+          taskContainer.insertBefore(focusItem, prevSibling);
+
+          // Animate
+          focusItem.classList.add('task-reordered');
+          setTimeout(() => focusItem.classList.remove('task-reordered'), 300);
+
+          // Scroll into view
+          focusItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+          // Save to API
+          await saveReorderPositions(container);
+        } else if (action === 'move-down' && currentIndex < siblings.length - 1) {
+          // Move down - insert after next sibling
+          const nextSibling = siblings[currentIndex + 1];
+          taskContainer.insertBefore(nextSibling, focusItem);
+
+          // Animate
+          focusItem.classList.add('task-reordered');
+          setTimeout(() => focusItem.classList.remove('task-reordered'), 300);
+
+          // Scroll into view
+          focusItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+          // Save to API
+          await saveReorderPositions(container);
+        }
+
+        // Update up-next indicator
+        updateUpNextIndicator(container);
       }
     } catch (error) {
       logger.error(`Error performing action "${action}" on focus item:`, error);
@@ -4198,6 +4291,31 @@ async function bindTodayFocusActions(container, content, signal, pomodoroState =
       actionBtn.disabled = false;
     }
   }, { signal });
+}
+
+/**
+ * Find the next incomplete task in the focus panel
+ * @param {HTMLElement} container - The focus container
+ * @returns {Object|null} The next incomplete task element and its data, or null if all tasks are complete
+ */
+function findNextIncompleteTask(container) {
+  const focusBlocks = container.querySelector('#today-focus-blocks');
+  if (!focusBlocks) return null;
+
+  const blockOrder = ['morning', 'afternoon', 'evening', 'unscheduled'];
+
+  for (const blockKey of blockOrder) {
+    const items = focusBlocks.querySelectorAll(`[data-time-block="${blockKey}"] [data-focus-item-id], [data-tasks-container="${blockKey}"] [data-focus-item-id]`);
+    const nextIncomplete = Array.from(items).find(item => !item.classList.contains('is-completed'));
+    if (nextIncomplete) {
+      return {
+        element: nextIncomplete,
+        taskName: nextIncomplete.querySelector('.focus-task-name, .today-focus-task-name')?.textContent || 'Unknown task'
+      };
+    }
+  }
+
+  return null;
 }
 
 /**
@@ -4228,6 +4346,32 @@ function updateFocusProgress(container) {
   });
 }
 
+/**
+ * Update the "Up Next" indicator to highlight the next incomplete task
+ * @param {HTMLElement} container - The focus container
+ */
+function updateUpNextIndicator(container) {
+  const focusBlocks = container.querySelector('#today-focus-blocks');
+  if (!focusBlocks) return;
+
+  const blockOrder = ['morning', 'afternoon', 'evening', 'unscheduled'];
+
+  // Remove up-next from all tasks
+  focusBlocks.querySelectorAll('[data-focus-item-id].is-up-next').forEach(el => {
+    el.classList.remove('is-up-next');
+  });
+
+  // Find and mark the first incomplete task
+  for (const blockKey of blockOrder) {
+    const items = focusBlocks.querySelectorAll(`[data-time-block="${blockKey}"] [data-focus-item-id]`);
+    const firstIncomplete = Array.from(items).find(item => !item.classList.contains('is-completed'));
+    if (firstIncomplete) {
+      firstIncomplete.classList.add('is-up-next');
+      break;
+    }
+  }
+}
+
 function initTodayFocusDragDrop(container, signal) {
   const focusBlocks = container.querySelector('#today-focus-blocks');
   if (!focusBlocks) return;
@@ -4239,6 +4383,7 @@ function initTodayFocusDragDrop(container, signal) {
   let savedState = null;
   let debounceTimeout = null;
   let lastDropState = null;
+  let dropIndicator = null;
 
   /**
    * Save current DOM state for rollback
@@ -4278,7 +4423,7 @@ function initTodayFocusDragDrop(container, signal) {
     const positions = [];
     focusBlocks.querySelectorAll('[data-tasks-container]').forEach(container => {
       const blockKey = container.dataset.tasksContainer;
-      Array.from(container.children).forEach((element, index) => {
+      Array.from(container.children).filter(el => el.dataset.focusItemId).forEach((element, index) => {
         const focusItemId = parseInt(element.dataset.focusItemId);
         positions.push({
           id: focusItemId,
@@ -4298,6 +4443,41 @@ function initTodayFocusDragDrop(container, signal) {
     return JSON.stringify(newPositions) !== JSON.stringify(lastDropState);
   }
 
+  /**
+   * Clear all drag indicators
+   */
+  function clearDragIndicators() {
+    focusBlocks.querySelectorAll('.drag-over-top, .drag-over-bottom').forEach(el => {
+      el.classList.remove('drag-over-top', 'drag-over-bottom');
+    });
+    focusBlocks.querySelectorAll('[data-tasks-container]').forEach(el => {
+      el.classList.remove('drag-over');
+    });
+    const taskList = container.querySelector('.focus-task-list');
+    if (taskList) taskList.classList.remove('is-dragging-active');
+  }
+
+  /**
+   * Get drop position info based on mouse Y position
+   */
+  function getDropPosition(event, taskContainer) {
+    const tasks = Array.from(taskContainer.querySelectorAll('[data-focus-item-id]:not(.is-dragging)'));
+    const mouseY = event.clientY;
+
+    for (let i = 0; i < tasks.length; i++) {
+      const task = tasks[i];
+      const rect = task.getBoundingClientRect();
+      const midY = rect.top + rect.height / 2;
+
+      if (mouseY < midY) {
+        return { element: task, position: 'before' };
+      }
+    }
+
+    // If we're past all tasks, insert at the end
+    return { element: null, position: 'end' };
+  }
+
   focusBlocks.addEventListener('dragstart', (event) => {
     const focusTask = event.target.closest('[data-focus-item-id]');
     if (!focusTask) return;
@@ -4309,15 +4489,22 @@ function initTodayFocusDragDrop(container, signal) {
     // Save state before drag starts
     savedState = saveState();
 
+    // Add visual feedback
     draggedElement.classList.add('is-dragging');
+    const taskList = container.querySelector('.focus-task-list');
+    if (taskList) taskList.classList.add('is-dragging-active');
+
     event.dataTransfer.effectAllowed = 'move';
     event.dataTransfer.setData('application/json', focusTask.dataset.focusItemId);
 
-    // Set custom drag image with cursor indicator
+    // Set custom drag image
     const dragImage = focusTask.cloneNode(true);
-    dragImage.style.opacity = '0.7';
+    dragImage.style.opacity = '0.8';
+    dragImage.style.transform = 'scale(1.02)';
+    dragImage.style.position = 'absolute';
+    dragImage.style.top = '-1000px';
     document.body.appendChild(dragImage);
-    event.dataTransfer.setDragImage(dragImage, 0, 0);
+    event.dataTransfer.setDragImage(dragImage, 20, 20);
     setTimeout(() => dragImage.remove(), 0);
   }, { signal });
 
@@ -4325,14 +4512,31 @@ function initTodayFocusDragDrop(container, signal) {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
 
+    if (!draggedElement) return;
+
+    // Clear previous indicators
+    clearDragIndicators();
+    const taskList = container.querySelector('.focus-task-list');
+    if (taskList) taskList.classList.add('is-dragging-active');
+
+    // Find target task container
     const taskContainer = event.target.closest('[data-tasks-container]');
-    if (taskContainer && draggedElement && draggedElement.parentNode !== taskContainer) {
-      // Only show drag-over for different containers
-      focusBlocks.querySelectorAll('[data-tasks-container]').forEach(el => {
-        if (el !== taskContainer) {
-          el.classList.remove('drag-over');
-        }
-      });
+    if (!taskContainer) return;
+
+    // Get drop position
+    const dropPos = getDropPosition(event, taskContainer);
+
+    if (dropPos.element) {
+      // Show indicator on target element
+      const rect = dropPos.element.getBoundingClientRect();
+      const midY = rect.top + rect.height / 2;
+      if (event.clientY < midY) {
+        dropPos.element.classList.add('drag-over-top');
+      } else {
+        dropPos.element.classList.add('drag-over-bottom');
+      }
+    } else {
+      // Show indicator at end of container
       taskContainer.classList.add('drag-over');
     }
   }, { signal });
@@ -4340,7 +4544,7 @@ function initTodayFocusDragDrop(container, signal) {
   focusBlocks.addEventListener('dragleave', (event) => {
     const taskContainer = event.target.closest('[data-tasks-container]');
     if (taskContainer && !taskContainer.contains(event.relatedTarget)) {
-      taskContainer.classList.remove('drag-over');
+      clearDragIndicators();
     }
   }, { signal });
 
@@ -4353,16 +4557,32 @@ function initTodayFocusDragDrop(container, signal) {
     const targetTaskContainer = event.target.closest('[data-tasks-container]');
     if (!targetTaskContainer) {
       // Invalid drop zone - restore and cancel
+      clearDragIndicators();
       draggedElement.classList.remove('is-dragging');
       return;
     }
 
-    // Remove drag-over styling
-    targetTaskContainer.classList.remove('drag-over');
+    // Clear all indicators
+    clearDragIndicators();
     draggedElement.classList.remove('is-dragging');
 
-    // Optimistic UI update - move task to target
-    targetTaskContainer.appendChild(draggedElement);
+    // Get drop position
+    const dropPos = getDropPosition(event, targetTaskContainer);
+
+    // Perform DOM reorder
+    if (dropPos.element) {
+      // Insert before the target element
+      targetTaskContainer.insertBefore(draggedElement, dropPos.element);
+    } else {
+      // Append to the end
+      targetTaskContainer.appendChild(draggedElement);
+    }
+
+    // Animate the reorder
+    draggedElement.classList.add('task-reordered');
+    setTimeout(() => {
+      draggedElement.classList.remove('task-reordered');
+    }, 300);
 
     // Get new positions
     const newPositions = getAllTaskPositions();
@@ -4413,11 +4633,210 @@ function initTodayFocusDragDrop(container, signal) {
   }, { signal });
 
   focusBlocks.addEventListener('dragend', () => {
+    // Clear all drag states
     const dragging = focusBlocks.querySelector('.is-dragging');
     if (dragging) dragging.classList.remove('is-dragging');
     focusBlocks.querySelectorAll('[data-tasks-container]').forEach(el => {
       el.classList.remove('drag-over');
     });
+    focusBlocks.querySelectorAll('.drag-over-top, .drag-over-bottom').forEach(el => {
+      el.classList.remove('drag-over-top', 'drag-over-bottom');
+    });
+    const taskList = container.querySelector('.focus-task-list');
+    if (taskList) taskList.classList.remove('is-dragging-active');
+
+    // Reset drag state
+    draggedElement = null;
+    draggedFromBlock = null;
+    draggedFromIndex = null;
+  }, { signal });
+
+  // ===== TOUCH SUPPORT FOR MOBILE =====
+  let touchStartY = 0;
+  let touchCurrentY = 0;
+  let touchDraggedElement = null;
+  let touchClone = null;
+  let touchStarted = false;
+  let longPressTimer = null;
+  const LONG_PRESS_DELAY = 300;
+
+  function createTouchClone(element) {
+    const clone = element.cloneNode(true);
+    clone.classList.add('touch-drag-clone');
+    clone.style.cssText = `
+      position: fixed;
+      pointer-events: none;
+      z-index: 10000;
+      opacity: 0.9;
+      transform: scale(1.02);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      width: ${element.offsetWidth}px;
+    `;
+    document.body.appendChild(clone);
+    return clone;
+  }
+
+  function updateTouchClonePosition(clone, y) {
+    clone.style.top = `${y - clone.offsetHeight / 2}px`;
+    clone.style.left = `${touchDraggedElement.getBoundingClientRect().left}px`;
+  }
+
+  function getTouchDropPosition(y, taskContainer) {
+    const tasks = Array.from(taskContainer.querySelectorAll('[data-focus-item-id]:not(.is-dragging)'));
+    for (let i = 0; i < tasks.length; i++) {
+      const task = tasks[i];
+      const rect = task.getBoundingClientRect();
+      const midY = rect.top + rect.height / 2;
+      if (y < midY) {
+        return { element: task, position: 'before' };
+      }
+    }
+    return { element: null, position: 'end' };
+  }
+
+  focusBlocks.addEventListener('touchstart', (event) => {
+    const focusTask = event.target.closest('[data-focus-item-id]');
+    const reorderArea = event.target.closest('.focus-task-reorder');
+
+    // Only start drag from the reorder buttons area
+    if (!focusTask || !reorderArea) return;
+
+    touchStartY = event.touches[0].clientY;
+    touchDraggedElement = focusTask;
+
+    // Long press to start drag
+    longPressTimer = setTimeout(() => {
+      if (!touchDraggedElement) return;
+
+      touchStarted = true;
+      savedState = saveState();
+
+      touchDraggedElement.classList.add('is-dragging');
+      const taskList = container.querySelector('.focus-task-list');
+      if (taskList) taskList.classList.add('is-dragging-active');
+
+      touchClone = createTouchClone(touchDraggedElement);
+      updateTouchClonePosition(touchClone, touchStartY);
+
+      // Vibrate for haptic feedback if available
+      if (navigator.vibrate) navigator.vibrate(50);
+    }, LONG_PRESS_DELAY);
+  }, { signal, passive: true });
+
+  focusBlocks.addEventListener('touchmove', (event) => {
+    if (!touchStarted || !touchDraggedElement || !touchClone) return;
+
+    event.preventDefault();
+    touchCurrentY = event.touches[0].clientY;
+    updateTouchClonePosition(touchClone, touchCurrentY);
+
+    // Clear previous indicators
+    clearDragIndicators();
+    const taskList = container.querySelector('.focus-task-list');
+    if (taskList) taskList.classList.add('is-dragging-active');
+
+    // Find element under touch point
+    touchClone.style.display = 'none';
+    const elementUnder = document.elementFromPoint(event.touches[0].clientX, touchCurrentY);
+    touchClone.style.display = '';
+
+    const taskContainer = elementUnder?.closest('[data-tasks-container]');
+    if (!taskContainer) return;
+
+    const dropPos = getTouchDropPosition(touchCurrentY, taskContainer);
+    if (dropPos.element) {
+      dropPos.element.classList.add('drag-over-top');
+    } else {
+      taskContainer.classList.add('drag-over');
+    }
+  }, { signal, passive: false });
+
+  focusBlocks.addEventListener('touchend', async (event) => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
+
+    if (!touchStarted || !touchDraggedElement) {
+      touchDraggedElement = null;
+      return;
+    }
+
+    // Find drop target
+    if (touchClone) touchClone.style.display = 'none';
+    const elementUnder = document.elementFromPoint(
+      event.changedTouches[0].clientX,
+      event.changedTouches[0].clientY
+    );
+
+    const targetContainer = elementUnder?.closest('[data-tasks-container]');
+
+    // Clean up touch clone
+    if (touchClone) {
+      touchClone.remove();
+      touchClone = null;
+    }
+
+    clearDragIndicators();
+    touchDraggedElement.classList.remove('is-dragging');
+
+    if (targetContainer) {
+      const dropPos = getTouchDropPosition(event.changedTouches[0].clientY, targetContainer);
+
+      if (dropPos.element) {
+        targetContainer.insertBefore(touchDraggedElement, dropPos.element);
+      } else {
+        targetContainer.appendChild(touchDraggedElement);
+      }
+
+      // Animate the reorder
+      touchDraggedElement.classList.add('task-reordered');
+      setTimeout(() => {
+        touchDraggedElement.classList.remove('task-reordered');
+      }, 300);
+
+      // Get new positions and save
+      const newPositions = getAllTaskPositions();
+      if (stateChanged(newPositions)) {
+        lastDropState = newPositions;
+
+        if (debounceTimeout) clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(async () => {
+          try {
+            await appApi.reorderDailyFocus(newPositions);
+            showToast('Tasks reordered', 'success');
+            savedState = null;
+          } catch (error) {
+            logger.error('Failed to reorder tasks:', error);
+            showToast('Failed to reorder tasks', 'error');
+            restoreState(savedState);
+            lastDropState = null;
+          }
+          debounceTimeout = null;
+        }, 500);
+      }
+    }
+
+    // Reset touch state
+    touchStarted = false;
+    touchDraggedElement = null;
+  }, { signal });
+
+  focusBlocks.addEventListener('touchcancel', () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
+    if (touchClone) {
+      touchClone.remove();
+      touchClone = null;
+    }
+    if (touchDraggedElement) {
+      touchDraggedElement.classList.remove('is-dragging');
+    }
+    clearDragIndicators();
+    touchStarted = false;
+    touchDraggedElement = null;
   }, { signal });
 
   // Cleanup on signal abort
@@ -4425,6 +4844,12 @@ function initTodayFocusDragDrop(container, signal) {
     signal.addEventListener('abort', () => {
       if (debounceTimeout) {
         clearTimeout(debounceTimeout);
+      }
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+      }
+      if (touchClone) {
+        touchClone.remove();
       }
     });
   }
@@ -4486,6 +4911,15 @@ async function bindTimerActions(container, currentPath, metadata = {}) {
     timerQuickTaskFeedback.hidden = !message;
     timerQuickTaskFeedback.classList.toggle('is-success', state === 'success');
     timerQuickTaskFeedback.classList.toggle('is-error', state === 'error');
+  };
+
+  const closeDropdown = () => {
+    if (taskDropdown) {
+      taskDropdown.classList.remove('is-open');
+    }
+    if (taskPicker) {
+      taskPicker.setAttribute('aria-expanded', 'false');
+    }
   };
 
   const setProgressFill = () => {
@@ -4720,11 +5154,11 @@ async function bindTimerActions(container, currentPath, metadata = {}) {
     }
   }, { signal });
 
-  // Initialize Today's Focus panel
-  const focusContainer = content.querySelector('.today-focus-section');
+  // Initialize Today's Focus panel (works with both old and new unified workspace)
+  const focusContainer = content.querySelector('.focus-workspace-secondary, .today-focus-section');
   if (focusContainer) {
     await initTodayFocusPanel(focusContainer, content, signal);
-    await bindTodayFocusActions(focusContainer, content, signal);
+    await bindTodayFocusActions(focusContainer, content, signal, {}, showToast);
     initTodayFocusDragDrop(focusContainer, signal);
 
     // Periodic refresh of focus data (every 30 seconds)

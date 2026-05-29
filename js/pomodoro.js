@@ -169,7 +169,17 @@ export function createPomodoroController(options = {}) {
 
   const updatePomodoroUI = (state) => {
     normalizeStateTaskIds(state);
-    if (ui.display) ui.display.textContent = formatPomodoroClock(state.remaining);
+    // Support both old single display and new separate minutes/seconds
+    if (ui.display) {
+      ui.display.textContent = formatPomodoroClock(state.remaining);
+    }
+    if (ui.minutes || ui.seconds) {
+      const safe = Math.max(0, Math.floor(Number(state.remaining || 0)));
+      const mins = Math.floor(safe / 60);
+      const secs = safe % 60;
+      if (ui.minutes) ui.minutes.textContent = String(mins).padStart(2, '0');
+      if (ui.seconds) ui.seconds.textContent = String(secs).padStart(2, '0');
+    }
     if (ui.modeText) ui.modeText.textContent = modeLabel(state.mode);
     if (ui.meta) ui.meta.textContent = `Session ${(state.completedWork % 4) + 1} of 4`;
 
@@ -901,10 +911,13 @@ function selectElements(root) {
   const query = (selector) => root.querySelector(selector);
   return {
     display: query('[data-pomodoro-display], #pomodoro-display'),
+    // New separate minutes/seconds elements for unified workspace
+    minutes: query('#pomodoro-minutes, .focus-timer-minutes'),
+    seconds: query('#pomodoro-seconds, .focus-timer-seconds'),
     modeText: query('[data-pomodoro-mode], #pomodoro-mode'),
     taskText: query('[data-pomodoro-task], #pomodoro-task'),
     meta: query('[data-pomodoro-meta], #pomodoro-meta'),
-    ring: query('[data-pomodoro-ring], .pomodoro-ring'),
+    ring: query('[data-pomodoro-ring], .pomodoro-ring, .focus-timer-ring'),
     dots: root.querySelectorAll('[data-session-dot]'),
     toggleBtn: query('[data-pomodoro-toggle], #pomodoro-toggle'),
     toggleIcon: query('[data-pomodoro-toggle-icon], #pomodoro-toggle-icon'),
