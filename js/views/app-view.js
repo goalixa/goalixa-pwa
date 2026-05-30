@@ -213,10 +213,7 @@ function closeMobileMenuOnClick(container) {
 function setThemeToggleState(button) {
   if (!button) return;
   const isDark = getTheme() === 'dark';
-  button.innerHTML = `
-    <i class="fas ${isDark ? 'fa-sun' : 'fa-moon'}"></i>
-    <span>${isDark ? 'Light' : 'Dark'}</span>
-  `;
+  button.innerHTML = `<i class="bi ${isDark ? 'bi-sun' : 'bi-moon-stars'}"></i>`;
   button.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
 }
 
@@ -227,16 +224,35 @@ function renderShell(container, section) {
   container.innerHTML = `
     <div class="app-shell">
       <header class="app-shell-header">
-        <button class="mobile-menu-toggle" data-action="toggle-menu" type="button" aria-label="Toggle menu">
-          <i class="fas fa-bars"></i>
-        </button>
-        <div class="app-brand" aria-label="Goalixa">
-          <img class="app-brand-logo" src="/icons/goalixa-logo.png" alt="Goalixa" />
+        <div class="header-left">
+          <button class="header-icon-btn mobile-menu-toggle" data-action="toggle-menu" type="button" aria-label="Toggle menu">
+            <i class="bi bi-list"></i>
+          </button>
+          <div class="app-brand" aria-label="Goalixa">
+            <img class="app-brand-logo" src="/icons/goalixa-logo.png" alt="Goalixa" />
+          </div>
         </div>
-        <div class="app-user-actions">
-          <span class="app-user-email">${escapeHtml(email)}</span>
-          <button class="btn btn-light app-theme-toggle" data-action="toggle-theme" type="button"></button>
-          <button class="btn btn-primary" data-action="logout" type="button">Logout</button>
+
+        <div class="header-center">
+          <button class="header-search-trigger" data-action="search" type="button">
+            <i class="bi bi-search"></i>
+            <span class="search-placeholder">Search or type <kbd>⌘K</kbd></span>
+          </button>
+        </div>
+
+        <div class="header-right">
+          <div class="app-user-actions">
+            <div class="header-timer" data-pomodoro-root="header">
+              <div class="header-timer-display" data-pomodoro-display>25:00</div>
+              <button class="header-timer-toggle" data-pomodoro-toggle aria-label="Start/Pause timer">
+                <i class="bi bi-play-fill" data-pomodoro-toggle-icon></i>
+              </button>
+            </div>
+            <button class="header-icon-btn app-theme-toggle" data-action="toggle-theme" type="button" title="Toggle theme"></button>
+            <button class="header-icon-btn logout-btn" data-action="logout" type="button" title="Logout">
+              <i class="bi bi-box-arrow-right"></i>
+            </button>
+          </div>
         </div>
       </header>
 
@@ -248,10 +264,10 @@ function renderShell(container, section) {
             <span class="app-nav-title">Navigation</span>
             <div class="app-nav-actions">
               <button class="desktop-nav-collapse" data-action="collapse-nav" type="button" aria-label="Collapse sidebar" title="Collapse sidebar">
-                <i class="fas fa-chevron-left"></i>
+                <i class="bi bi-chevron-left"></i>
               </button>
               <button class="mobile-nav-close" data-action="close-menu" type="button" aria-label="Close menu">
-                <i class="fas fa-times"></i>
+                <i class="bi bi-x"></i>
               </button>
             </div>
           </div>
@@ -283,6 +299,26 @@ function renderShell(container, section) {
     themeButton.addEventListener('click', () => {
       toggleTheme();
       setThemeToggleState(themeButton);
+    });
+  }
+
+  // Search trigger for command palette
+  const searchTrigger = container.querySelector('[data-action="search"]');
+  if (searchTrigger && !searchTrigger._hasListener) {
+    searchTrigger.addEventListener('click', () => {
+      eventBus.emit('command-palette-toggle');
+    });
+    searchTrigger._hasListener = true;
+  }
+
+  // Header Pomodoro initialization
+  const headerPomodoroRoot = container.querySelector('[data-pomodoro-root="header"]');
+  if (headerPomodoroRoot) {
+    createPomodoroController({
+      root: headerPomodoroRoot,
+      appApi,
+      showToast,
+      mode: 'compact'
     });
   }
 
@@ -348,7 +384,7 @@ function renderShell(container, section) {
     if (!button) return;
     const icon = button.querySelector('i');
     if (icon) {
-      icon.className = isCollapsed ? 'fas fa-chevron-right' : 'fas fa-chevron-left';
+      icon.className = isCollapsed ? 'bi bi-chevron-right' : 'bi bi-chevron-left';
     }
     button.setAttribute('aria-label', isCollapsed ? 'Expand sidebar' : 'Collapse sidebar');
     button.setAttribute('title', isCollapsed ? 'Expand sidebar' : 'Collapse sidebar');
@@ -9321,7 +9357,34 @@ async function renderSection(container, section, currentPath) {
  */
 export async function render(container, path, params) {
   const { section } = resolveSection(path);
-  renderShell(container, section);
+  
+  // Only render shell if not already present
+  if (!container.querySelector('.app-shell')) {
+    renderShell(container, section);
+  } else {
+    // Just update active nav state
+    const nav = container.querySelector('.app-shell-nav');
+    if (nav) {
+      nav.querySelectorAll('.app-nav-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.route === `/app/${section}`);
+      });
+    }
+
+    // Re-bind search trigger if it exists
+    const searchTrigger = container.querySelector('[data-action="search"]');
+    if (searchTrigger) {
+      // We use a named function to avoid duplicate listeners if possible, 
+      // but since we're recreating the button's environment or it's a new button,
+      // a fresh listener is safer if we ensure it's not double-bound.
+      // However, if the button is the SAME element, we might double bind.
+      // Let's check if the button is the same.
+      if (!searchTrigger._hasListener) {
+        searchTrigger.addEventListener('click', () => eventBus.emit('command-palette-toggle'));
+        searchTrigger._hasListener = true;
+      }
+    }
+  }
+  
   await renderSection(container, section, path);
 }
 

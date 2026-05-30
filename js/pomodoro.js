@@ -904,6 +904,21 @@ export function createPomodoroController(options = {}) {
     document.title = baseTitle;
   };
 
+  // Listen for storage changes from other tabs/instances
+  window.addEventListener('storage', (e) => {
+    if (e.key === storageKey) {
+      const newState = loadState();
+      // If running state changed, start/stop interval
+      if (newState.isRunning && !state.isRunning) {
+        startInterval(newState);
+      } else if (!newState.isRunning && state.isRunning) {
+        stopInterval();
+      }
+      Object.assign(state, newState);
+      updatePomodoroUI(state);
+    }
+  }, { signal: localSignal });
+
   return cleanup;
 }
 

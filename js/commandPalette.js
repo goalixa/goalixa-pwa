@@ -3,6 +3,8 @@
  * Global search and quick actions for Goalixa PWA
  */
 
+import { eventBus } from './utils.js';
+
 class CommandPalette {
   constructor() {
     this.overlay = document.getElementById('command-palette-overlay');
@@ -11,6 +13,11 @@ class CommandPalette {
     this.selectedIndex = 0;
     this.filteredItems = [];
     this.isOpen = false;
+
+    // Listen for toggle event
+    eventBus.on('command-palette-toggle', () => this.toggle());
+    eventBus.on('command-palette-open', () => this.open());
+    eventBus.on('command-palette-close', () => this.close());
 
     // Command registry
     this.commands = {
@@ -21,7 +28,7 @@ class CommandPalette {
           description: 'Add a new task to your list',
           icon: 'bi-plus-circle',
           keywords: ['create', 'new', 'task', 'add'],
-          action: () => this.navigate('#/app/tasks?action=create')
+          action: () => this.navigate('/app/tasks?action=create')
         },
         {
           id: 'create-project',
@@ -29,7 +36,7 @@ class CommandPalette {
           description: 'Start a new project',
           icon: 'bi-folder-plus',
           keywords: ['create', 'new', 'project', 'add'],
-          action: () => this.navigate('#/app/projects?action=create')
+          action: () => this.navigate('/app/projects?action=create')
         },
         {
           id: 'create-goal',
@@ -37,7 +44,7 @@ class CommandPalette {
           description: 'Set a new goal',
           icon: 'bi-trophy',
           keywords: ['create', 'new', 'goal', 'add'],
-          action: () => this.navigate('#/app/goals?action=create')
+          action: () => this.navigate('/app/goals?action=create')
         },
         {
           id: 'start-timer',
@@ -45,7 +52,7 @@ class CommandPalette {
           description: 'Begin a focused work session',
           icon: 'bi-stopwatch',
           keywords: ['start', 'timer', 'pomodoro', 'focus'],
-          action: () => this.navigate('#/app/timer')
+          action: () => this.navigate('/app/timer')
         },
         {
           id: 'view-reports',
@@ -53,7 +60,7 @@ class CommandPalette {
           description: 'See your productivity analytics',
           icon: 'bi-graph-up',
           keywords: ['reports', 'analytics', 'stats', 'insights'],
-          action: () => this.navigate('#/app/reports')
+          action: () => this.navigate('/app/reports')
         }
       ],
       navigation: [
@@ -63,7 +70,7 @@ class CommandPalette {
           description: 'Dashboard and quick stats',
           icon: 'bi-house',
           keywords: ['overview', 'dashboard', 'home'],
-          action: () => this.navigate('#/app')
+          action: () => this.navigate('/app')
         },
         {
           id: 'nav-tasks',
@@ -71,7 +78,7 @@ class CommandPalette {
           description: 'View and manage tasks',
           icon: 'bi-check-square',
           keywords: ['tasks', 'todo', 'list'],
-          action: () => this.navigate('#/app/tasks')
+          action: () => this.navigate('/app/tasks')
         },
         {
           id: 'nav-projects',
@@ -79,7 +86,7 @@ class CommandPalette {
           description: 'Browse your projects',
           icon: 'bi-folder',
           keywords: ['projects', 'folders'],
-          action: () => this.navigate('#/app/projects')
+          action: () => this.navigate('/app/projects')
         },
         {
           id: 'nav-goals',
@@ -87,7 +94,7 @@ class CommandPalette {
           description: 'Track your goals',
           icon: 'bi-trophy',
           keywords: ['goals', 'objectives', 'targets'],
-          action: () => this.navigate('#/app/goals')
+          action: () => this.navigate('/app/goals')
         },
         {
           id: 'nav-habits',
@@ -95,7 +102,7 @@ class CommandPalette {
           description: 'Build better habits',
           icon: 'bi-repeat',
           keywords: ['habits', 'routines', 'daily'],
-          action: () => this.navigate('#/app/habits')
+          action: () => this.navigate('/app/habits')
         },
         {
           id: 'nav-planner',
@@ -103,7 +110,7 @@ class CommandPalette {
           description: 'Daily and weekly planning',
           icon: 'bi-calendar-check',
           keywords: ['planner', 'calendar', 'schedule'],
-          action: () => this.navigate('#/app/planner')
+          action: () => this.navigate('/app/planner')
         },
         {
           id: 'nav-timer',
@@ -111,7 +118,7 @@ class CommandPalette {
           description: 'Pomodoro timer',
           icon: 'bi-stopwatch',
           keywords: ['timer', 'pomodoro', 'focus'],
-          action: () => this.navigate('#/app/timer')
+          action: () => this.navigate('/app/timer')
         },
         {
           id: 'nav-sessions',
@@ -119,7 +126,7 @@ class CommandPalette {
           description: 'Active login sessions',
           icon: 'bi-shield-check',
           keywords: ['sessions', 'security', 'devices'],
-          action: () => this.navigate('#/app/sessions')
+          action: () => this.navigate('/app/sessions')
         },
         {
           id: 'nav-account',
@@ -127,7 +134,7 @@ class CommandPalette {
           description: 'Manage your account',
           icon: 'bi-gear',
           keywords: ['settings', 'account', 'profile', 'preferences'],
-          action: () => this.navigate('#/app/account')
+          action: () => this.navigate('/app/account')
         }
       ]
     };
@@ -287,8 +294,10 @@ class CommandPalette {
     }
   }
 
-  navigate(hash) {
-    window.location.hash = hash;
+  navigate(path) {
+    // Remove hash prefix if present and emit navigate event
+    const cleanPath = path.startsWith('#') ? path.substring(1) : path;
+    eventBus.emit('navigate', cleanPath);
   }
 
   renderResults() {
