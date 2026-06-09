@@ -10,6 +10,12 @@ class CommandPalette {
     this.overlay = document.getElementById('command-palette-overlay');
     this.input = document.getElementById('command-palette-input');
     this.results = document.getElementById('command-palette-results');
+    
+    if (!this.overlay || !this.input || !this.results) {
+      console.warn('[CommandPalette] Required DOM elements not found');
+      return;
+    }
+
     this.selectedIndex = 0;
     this.filteredItems = [];
     this.isOpen = false;
@@ -165,6 +171,27 @@ class CommandPalette {
       }
     });
 
+    // Event delegation for result item clicks
+    this.results.addEventListener('click', (e) => {
+      const item = e.target.closest('.command-palette-item');
+      if (item) {
+        const commandId = item.dataset.commandId;
+        const allCommands = [
+          ...this.commands.actions,
+          ...this.commands.navigation
+        ];
+        
+        // Find in filtered items first, then in all commands
+        const command = this.filteredItems.length > 0
+          ? this.filteredItems.find(c => c.id === commandId)
+          : allCommands.find(c => c.id === commandId);
+
+        if (command) {
+          this.execute(command);
+        }
+      }
+    });
+
     // Input event
     this.input.addEventListener('input', () => this.handleSearch());
 
@@ -177,16 +204,18 @@ class CommandPalette {
 
     this.isOpen = true;
     this.overlay.style.display = 'flex';
+    this.overlay.classList.add('is-open');
     this.input.value = '';
-    this.input.focus();
     this.renderResults();
+    
+    // Focus after a short delay to ensure visibility
+    setTimeout(() => this.input.focus(), 10);
   }
 
   close() {
-    if (!this.isOpen) return;
-
     this.isOpen = false;
     this.overlay.style.display = 'none';
+    this.overlay.classList.remove('is-open');
     this.input.value = '';
     this.selectedIndex = 0;
     this.filteredItems = [];
@@ -252,12 +281,15 @@ class CommandPalette {
   }
 
   handleKeydown(e) {
-    if (!this.filteredItems.length) return;
+    const totalItems = this.filteredItems.length || 
+                      ([...this.commands.actions, ...this.commands.navigation].length);
+
+    if (totalItems === 0) return;
 
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
-        this.selectedIndex = (this.selectedIndex + 1) % this.filteredItems.length;
+        this.selectedIndex = (this.selectedIndex + 1) % totalItems;
         this.renderResults();
         this.scrollToSelected();
         break;
@@ -265,7 +297,7 @@ class CommandPalette {
       case 'ArrowUp':
         e.preventDefault();
         this.selectedIndex = this.selectedIndex === 0
-          ? this.filteredItems.length - 1
+          ? totalItems - 1
           : this.selectedIndex - 1;
         this.renderResults();
         this.scrollToSelected();
@@ -273,8 +305,13 @@ class CommandPalette {
 
       case 'Enter':
         e.preventDefault();
-        if (this.filteredItems[this.selectedIndex]) {
-          this.execute(this.filteredItems[this.selectedIndex]);
+        const allCommands = [...this.commands.actions, ...this.commands.navigation];
+        const command = this.filteredItems.length > 0
+          ? this.filteredItems[this.selectedIndex]
+          : allCommands[this.selectedIndex];
+          
+        if (command) {
+          this.execute(command);
         }
         break;
     }
@@ -302,17 +339,18 @@ class CommandPalette {
 
   renderResults() {
     const query = this.input.value.trim();
+    let globalIndex = 0;
 
     if (!query) {
       // Show all commands grouped
       this.results.innerHTML = `
         <div class="command-palette-section">
           <div class="command-palette-section-label">Quick Actions</div>
-          ${this.renderCommandList(this.commands.actions, 'action')}
+          ${this.commands.actions.map(cmd => this.renderCommand({ ...cmd, type: 'action' }, globalIndex++)).join('')}
         </div>
         <div class="command-palette-section">
           <div class="command-palette-section-label">Navigation</div>
-          ${this.renderCommandList(this.commands.navigation, 'navigation')}
+          ${this.commands.navigation.map(cmd => this.renderCommand({ ...cmd, type: 'navigation' }, globalIndex++)).join('')}
         </div>
       `;
     } else if (this.filteredItems.length > 0) {
@@ -337,24 +375,6 @@ class CommandPalette {
         </div>
       `;
     }
-
-    // Attach click handlers
-    this.results.querySelectorAll('.command-palette-item').forEach((el, index) => {
-      el.addEventListener('click', () => {
-        const commandId = el.dataset.commandId;
-        const command = this.filteredItems.length > 0
-          ? this.filteredItems.find(c => c.id === commandId)
-          : [...this.commands.actions, ...this.commands.navigation].find(c => c.id === commandId);
-
-        if (command) {
-          this.execute(command);
-        }
-      });
-    });
-  }
-
-  renderCommandList(commands, type) {
-    return commands.map((cmd, index) => this.renderCommand({ ...cmd, type }, index)).join('');
   }
 
   renderCommand(command, index) {

@@ -49,6 +49,7 @@ const viewModules = {
 
 // Current route state
 let currentRoute = null;
+let currentView = null;
 let currentParams = {};
 
 initTheme();
@@ -235,8 +236,11 @@ async function renderView(viewName, path) {
   const container = document.getElementById('view-container');
   if (!container) return;
 
-  // Clear current view
-  container.innerHTML = '';
+  // Clear current view ONLY if it's different from the new view
+  if (currentView !== viewName) {
+    container.innerHTML = '';
+    currentView = viewName;
+  }
 
   // Get view module
   let viewModule = viewModules[viewName];

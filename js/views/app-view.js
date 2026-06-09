@@ -5,7 +5,7 @@
 
 import { appApi } from '../api.js';
 import { getCurrentUser, logout } from '../auth.js';
-import { showToast, escapeHtml, logger } from '../utils.js';
+import { eventBus, showToast, escapeHtml, logger } from '../utils.js';
 import { navigate } from '../router.js';
 import { getTheme, toggleTheme } from '../theme.js';
 import { bindTasksSection, clearTasksView, renderTasksSection } from './app/tasks-view.js';
@@ -304,10 +304,19 @@ function renderShell(container, section) {
 
   // Search trigger for command palette
   const searchTrigger = container.querySelector('[data-action="search"]');
-  if (searchTrigger && !searchTrigger._hasListener) {
-    searchTrigger.addEventListener('click', () => {
-      eventBus.emit('command-palette-toggle');
-    });
+  if (searchTrigger) {
+    // Force fresh listener by removing old one if possible or using a flag
+    if (searchTrigger._hasListener) {
+      // Elements are recreated by innerHTML, but let's be safe
+    }
+    searchTrigger.onclick = (e) => {
+      e.preventDefault();
+      if (window.commandPalette) {
+        window.commandPalette.toggle();
+      } else {
+        eventBus.emit('command-palette-toggle');
+      }
+    };
     searchTrigger._hasListener = true;
   }
 
@@ -3167,7 +3176,7 @@ function renderTimer(content, payload) {
         </section>
 
         <!-- Unified Focus Workspace -->
-        <section class="focus-workspace" data-tour-id="focus-workspace">
+        <section class="focus-workspace is-soft-colorful" data-tour-id="focus-workspace">
           <!-- Left Column: Timer Hero -->
           <div class="focus-workspace-primary">
             <div class="focus-timer-hero">
@@ -3207,15 +3216,17 @@ function renderTimer(content, payload) {
                   <i class="bi bi-play-fill" id="pomodoro-toggle-icon"></i>
                   <span id="pomodoro-toggle-text">Start Focus</span>
                 </button>
-                <button class="focus-btn focus-btn-secondary" type="button" id="pomodoro-skip" title="Skip to next session">
-                  <i class="bi bi-skip-forward-fill"></i>
-                </button>
-                <button class="focus-btn focus-btn-secondary" type="button" id="pomodoro-reset" title="Reset timer">
-                  <i class="bi bi-arrow-counterclockwise"></i>
-                </button>
-                <button class="focus-btn focus-btn-success" type="button" id="pomodoro-done" title="Mark task complete">
-                  <i class="bi bi-check-lg"></i>
-                </button>
+                <div class="focus-secondary-actions">
+                  <button class="focus-btn focus-btn-secondary" type="button" id="pomodoro-skip" title="Skip to next session">
+                    <i class="bi bi-skip-forward-fill"></i>
+                  </button>
+                  <button class="focus-btn focus-btn-secondary" type="button" id="pomodoro-reset" title="Reset timer">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                  </button>
+                  <button class="focus-btn focus-btn-success" type="button" id="pomodoro-done" title="Mark task complete">
+                    <i class="bi bi-check-lg"></i>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -9373,15 +9384,15 @@ export async function render(container, path, params) {
     // Re-bind search trigger if it exists
     const searchTrigger = container.querySelector('[data-action="search"]');
     if (searchTrigger) {
-      // We use a named function to avoid duplicate listeners if possible, 
-      // but since we're recreating the button's environment or it's a new button,
-      // a fresh listener is safer if we ensure it's not double-bound.
-      // However, if the button is the SAME element, we might double bind.
-      // Let's check if the button is the same.
-      if (!searchTrigger._hasListener) {
-        searchTrigger.addEventListener('click', () => eventBus.emit('command-palette-toggle'));
-        searchTrigger._hasListener = true;
-      }
+      searchTrigger.onclick = (e) => {
+        e.preventDefault();
+        if (window.commandPalette) {
+          window.commandPalette.toggle();
+        } else {
+          eventBus.emit('command-palette-toggle');
+        }
+      };
+      searchTrigger._hasListener = true;
     }
   }
   
